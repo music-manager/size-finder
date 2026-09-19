@@ -397,7 +397,9 @@
       "저소음",
       "고객직접설치"
     ],
-    "verified": true
+    "verified": true,
+    "price": 303470,
+    "priceCheckedAt": "2026-09-19"
   },
   {
     "id": "mic-001",
