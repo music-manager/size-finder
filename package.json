@@ -2,7 +2,7 @@
   "name": "size-finder",
   "version": "1.0.0",
   "private": true,
-  "description": "내 원룸 맞춤 가전·가구 실측 검색기 (공간핏)",
+  "description": "센치픽(CmPick) — 내 원룸 맞춤 가전·가구 실측 검색기",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -8,12 +8,14 @@ export default function Header() {
           <Ruler className="h-5 w-5" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-tight text-slate-900 sm:text-base">
-            내 원룸 맞춤 가전·가구 실측 검색기{' '}
-            <span className="text-brand-600">(공간핏)</span>
+          <p className="flex items-baseline gap-1.5 text-base font-extrabold leading-tight text-slate-900 sm:text-lg">
+            센치픽
+            <span className="text-[11px] font-bold text-brand-600 sm:text-xs">
+              CmPick
+            </span>
           </p>
           <p className="truncate text-[11px] leading-tight text-slate-500 sm:text-xs">
-            빈 공간 치수만 입력하면, 실제로 들어가는 제품만 남습니다
+            내 원룸 맞춤 가전·가구 실측 검색기
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@ export default function Footer() {
     <footer className="mt-16 border-t border-slate-200 bg-white">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <p className="text-sm font-bold text-slate-900">
-          공간핏 — 내 원룸 맞춤 가전·가구 실측 검색기
+          센치픽 (CmPick) — 내 원룸 맞춤 가전·가구 실측 검색기
         </p>
         <p className="mt-2 text-xs leading-relaxed text-slate-500">
           제품 치수는 제조사 공개 스펙 기준이며, 문고리·배관·걸레받이 등 설치
@@ -17,7 +17,7 @@ export default function Footer() {
           </p>
         </div>
         <p className="mt-6 text-xs text-slate-400">
-          © {new Date().getFullYear()} 공간핏. All rights reserved.
+          © {new Date().getFullYear()} 센치픽 (CmPick). All rights reserved.
         </p>
       </div>
     </footer>
