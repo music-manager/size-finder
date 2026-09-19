@@ -1,0 +1,222 @@
+[
+  {
+    "id": "ref-001",
+    "name": "위니아 딤채 소형 냉장고 86L",
+    "category": "refrigerator",
+    "brand": "위니아",
+    "dimensions": { "width": 47.4, "depth": 49.5, "height": 85.5 },
+    "capacity_or_spec": "86L",
+    "imageUrl": "https://images.unsplash.com/photo-1571175443880-49e1d25b2bc5?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%9C%84%EB%8B%88%EC%95%84%20%EC%86%8C%ED%98%95%EB%83%89%EC%9E%A5%EA%B3%A0%2086L",
+    "tags": ["로켓배송", "가성비", "저소음"]
+  },
+  {
+    "id": "ref-002",
+    "name": "삼성전자 소형 냉장고 RT16 152L",
+    "category": "refrigerator",
+    "brand": "삼성전자",
+    "dimensions": { "width": 55.0, "depth": 57.8, "height": 128.5 },
+    "capacity_or_spec": "152L",
+    "imageUrl": "https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EC%84%B1%20%EC%86%8C%ED%98%95%EB%83%89%EC%9E%A5%EA%B3%A0%20152L",
+    "tags": ["로켓배송", "1등급", "냉동실분리"]
+  },
+  {
+    "id": "ref-003",
+    "name": "LG전자 오브제컬렉션 미니 냉장고 100L",
+    "category": "refrigerator",
+    "brand": "LG전자",
+    "dimensions": { "width": 49.8, "depth": 54.2, "height": 92.0 },
+    "capacity_or_spec": "100L",
+    "imageUrl": "https://images.unsplash.com/photo-1536353284924-9220c464e262?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=LG%20%EB%AF%B8%EB%8B%88%EB%83%89%EC%9E%A5%EA%B3%A0%20100L",
+    "tags": ["인테리어", "저소음", "무상A/S"]
+  },
+  {
+    "id": "ref-004",
+    "name": "캐리어 클라윈드 미니 냉장고 45L",
+    "category": "refrigerator",
+    "brand": "캐리어",
+    "dimensions": { "width": 44.0, "depth": 46.5, "height": 50.5 },
+    "capacity_or_spec": "45L",
+    "imageUrl": "https://images.unsplash.com/photo-1601599963565-b7f49beb0f6d?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BA%90%EB%A6%AC%EC%96%B4%20%EB%AF%B8%EB%8B%88%EB%83%89%EC%9E%A5%EA%B3%A0%2045L",
+    "tags": ["초소형", "가성비", "책상위"]
+  },
+  {
+    "id": "ref-005",
+    "name": "하이얼 슬림형 냉장고 122L",
+    "category": "refrigerator",
+    "brand": "하이얼",
+    "dimensions": { "width": 47.0, "depth": 52.0, "height": 120.0 },
+    "capacity_or_spec": "122L",
+    "imageUrl": "https://images.unsplash.com/photo-1610701596007-11502861dcfa?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%ED%95%98%EC%9D%B4%EC%96%BC%20%EC%8A%AC%EB%A6%BC%EB%83%89%EC%9E%A5%EA%B3%A0%20122L",
+    "tags": ["슬림", "로켓배송", "가성비"]
+  },
+  {
+    "id": "wsh-001",
+    "name": "LG전자 미니워시 아기옷 세탁기 3.5kg",
+    "category": "washing_machine",
+    "brand": "LG전자",
+    "dimensions": { "width": 60.0, "depth": 47.5, "height": 36.0 },
+    "capacity_or_spec": "3.5kg",
+    "imageUrl": "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=LG%20%EB%AF%B8%EB%8B%88%EC%9B%8C%EC%8B%9C%203.5kg",
+    "tags": ["저소음", "드럼", "빌트인가능"]
+  },
+  {
+    "id": "wsh-002",
+    "name": "위니아 통돌이 미니 세탁기 3kg",
+    "category": "washing_machine",
+    "brand": "위니아",
+    "dimensions": { "width": 44.0, "depth": 45.0, "height": 71.0 },
+    "capacity_or_spec": "3kg",
+    "imageUrl": "https://images.unsplash.com/photo-1604335398980-ededcadcc37d?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%9C%84%EB%8B%88%EC%95%84%20%EB%AF%B8%EB%8B%88%EC%84%B8%ED%83%81%EA%B8%B0%203kg",
+    "tags": ["가성비", "로켓배송", "원룸추천"]
+  },
+  {
+    "id": "wsh-003",
+    "name": "삼성전자 아기사랑 통돌이 세탁기 4.5kg",
+    "category": "washing_machine",
+    "brand": "삼성전자",
+    "dimensions": { "width": 49.0, "depth": 51.0, "height": 82.5 },
+    "capacity_or_spec": "4.5kg",
+    "imageUrl": "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EC%84%B1%20%EC%95%84%EA%B8%B0%EC%82%AC%EB%9E%91%20%EC%84%B8%ED%83%81%EA%B8%B0%204.5kg",
+    "tags": ["삶음코스", "저소음", "무상A/S"]
+  },
+  {
+    "id": "wsh-004",
+    "name": "대우전자 벽걸이 드럼세탁기 3kg",
+    "category": "washing_machine",
+    "brand": "대우전자",
+    "dimensions": { "width": 55.0, "depth": 30.0, "height": 60.0 },
+    "capacity_or_spec": "3kg",
+    "imageUrl": "https://images.unsplash.com/photo-1610557892470-55d9e80c0bce?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%B2%BD%EA%B1%B8%EC%9D%B4%20%EB%93%9C%EB%9F%BC%EC%84%B8%ED%83%81%EA%B8%B0%203kg",
+    "tags": ["벽걸이", "초슬림", "공간절약"]
+  },
+  {
+    "id": "mic-001",
+    "name": "쿠쿠 전자레인지 20L 화이트",
+    "category": "microwave",
+    "brand": "쿠쿠",
+    "dimensions": { "width": 45.2, "depth": 33.5, "height": 26.2 },
+    "capacity_or_spec": "20L",
+    "imageUrl": "https://images.unsplash.com/photo-1574269909862-7e1d70bb8078?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BF%A0%EC%BF%A0%20%EC%A0%84%EC%9E%90%EB%A0%88%EC%9D%B8%EC%A7%80%2020L",
+    "tags": ["로켓배송", "가성비", "원룸추천"]
+  },
+  {
+    "id": "mic-002",
+    "name": "LG전자 오브제 전자레인지 25L",
+    "category": "microwave",
+    "brand": "LG전자",
+    "dimensions": { "width": 47.6, "depth": 38.0, "height": 27.2 },
+    "capacity_or_spec": "25L",
+    "imageUrl": "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=LG%20%EC%A0%84%EC%9E%90%EB%A0%88%EC%9D%B8%EC%A7%80%2025L",
+    "tags": ["인테리어", "저소음", "1등급"]
+  },
+  {
+    "id": "mic-003",
+    "name": "쿠첸 미니 전자레인지 15L",
+    "category": "microwave",
+    "brand": "쿠첸",
+    "dimensions": { "width": 43.9, "depth": 31.5, "height": 25.8 },
+    "capacity_or_spec": "15L",
+    "imageUrl": "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%AF%B8%EB%8B%88%20%EC%A0%84%EC%9E%90%EB%A0%88%EC%9D%B8%EC%A7%80%2015L",
+    "tags": ["초소형", "가성비", "1인가구"]
+  },
+  {
+    "id": "mic-004",
+    "name": "한샘 전자레인지 수납장 2단",
+    "category": "microwave",
+    "brand": "한샘",
+    "dimensions": { "width": 60.0, "depth": 40.0, "height": 90.0 },
+    "capacity_or_spec": "2단 / 내부 폭 560mm",
+    "imageUrl": "https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%A0%84%EC%9E%90%EB%A0%88%EC%9D%B8%EC%A7%80%20%EC%88%98%EB%82%A9%EC%9E%A5",
+    "tags": ["수납장", "조립쉬움", "주방정리"]
+  },
+  {
+    "id": "dsk-001",
+    "name": "데스커 좁은 폭 컴퓨터 책상 1000",
+    "category": "desk",
+    "brand": "데스커",
+    "dimensions": { "width": 100.0, "depth": 45.0, "height": 72.0 },
+    "capacity_or_spec": "1000mm",
+    "imageUrl": "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%8D%B0%EC%8A%A4%EC%BB%A4%20%EC%B1%85%EC%83%81%201000",
+    "tags": ["로켓배송", "슬림", "조립쉬움"]
+  },
+  {
+    "id": "dsk-002",
+    "name": "일룸 원룸용 미니 책상 800",
+    "category": "desk",
+    "brand": "일룸",
+    "dimensions": { "width": 80.0, "depth": 40.0, "height": 73.5 },
+    "capacity_or_spec": "800mm",
+    "imageUrl": "https://images.unsplash.com/photo-1593062096033-9a26b09da705?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%9B%90%EB%A3%B8%20%EB%AF%B8%EB%8B%88%20%EC%B1%85%EC%83%81%20800",
+    "tags": ["초소형", "원룸추천", "가성비"]
+  },
+  {
+    "id": "dsk-003",
+    "name": "한샘 모션데스크 전동 높이조절 책상 1200",
+    "category": "desk",
+    "brand": "한샘",
+    "dimensions": { "width": 120.0, "depth": 60.0, "height": 120.0 },
+    "capacity_or_spec": "1200mm / 높이 72~120cm",
+    "imageUrl": "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%A0%84%EB%8F%99%20%EB%86%92%EC%9D%B4%EC%A1%B0%EC%A0%88%20%EC%B1%85%EC%83%81%201200",
+    "tags": ["높이조절", "재택근무", "프리미엄"]
+  },
+  {
+    "id": "shf-001",
+    "name": "이케아 스타일 4단 틈새 선반 300",
+    "category": "shelf",
+    "brand": "코멧홈",
+    "dimensions": { "width": 30.0, "depth": 29.5, "height": 120.0 },
+    "capacity_or_spec": "4단 / 300mm",
+    "imageUrl": "https://images.unsplash.com/photo-1594026112284-02bb6f3352fe?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%ED%8B%88%EC%83%88%20%EC%84%A0%EB%B0%98%204%EB%8B%A8",
+    "tags": ["틈새수납", "가성비", "로켓배송"]
+  },
+  {
+    "id": "shf-002",
+    "name": "삼바스 5단 철제 선반 800",
+    "category": "shelf",
+    "brand": "삼바스",
+    "dimensions": { "width": 80.0, "depth": 35.0, "height": 150.0 },
+    "capacity_or_spec": "5단 / 800mm",
+    "imageUrl": "https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%B2%A0%EC%A0%9C%20%EC%84%A0%EB%B0%98%205%EB%8B%A8%20800",
+    "tags": ["대용량", "조립쉬움", "튼튼"]
+  },
+  {
+    "id": "shf-003",
+    "name": "리바트 낮은 3단 책장 600",
+    "category": "shelf",
+    "brand": "리바트",
+    "dimensions": { "width": 60.0, "depth": 30.0, "height": 88.0 },
+    "capacity_or_spec": "3단 / 600mm",
+    "imageUrl": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%82%AE%EC%9D%80%20%EC%B1%85%EC%9E%A5%203%EB%8B%A8%20600",
+    "tags": ["창문가림없음", "원룸추천", "인테리어"]
+  },
+  {
+    "id": "shf-004",
+    "name": "다용도 슬림 주방 틈새장 200",
+    "category": "shelf",
+    "brand": "코멧홈",
+    "dimensions": { "width": 20.0, "depth": 45.0, "height": 88.0 },
+    "capacity_or_spec": "5단 / 200mm",
+    "imageUrl": "https://images.unsplash.com/photo-1600121848594-d8644e57abab?auto=format&fit=crop&w=800&q=60",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%A3%BC%EB%B0%A9%20%ED%8B%88%EC%83%88%EC%9E%A5%2020cm",
+    "tags": ["초슬림", "바퀴형", "틈새수납"]
+  }
+]
