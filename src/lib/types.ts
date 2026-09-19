@@ -1,9 +1,12 @@
 export type CategoryId =
   | 'refrigerator'
   | 'washing_machine'
+  | 'dryer'
   | 'microwave'
   | 'desk'
-  | 'shelf';
+  | 'shelf'
+  | 'bed'
+  | 'hanger';
 
 export interface Dimensions {
   /** 가로 (cm) */
@@ -26,9 +29,11 @@ export interface Product {
   tags: string[];
 }
 
+export type TabId = CategoryId | 'all';
+
 export interface Filters {
   /** 'all' 이면 전체 카테고리 */
-  category: CategoryId | 'all';
+  category: TabId;
   maxWidth: number;
   maxDepth: number;
   maxHeight: number;

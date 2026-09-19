@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import CategoryTabs from './CategoryTabs';
 import FilterPanel from './FilterPanel';
 import MobileFilterDrawer from './MobileFilterDrawer';
+import PresetChips from './PresetChips';
 import ProductGrid from './ProductGrid';
+import ShareButton from './ShareButton';
 import { CATEGORIES } from '@/lib/categories';
 import {
   DEFAULT_FILTERS,
@@ -12,11 +15,33 @@ import {
   isFilterDirty,
   products,
 } from '@/lib/products';
-import type { CategoryId, Filters } from '@/lib/types';
+import {
+  applyRoomPreset,
+  applySpecPreset,
+  type RoomPreset,
+  type SpecPreset,
+} from '@/lib/presets';
+import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
+import type { Filters, TabId } from '@/lib/types';
 
 export default function SizeFinderApp() {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const searchParams = useSearchParams();
+
+  // 공유 링크로 들어온 경우 URL 쿼리를 초기 상태로 복원한다.
+  const [filters, setFilters] = useState<Filters>(() =>
+    paramsToFilters(new URLSearchParams(searchParams.toString())),
+  );
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // 상태 -> URL 반영. 슬라이더 드래그마다 호출되면 사파리가 replaceState 를
+  // 스로틀링하므로 짧게 디바운스한다.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const query = filtersToQueryString(filters);
+      window.history.replaceState(null, '', `${window.location.pathname}${query}`);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [filters]);
 
   const patchFilters = useCallback((patch: Partial<Filters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
@@ -26,10 +51,15 @@ export default function SizeFinderApp() {
     setFilters(DEFAULT_FILTERS);
   }, []);
 
-  const visible = useMemo(
-    () => filterProducts(products, filters),
-    [filters],
-  );
+  const handleRoomPreset = useCallback((preset: RoomPreset) => {
+    setFilters((prev) => applyRoomPreset(prev, preset));
+  }, []);
+
+  const handleSpecPreset = useCallback((preset: SpecPreset) => {
+    setFilters(applySpecPreset(preset));
+  }, []);
+
+  const visible = useMemo(() => filterProducts(products, filters), [filters]);
 
   /** 탭 뱃지 숫자: 카테고리를 제외한 나머지 조건만 적용한 개수 */
   const counts = useMemo(() => {
@@ -46,7 +76,7 @@ export default function SizeFinderApp() {
   const dirty = isFilterDirty(filters);
 
   const handleCategory = useCallback(
-    (category: CategoryId | 'all') => patchFilters({ category }),
+    (category: TabId) => patchFilters({ category }),
     [patchFilters],
   );
 
@@ -60,10 +90,19 @@ export default function SizeFinderApp() {
           <br className="sm:hidden" /> 들어가는 제품만 남습니다.
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-brand-100">
-          원룸·자취방 빈틈에 딱 맞는 소형냉장고 · 미니세탁기 · 전자레인지 ·
-          책상 · 선반을 가로(W) × 깊이(D) × 높이(H) 기준으로 골라드립니다.
+          원룸·자취방 빈틈에 딱 맞는 소형냉장고 · 미니세탁기 · 미니건조기 ·
+          전자레인지 · 책상 · 선반 · 침대 · 행거를 가로(W) × 깊이(D) × 높이(H)
+          기준으로 골라드립니다.
         </p>
       </section>
+
+      <div className="mt-6">
+        <PresetChips
+          filters={filters}
+          onRoomPreset={handleRoomPreset}
+          onSpecPreset={handleSpecPreset}
+        />
+      </div>
 
       <div className="mt-6">
         <CategoryTabs
@@ -87,15 +126,16 @@ export default function SizeFinderApp() {
         </aside>
 
         <section>
-          <div className="mb-3 flex items-baseline justify-between gap-2">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-bold text-slate-900">
-              검색 결과{' '}
-              <span className="text-brand-600">{visible.length}</span>개
+              검색 결과 <span className="text-brand-600">{visible.length}</span>
+              개
+              <span className="ml-2 text-xs font-normal text-slate-400">
+                최대 {filters.maxWidth} × {filters.maxDepth} ×{' '}
+                {filters.maxHeight} cm 이하
+              </span>
             </p>
-            <p className="text-xs text-slate-400">
-              최대 {filters.maxWidth} × {filters.maxDepth} ×{' '}
-              {filters.maxHeight} cm 이하
-            </p>
+            <ShareButton />
           </div>
 
           <ProductGrid products={visible} onReset={resetFilters} />

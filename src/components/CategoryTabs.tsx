@@ -1,12 +1,12 @@
 'use client';
 
 import { CATEGORIES } from '@/lib/categories';
-import type { CategoryId } from '@/lib/types';
+import type { TabId } from '@/lib/types';
 
 interface Props {
-  value: CategoryId | 'all';
+  value: TabId;
   counts: Record<string, number>;
-  onChange: (next: CategoryId | 'all') => void;
+  onChange: (next: TabId) => void;
 }
 
 export default function CategoryTabs({ value, counts, onChange }: Props) {

@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SizeFinderApp from '@/components/SizeFinderApp';
@@ -51,7 +52,15 @@ export default function HomePage() {
       <StructuredData />
       <Header />
       <main>
-        <SizeFinderApp />
+        <Suspense
+          fallback={
+            <div className="mx-auto max-w-7xl px-4 py-20 text-center text-sm text-slate-400">
+              불러오는 중…
+            </div>
+          }
+        >
+          <SizeFinderApp />
+        </Suspense>
       </main>
       <Footer />
     </>
