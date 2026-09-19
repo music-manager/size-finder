@@ -18,7 +18,7 @@ function StructuredData() {
         '@type': 'Product',
         name: product.name,
         brand: { '@type': 'Brand', name: product.brand },
-        image: product.imageUrl,
+        ...(product.imageUrl ? { image: product.imageUrl } : {}),
         width: {
           '@type': 'QuantitativeValue',
           value: product.dimensions.width,
