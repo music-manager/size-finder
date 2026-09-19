@@ -380,6 +380,26 @@
     "verified": true
   },
   {
+    "id": "dry-007",
+    "name": "위닉스 인버터 컴팩트 건조기 4kg",
+    "category": "dryer",
+    "brand": "위닉스",
+    "dimensions": {
+      "width": 50.6,
+      "depth": 50.6,
+      "height": 69.5
+    },
+    "capacity_or_spec": "4kg · 인버터 / 고객직접설치",
+    "imageUrl": "https://thumbnail10.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/2025/02/05/14/0/dab48cd7-f1d4-48f5-95ff-e3df4bfa7234.jpg",
+    "coupangUrl": "https://link.coupang.com/a/haL0ebO2QS",
+    "tags": [
+      "인버터",
+      "저소음",
+      "고객직접설치"
+    ],
+    "verified": true
+  },
+  {
     "id": "mic-001",
     "name": "쿠쿠 전자레인지 20L 화이트",
     "category": "microwave",
