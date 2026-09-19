@@ -377,7 +377,9 @@
       "설치불필요",
       "1인가구"
     ],
-    "verified": true
+    "verified": true,
+    "price": 248310,
+    "priceCheckedAt": "2026-09-19"
   },
   {
     "id": "dry-007",
