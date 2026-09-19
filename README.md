@@ -10,7 +10,7 @@
 - **필터 상태가 URL 에 저장** → 블로그·고정댓글에서 결제 직전 화면으로 바로 링크 가능
 - 쿠팡 파트너스 아웃바운드 링크 + 필수 고지 문구 포함
 
-배포 주소: **https://size.esedy.com**
+배포 주소: **https://cmpick.esedy.com**
 
 ---
 
@@ -83,10 +83,10 @@ src/
 바로 쓰는 랜딩 링크 예시:
 
 ```
-https://size.esedy.com/?c=dryer&w=60          가로 60cm 이하 미니건조기
-https://size.esedy.com/?c=refrigerator&h=140  높이 140cm 이하 소형냉장고
-https://size.esedy.com/?c=bed&w=120           폭 120cm 이하 싱글·SS 침대
-https://size.esedy.com/?w=60&d=60&h=130       5평 원룸 가전 전체
+https://cmpick.esedy.com/?c=dryer&w=60          가로 60cm 이하 미니건조기
+https://cmpick.esedy.com/?c=refrigerator&h=140  높이 140cm 이하 소형냉장고
+https://cmpick.esedy.com/?c=bed&w=120           폭 120cm 이하 싱글·SS 침대
+https://cmpick.esedy.com/?w=60&d=60&h=130       5평 원룸 가전 전체
 ```
 
 기본값과 같은 항목은 URL 에서 자동으로 빠지므로 링크가 짧게 유지됩니다.
@@ -130,18 +130,18 @@ https://size.esedy.com/?w=60&d=60&h=130       5평 원룸 가전 전체
 
 ---
 
-## 5. 배포 (Vercel + size.esedy.com)
+## 5. 배포 (Vercel + cmpick.esedy.com)
 
 1. Vercel → Add New Project → GitHub `music-manager/size-finder` Import → 설정 변경 없이 Deploy
-2. Vercel → Settings → Domains → `size.esedy.com` 추가
+2. Vercel → Settings → Domains → `cmpick.esedy.com` 추가
 3. esedy.com DNS 에 레코드 추가
    ```
-   Type: CNAME   Name: size   Value: cname.vercel-dns.com
+   Type: CNAME   Name: cmpick   Value: cname.vercel-dns.com
    ```
-4. Google Search Console 에 `size.esedy.com` 을 **별도 속성으로 등록** (서브도메인은 esedy.com 속성에 잡히지 않음)
-   → 사이트맵 `https://size.esedy.com/sitemap.xml` 제출
+4. Google Search Console 에 `cmpick.esedy.com` 을 **별도 속성으로 등록** (서브도메인은 esedy.com 속성에 잡히지 않음)
+   → 사이트맵 `https://cmpick.esedy.com/sitemap.xml` 제출
 
-> 도메인을 바꾸려면 `src/app/layout.tsx`, `robots.ts`, `sitemap.ts` 3곳의 `size.esedy.com` 만 교체하면 됩니다.
+> 도메인을 바꾸려면 `src/app/layout.tsx`, `robots.ts`, `sitemap.ts` 3곳의 `cmpick.esedy.com` 만 교체하면 됩니다.
 
 ---
 
