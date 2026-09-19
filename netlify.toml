@@ -1,0 +1,20 @@
+# Netlify 배포 설정
+# Next.js 런타임은 Netlify 가 자동 감지해 적용하므로 플러그인을 직접 선언하지 않는다.
+# (수동 선언 시 구버전 런타임에 고정될 수 있음)
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--no-audit --no-fund"
+
+# 보안 헤더 — 쿠팡 아웃바운드 링크에 referrer 를 넘겨야 파트너스 추적이 되므로
+# Referrer-Policy 는 origin 까지만 제한한다.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"

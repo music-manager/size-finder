@@ -130,18 +130,38 @@ https://cmpick.esedy.com/?w=60&d=60&h=130       5평 원룸 가전 전체
 
 ---
 
-## 5. 배포 (Vercel + cmpick.esedy.com)
+## 5. 배포 (Netlify + cmpick.esedy.com)
 
-1. Vercel → Add New Project → GitHub `music-manager/size-finder` Import → 설정 변경 없이 Deploy
-2. Vercel → Settings → Domains → `cmpick.esedy.com` 추가
-3. esedy.com DNS 에 레코드 추가
-   ```
-   Type: CNAME   Name: cmpick   Value: cname.vercel-dns.com
-   ```
-4. Google Search Console 에 `cmpick.esedy.com` 을 **별도 속성으로 등록** (서브도메인은 esedy.com 속성에 잡히지 않음)
-   → 사이트맵 `https://cmpick.esedy.com/sitemap.xml` 제출
+`esedy.com` 은 Netlify 에서 운영 중이므로 이 프로젝트도 Netlify 에 올립니다.
+빌드 설정은 `netlify.toml` 에 들어 있어 별도 입력이 필요 없습니다.
 
-> 도메인을 바꾸려면 `src/app/layout.tsx`, `robots.ts`, `sitemap.ts` 3곳의 `cmpick.esedy.com` 만 교체하면 됩니다.
+**Step 1. 새 사이트 생성**
+Netlify → Add new project → Import an existing project → GitHub →
+`music-manager/size-finder` 선택 → Deploy
+(빌드 명령·publish 디렉터리는 `netlify.toml` 에서 자동으로 읽습니다)
+
+**Step 2. 서브도메인 연결**
+생성된 사이트 → Domain management → Add a domain →
+`cmpick.esedy.com` 입력 → Add domain
+
+- **esedy.com 이 Netlify DNS 를 쓰는 경우** (같은 팀에서 관리 중이면 대부분 해당):
+  DNS 레코드가 **자동 생성**됩니다. 추가 작업 없음.
+- **외부 DNS 를 쓰는 경우**: 아래 CNAME 을 직접 추가합니다.
+  ```
+  Type: CNAME   Name: cmpick   Value: <생성된사이트명>.netlify.app
+  ```
+
+**Step 3. HTTPS 확인**
+Domain management → HTTPS → 인증서가 `cmpick.esedy.com` 을 포함하는지 확인
+(자동 발급까지 보통 1~2분)
+
+**Step 4. 검색엔진 등록**
+Google Search Console 에 `cmpick.esedy.com` 을 **별도 속성으로 등록**
+(서브도메인은 esedy.com 속성에 잡히지 않습니다)
+→ 사이트맵 `https://cmpick.esedy.com/sitemap.xml` 제출
+
+> 도메인을 바꾸려면 `src/app/layout.tsx`, `robots.ts`, `sitemap.ts` 3곳의
+> `cmpick.esedy.com` 만 교체하면 됩니다.
 
 ---
 
