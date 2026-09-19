@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { HelpCircle, X } from 'lucide-react';
 
 const TIPS = [
@@ -32,6 +33,11 @@ const TIPS = [
 
 export default function MeasureGuide() {
   const [open, setOpen] = useState(false);
+  // 헤더에 backdrop-blur 가 걸려 있어 fixed 요소의 기준이 헤더 박스가 된다.
+  // 모달은 body 로 포털해서 화면 전체를 기준으로 띄운다.
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (!open) return;
@@ -56,46 +62,59 @@ export default function MeasureGuide() {
         <span className="hidden sm:inline">치수 재는 법</span>
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="치수 재는 법">
-          <button
-            type="button"
-            aria-label="닫기"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 h-full w-full bg-slate-900/50"
-          />
-          <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white pb-8 shadow-2xl animate-fade-up sm:inset-0 sm:m-auto sm:h-fit sm:max-w-lg sm:rounded-2xl sm:pb-6">
-            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-5 py-3.5">
-              <h2 className="text-sm font-bold text-slate-900">
-                줄자 하나로 실패 없이 재는 법
-              </h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="닫기"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </button>
+      {open &&
+        mounted &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
+            role="dialog"
+            aria-modal="true"
+            aria-label="치수 재는 법"
+          >
+            <button
+              type="button"
+              aria-label="닫기"
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 h-full w-full bg-slate-900/50"
+            />
+            {/* min-h-full + 플렉스 정렬이라 내용이 화면보다 길어도 위가 잘리지 않는다 */}
+            <div className="relative flex min-h-full items-end justify-center sm:items-center sm:p-4">
+              <div className="relative w-full rounded-t-2xl bg-white pb-8 shadow-2xl animate-fade-up sm:max-w-lg sm:rounded-2xl sm:pb-6">
+                <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-slate-100 bg-white px-5 py-3.5">
+                  <h2 className="text-sm font-bold text-slate-900">
+                    줄자 하나로 실패 없이 재는 법
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    aria-label="닫기"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+                <ol className="space-y-4 px-5 pt-4">
+                  {TIPS.map((tip, i) => (
+                    <li key={tip.title} className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[11px] font-bold text-white">
+                        {i + 1}
+                      </span>
+                      <div>
+                        <p className="text-[13px] font-bold text-slate-900">
+                          {tip.title}
+                        </p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                          {tip.body}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
-            <ol className="space-y-4 px-5 pt-4">
-              {TIPS.map((tip, i) => (
-                <li key={tip.title} className="flex gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-[11px] font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <p className="text-[13px] font-bold text-slate-900">{tip.title}</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-                      {tip.body}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }
