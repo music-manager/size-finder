@@ -20,20 +20,6 @@ export default function ProductCard({ product }: Props) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md">
-      {showImage && (
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition duration-300 group-hover:scale-105"
-            onError={() => setImageFailed(true)}
-            unoptimized
-          />
-        </div>
-      )}
-
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="flex items-center gap-1.5">
           <span aria-hidden="true">{CATEGORY_EMOJI[product.category]}</span>
@@ -45,9 +31,24 @@ export default function ProductCard({ product }: Props) {
           </span>
         </div>
 
-        <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
-          {product.name}
-        </h3>
+        <div className="flex items-start gap-2.5">
+          {showImage && (
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                sizes="56px"
+                className="object-contain"
+                onError={() => setImageFailed(true)}
+                unoptimized
+              />
+            </div>
+          )}
+          <h3 className="line-clamp-3 text-sm font-bold leading-snug text-slate-900">
+            {product.name}
+          </h3>
+        </div>
 
         {/* 실측 정보 — 사진이 없는 만큼 카드의 시각적 중심이 된다 */}
         <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-2.5">
