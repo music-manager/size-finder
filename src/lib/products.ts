@@ -114,6 +114,17 @@ export function sortProducts(list: Product[], sort: SortKey): Product[] {
   if (sort === 'default') return list;
   const next = [...list];
 
+  // 틈새를 찾는 사용자는 폭, 문·동선이 걱정인 사용자는 깊이가 기준이 된다
+  if (sort === 'width') {
+    next.sort((a, b) => a.dimensions.width - b.dimensions.width);
+    return next;
+  }
+
+  if (sort === 'depth') {
+    next.sort((a, b) => a.dimensions.depth - b.dimensions.depth);
+    return next;
+  }
+
   if (sort === 'size') {
     // 부피가 작을수록 좁은 방에 유리하다
     const volume = (p: Product) =>

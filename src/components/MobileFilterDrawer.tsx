@@ -51,11 +51,20 @@ export default function MobileFilterDrawer({
         <button
           type="button"
           onClick={onOpen}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.99]"
+          className="flex w-full items-center justify-between gap-2 rounded-xl bg-brand-600 px-4 py-3 text-white shadow-lg shadow-brand-600/20 transition active:scale-[0.99]"
         >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-          사이즈 필터
-          <span className="rounded-full bg-white/20 px-2 py-0.5 text-xs">
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span className="text-left">
+              <span className="block text-[10px] font-medium leading-tight text-brand-100">
+                가로 × 깊이 × 높이 (cm)
+              </span>
+              <span className="block text-sm font-extrabold tabular-nums leading-tight">
+                {filters.maxWidth} × {filters.maxDepth} × {filters.maxHeight}
+              </span>
+            </span>
+          </span>
+          <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-xs font-bold">
             {resultCount}개
           </span>
         </button>

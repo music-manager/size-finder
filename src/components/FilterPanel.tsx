@@ -26,9 +26,9 @@ export default function FilterPanel({
         onChange={(keyword) => onPatch({ keyword })}
       />
 
-      <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="space-y-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900">
+          <h2 className="whitespace-nowrap text-sm font-bold text-slate-900">
             📐 내 공간 최대 치수
           </h2>
           <button

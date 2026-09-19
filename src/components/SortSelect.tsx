@@ -10,6 +10,8 @@ interface Props {
 
 const OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'default', label: '기본순' },
+  { value: 'width', label: '폭 좁은 순' },
+  { value: 'depth', label: '깊이 얕은 순' },
   { value: 'size', label: '작은 크기순' },
   { value: 'price', label: '낮은 가격순' },
 ];

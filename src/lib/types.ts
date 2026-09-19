@@ -37,7 +37,7 @@ export interface Product {
 
 export type TabId = CategoryId | 'all';
 
-export type SortKey = 'default' | 'size' | 'price';
+export type SortKey = 'default' | 'width' | 'depth' | 'size' | 'price';
 
 export interface Filters {
   /** 'all' 이면 전체 카테고리 */

@@ -89,35 +89,17 @@ export default function SizeFinderApp() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-16">
-      <section className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 px-5 py-6 text-white shadow-sm sm:px-8 sm:py-8">
-        <h1 className="text-lg font-extrabold leading-snug sm:text-2xl">
-          줄자로 잰 숫자만 넣으세요.
-          <br className="sm:hidden" /> 들어가는 제품만 남습니다.
+      <section className="rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-4 py-3.5 text-white sm:px-6 sm:py-4">
+        <h1 className="text-[15px] font-extrabold leading-snug sm:text-lg">
+          줄자로 잰 숫자만 넣으세요. 들어가는 제품만 남습니다.
         </h1>
-        <p className="mt-2 text-sm leading-relaxed text-brand-100">
-          원룸·자취방 빈틈에 딱 맞는 소형냉장고 · 미니세탁기 · 미니건조기 ·
-          전자레인지 · 책상 · 선반 · 침대 · 행거를 가로(W) × 깊이(D) × 높이(H)
-          기준으로 골라드립니다.
+        <p className="mt-0.5 text-[11px] leading-relaxed text-brand-100 sm:text-xs">
+          원룸·자취방 빈틈에 맞는 가전·가구를 가로(W) × 깊이(D) × 높이(H)로 골라드립니다.
         </p>
       </section>
 
-      <div className="mt-6">
-        <PresetChips
-          filters={filters}
-          onRoomPreset={handleRoomPreset}
-          onSpecPreset={handleSpecPreset}
-        />
-      </div>
-
-      <div className="mt-6">
-        <CategoryTabs
-          value={filters.category}
-          counts={counts}
-          onChange={handleCategory}
-        />
-      </div>
-
-      <div className="mt-5 lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:gap-8">
+      {/* 필터를 왼쪽 최상단에 두어 3축 슬라이더가 스크롤 없이 보이게 한다 */}
+      <div className="mt-4 lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:gap-6">
         {/* 데스크톱: 스티키 사이드 필터 */}
         <aside className="hidden lg:block">
           <div className="sticky top-20">
@@ -131,7 +113,21 @@ export default function SizeFinderApp() {
         </aside>
 
         <section>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <PresetChips
+            filters={filters}
+            onRoomPreset={handleRoomPreset}
+            onSpecPreset={handleSpecPreset}
+          />
+
+          <div className="mt-4">
+            <CategoryTabs
+              value={filters.category}
+              counts={counts}
+              onChange={handleCategory}
+            />
+          </div>
+
+          <div className="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-bold text-slate-900">
               검색 결과 <span className="text-brand-600">{visible.length}</span>
               개

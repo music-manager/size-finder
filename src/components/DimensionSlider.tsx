@@ -68,7 +68,7 @@ export default function DimensionSlider({
               }
             }}
             aria-label={`${label} 직접 입력`}
-            className="w-20 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-right text-sm font-bold text-brand-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
+            className="w-16 rounded-lg border border-slate-200 bg-white px-2 py-1 text-right text-sm font-bold text-brand-700 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
           />
           <span className="text-sm font-semibold text-slate-500">cm</span>
         </div>
@@ -83,12 +83,12 @@ export default function DimensionSlider({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         aria-label={`${label} 슬라이더`}
-        className="dim-slider mt-3"
+        className="dim-slider mt-2"
         style={{
           background: `linear-gradient(to right, #1d69f0 ${percent}%, #e2e8f0 ${percent}%)`,
         }}
       />
-      <div className="mt-1 flex justify-between text-[11px] text-slate-400">
+      <div className="mt-0.5 flex justify-between text-[10px] text-slate-400">
         <span>{min}cm</span>
         <span>{max}cm</span>
       </div>

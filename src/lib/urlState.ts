@@ -38,7 +38,7 @@ export function paramsToFilters(params: URLSearchParams): Filters {
   };
 }
 
-const SORT_KEYS: SortKey[] = ['default', 'size', 'price'];
+const SORT_KEYS: SortKey[] = ['default', 'width', 'depth', 'size', 'price'];
 
 function readSort(raw: string | null): SortKey {
   return SORT_KEYS.includes(raw as SortKey)
