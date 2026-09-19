@@ -28,20 +28,22 @@
 
 ## 데이터 규칙
 
-제품 데이터는 `src/data/products.json` 한 파일에 있다. 43건.
+제품 데이터는 `src/data/products.json` 한 파일에 있다. 59건.
 
 ```jsonc
 {
   "id": "dry-006",                    // 카테고리 접두어 3글자 + 일련번호
   "name": "미닉스 미니 건조기 PRO+ 3.5kg",
-  "category": "dryer",                // 8종 중 하나 (src/lib/types.ts)
+  "category": "dryer",                // 13종 중 하나 (src/lib/types.ts)
   "brand": "미닉스",
   "dimensions": { "width": 49, "depth": 41.8, "height": 63.1 },  // cm
   "capacity_or_spec": "최대 3.5kg / 표준 2.5kg · MNMD-120G",
   "imageUrl": "https://thumbnail10.coupangcdn.com/...",           // 빈 문자열이면 미표시
   "coupangUrl": "https://link.coupang.com/a/haKLrWKw0q",
   "tags": ["초소형", "설치불필요", "1인가구"],
-  "verified": true                    // 제조사 스펙으로 치수 확인 시 true
+  "verified": true,                   // 제조사 스펙으로 치수 확인 시 true
+  "price": 248310,                    // 선택. 없으면 카드에 미표시
+  "priceCheckedAt": "2026-09-19"      // 가격 확인일. 카드에 "YYYY.MM 기준" 으로 노출
 }
 ```
 
