@@ -37,6 +37,8 @@ export interface Product {
 
 export type TabId = CategoryId | 'all';
 
+export type SortKey = 'default' | 'size' | 'price';
+
 export interface Filters {
   /** 'all' 이면 전체 카테고리 */
   category: TabId;
@@ -44,6 +46,11 @@ export interface Filters {
   maxDepth: number;
   maxHeight: number;
   keyword: string;
+  sort: SortKey;
+  /** 로켓배송 제품만 보기 */
+  rocketOnly: boolean;
+  /** 문을 열 앞쪽 공간까지 포함해서 깊이를 계산할지 */
+  doorClearance: boolean;
 }
 
 export interface DimensionBounds {

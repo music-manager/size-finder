@@ -4,22 +4,29 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
 import { CATEGORY_LABEL } from '@/lib/categories';
-import { formatCm } from '@/lib/products';
+import {
+  DOOR_CLEARANCE_CM,
+  formatCm,
+  needsDoorClearance,
+} from '@/lib/products';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
 import type { Product } from '@/lib/types';
 
 interface Props {
   product: Product;
+  /** 도어 개폐 공간 포함 필터가 켜져 있는지 */
+  doorClearance?: boolean;
 }
 
 /** 태그에서 배지로 승격시킬 항목 — 커머스 관습대로 배송 조건을 가장 먼저 보여준다 */
 const ROCKET_TAG = '로켓배송';
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, doorClearance = false }: Props) {
   const { width, depth, height } = product.dimensions;
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(product.imageUrl) && !imageFailed;
 
+  const showDoorNote = doorClearance && needsDoorClearance(product);
   const isRocket = product.tags.includes(ROCKET_TAG);
   const restTags = product.tags.filter((t) => t !== ROCKET_TAG);
 
@@ -75,6 +82,11 @@ export default function ProductCard({ product }: Props) {
           <p className="text-center text-[9px] font-medium text-brand-400">
             가로 × 깊이 × 높이
           </p>
+          {showDoorNote && (
+            <p className="mt-1 rounded bg-white/70 py-0.5 text-center text-[9px] font-bold text-brand-700">
+              문 열면 깊이 {formatCm(depth + DOOR_CLEARANCE_CM)}cm 필요
+            </p>
+          )}
         </div>
 
         <p className="mt-1.5 line-clamp-1 text-[11px] text-slate-500">

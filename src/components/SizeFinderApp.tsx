@@ -8,12 +8,14 @@ import MobileFilterDrawer from './MobileFilterDrawer';
 import PresetChips from './PresetChips';
 import ProductGrid from './ProductGrid';
 import ShareButton from './ShareButton';
+import SortSelect from './SortSelect';
 import { CATEGORIES } from '@/lib/categories';
 import {
   DEFAULT_FILTERS,
   filterProducts,
   isFilterDirty,
   products,
+  sortProducts,
 } from '@/lib/products';
 import {
   applyRoomPreset,
@@ -22,7 +24,7 @@ import {
   type SpecPreset,
 } from '@/lib/presets';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
-import type { Filters, TabId } from '@/lib/types';
+import type { Filters, SortKey, TabId } from '@/lib/types';
 
 export default function SizeFinderApp() {
   const searchParams = useSearchParams();
@@ -59,7 +61,10 @@ export default function SizeFinderApp() {
     setFilters(applySpecPreset(preset));
   }, []);
 
-  const visible = useMemo(() => filterProducts(products, filters), [filters]);
+  const visible = useMemo(
+    () => sortProducts(filterProducts(products, filters), filters.sort),
+    [filters],
+  );
 
   /** 탭 뱃지 숫자: 카테고리를 제외한 나머지 조건만 적용한 개수 */
   const counts = useMemo(() => {
@@ -135,10 +140,20 @@ export default function SizeFinderApp() {
                 {filters.maxHeight} cm 이하
               </span>
             </p>
-            <ShareButton />
+            <div className="flex items-center gap-2">
+              <SortSelect
+                value={filters.sort}
+                onChange={(sort: SortKey) => patchFilters({ sort })}
+              />
+              <ShareButton />
+            </div>
           </div>
 
-          <ProductGrid products={visible} onReset={resetFilters} />
+          <ProductGrid
+            products={visible}
+            doorClearance={filters.doorClearance}
+            onReset={resetFilters}
+          />
         </section>
       </div>
 

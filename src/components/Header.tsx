@@ -1,4 +1,5 @@
 import { Ruler } from 'lucide-react';
+import MeasureGuide from './MeasureGuide';
 
 export default function Header() {
   return (
@@ -17,6 +18,9 @@ export default function Header() {
           <p className="truncate text-[11px] leading-tight text-slate-500 sm:text-xs">
             내 원룸 맞춤 가전·가구 실측 검색기
           </p>
+        </div>
+        <div className="ml-auto">
+          <MeasureGuide />
         </div>
       </div>
     </header>
