@@ -1,5 +1,13 @@
 import type { CategoryId, Product } from './types';
 
+/**
+ * 관리 툴이 브라우저에 보관하는 레코드.
+ * htmlTag 는 쿠팡 배너 코드 보관용이라 products.json 으로는 내보내지 않는다.
+ */
+export interface AdminRecord extends Product {
+  htmlTag?: string;
+}
+
 /** 쿠팡 파트너스에서 복사한 덩어리에서 링크·이미지·iframe 을 한 번에 추출한다 */
 export interface ParsedBlob {
   coupangUrl: string;
@@ -43,7 +51,7 @@ export const CATEGORY_PREFIX: Record<CategoryId, string> = {
 };
 
 /** 같은 카테고리에서 겹치지 않는 다음 id 를 만든다 */
-export function nextId(list: Product[], category: CategoryId): string {
+export function nextId(list: AdminRecord[], category: CategoryId): string {
   const prefix = CATEGORY_PREFIX[category];
   const used = list
     .filter((p) => p.id.startsWith(`${prefix}-`))
@@ -54,7 +62,7 @@ export function nextId(list: Product[], category: CategoryId): string {
 }
 
 /** products.json 스키마에 맞는 필드만 남긴다 (메모·HTML 태그는 제외) */
-export function toProductJson(list: Product[]): string {
+export function toProductJson(list: AdminRecord[]): string {
   const clean = list.map((p) => ({
     id: p.id,
     name: p.name,
@@ -66,8 +74,26 @@ export function toProductJson(list: Product[]): string {
     coupangUrl: p.coupangUrl,
     tags: p.tags,
     verified: p.verified,
+    ...(p.price ? { price: p.price, priceCheckedAt: p.priceCheckedAt } : {}),
   }));
   return JSON.stringify(clean, null, 2);
+}
+
+/** "139,000" / "139000원" 같은 입력을 숫자로 */
+export function toWon(raw: string): number | null {
+  const n = Number(String(raw).replace(/[^\d]/g, ''));
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function formatWon(won: number): string {
+  return won.toLocaleString('ko-KR');
+}
+
+/** 가격 확인일을 'YYYY.MM 기준' 으로 */
+export function formatCheckedAt(iso?: string): string {
+  if (!iso) return '';
+  const [y, m] = iso.split('-');
+  return y && m ? `${y}.${m} 기준` : '';
 }
 
 export function hasDeepLink(p: Product): boolean {

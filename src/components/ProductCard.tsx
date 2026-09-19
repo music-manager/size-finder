@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { BadgeCheck, ExternalLink } from 'lucide-react';
 import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
 import { formatCm } from '@/lib/products';
+import { formatCheckedAt, formatWon } from '@/lib/adminParse';
 import type { Product } from '@/lib/types';
 
 interface Props {
@@ -97,6 +98,18 @@ export default function ProductCard({ product }: Props) {
             </li>
           ))}
         </ul>
+
+        {product.price ? (
+          <p className="mt-auto flex items-baseline justify-center gap-1.5">
+            <span className="text-lg font-extrabold tabular-nums text-slate-900">
+              {formatWon(product.price)}
+              <span className="text-xs font-bold">원</span>
+            </span>
+            <span className="text-[10px] font-medium text-slate-400">
+              {formatCheckedAt(product.priceCheckedAt)}
+            </span>
+          </p>
+        ) : null}
 
         <a
           href={product.coupangUrl}

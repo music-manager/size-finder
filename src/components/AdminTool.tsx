@@ -21,8 +21,10 @@ import {
   parseCoupangBlob,
   toCm,
   toProductJson,
+  toWon,
+  type AdminRecord,
 } from '@/lib/adminParse';
-import type { CategoryId, Product } from '@/lib/types';
+import type { CategoryId } from '@/lib/types';
 
 const STORAGE_KEY = 'cmpick-admin-v1';
 
@@ -40,6 +42,7 @@ interface Draft {
   imageUrl: string;
   htmlTag: string;
   verified: boolean;
+  price: string;
 }
 
 const EMPTY: Draft = {
@@ -56,6 +59,7 @@ const EMPTY: Draft = {
   imageUrl: '',
   htmlTag: '',
   verified: false,
+  price: '',
 };
 
 const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c.id !== 'all') as {
@@ -63,7 +67,7 @@ const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c.id !== 'all') as {
   label: string;
 }[];
 
-function toDraft(p: Product): Draft {
+function toDraft(p: AdminRecord): Draft {
   return {
     id: p.id,
     name: p.name,
@@ -76,13 +80,14 @@ function toDraft(p: Product): Draft {
     tags: p.tags.join(', '),
     coupangUrl: p.coupangUrl,
     imageUrl: p.imageUrl,
-    htmlTag: '',
+    htmlTag: p.htmlTag ?? '',
     verified: p.verified,
+    price: p.price ? String(p.price) : '',
   };
 }
 
 export default function AdminTool() {
-  const [list, setList] = useState<Product[]>(seedProducts);
+  const [list, setList] = useState<AdminRecord[]>(seedProducts);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [blob, setBlob] = useState('');
   const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('todo');
@@ -94,7 +99,7 @@ export default function AdminTool() {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) setList(JSON.parse(raw) as Product[]);
+      if (raw) setList(JSON.parse(raw) as AdminRecord[]);
     } catch {
       /* 저장소 접근 불가 시 사이트 데이터 그대로 사용 */
     }
@@ -144,8 +149,9 @@ export default function AdminTool() {
     if (w === null || d === null || h === null)
       return window.alert('가로·깊이·높이를 모두 입력하세요. (mm 로 넣으면 cm 로 자동 환산)');
 
+    const won = toWon(draft.price);
     const id = draft.id.trim() || nextId(list, draft.category);
-    const item: Product = {
+    const item: AdminRecord = {
       id,
       name: draft.name.trim(),
       category: draft.category,
@@ -161,6 +167,10 @@ export default function AdminTool() {
         .map((t) => t.trim().replace(/^#/, ''))
         .filter(Boolean),
       verified: draft.verified,
+      ...(draft.htmlTag.trim() ? { htmlTag: draft.htmlTag.trim() } : {}),
+      ...(won
+        ? { price: won, priceCheckedAt: new Date().toISOString().slice(0, 10) }
+        : {}),
     };
 
     setList((prev) => {
@@ -336,6 +346,16 @@ export default function AdminTool() {
             />
           </label>
           <label className="text-xs font-semibold text-slate-600">
+            가격 (원) — 비우면 미표시
+            <input
+              className={field}
+              inputMode="numeric"
+              value={draft.price}
+              onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+              placeholder="139000"
+            />
+          </label>
+          <label className="text-xs font-semibold text-slate-600">
             태그 (쉼표로 구분)
             <input
               className={field}
@@ -451,8 +471,10 @@ export default function AdminTool() {
                 <th className="py-2 pr-2">ID</th>
                 <th className="py-2 pr-2">제품명</th>
                 <th className="py-2 pr-2">W×D×H</th>
+                <th className="py-2 pr-2">가격</th>
                 <th className="py-2 pr-2">링크</th>
                 <th className="py-2 pr-2">스펙</th>
+                <th className="py-2 pr-2">HTML</th>
                 <th className="py-2" />
               </tr>
             </thead>
@@ -469,6 +491,9 @@ export default function AdminTool() {
                   <td className="py-2 pr-2 tabular-nums text-slate-600">
                     {p.dimensions.width}×{p.dimensions.depth}×{p.dimensions.height}
                   </td>
+                  <td className="py-2 pr-2 tabular-nums text-slate-600">
+                    {p.price ? p.price.toLocaleString('ko-KR') : <span className="text-slate-300">—</span>}
+                  </td>
                   <td className="py-2 pr-2">
                     {hasDeepLink(p) ? (
                       <span className="font-bold text-brand-600">✓</span>
@@ -479,6 +504,20 @@ export default function AdminTool() {
                   <td className="py-2 pr-2">
                     {p.verified ? (
                       <span className="font-bold text-emerald-600">✓</span>
+                    ) : (
+                      <span className="text-slate-300">—</span>
+                    )}
+                  </td>
+                  <td className="py-2 pr-2">
+                    {p.htmlTag ? (
+                      <button
+                        type="button"
+                        onClick={() => copy(p.htmlTag as string, `html-${p.id}`)}
+                        className="rounded px-1.5 py-0.5 text-[11px] font-bold text-slate-500 hover:bg-slate-100"
+                        title="HTML 태그 복사"
+                      >
+                        {copied === `html-${p.id}` ? '복사됨' : '복사'}
+                      </button>
                     ) : (
                       <span className="text-slate-300">—</span>
                     )}
@@ -504,7 +543,7 @@ export default function AdminTool() {
               ))}
               {visible.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">
+                  <td colSpan={8} className="py-8 text-center text-slate-400">
                     해당하는 제품이 없습니다.
                   </td>
                 </tr>
@@ -519,6 +558,8 @@ export default function AdminTool() {
         <h2 className="mb-2 text-sm font-bold text-slate-900">4. 내보내기</h2>
         <p className="mb-3 text-xs text-slate-500">
           아래 JSON 을 그대로 전달하면 <code className="text-brand-600">products.json</code> 에 바로 반영됩니다.
+          HTML 태그는 사이트에서 쓰지 않으므로 JSON 에는 포함되지 않고, 이 브라우저에만 보관됩니다.
+          가격을 입력하면 저장한 날짜가 기준일로 함께 기록되어 카드에 “YYYY.MM 기준” 으로 표시됩니다.
         </p>
         <div className="flex flex-wrap gap-2">
           <button

@@ -29,6 +29,10 @@ export interface Product {
   tags: string[];
   /** 제조사/상세페이지 스펙으로 치수를 직접 확인했는지 여부 */
   verified: boolean;
+  /** 참고 가격(원). 쿠팡 가격은 수시로 바뀌므로 없으면 표시하지 않는다 */
+  price?: number;
+  /** 가격을 확인한 날짜 (YYYY-MM-DD). 가격과 함께 기준일을 노출해 오인을 막는다 */
+  priceCheckedAt?: string;
 }
 
 export type TabId = CategoryId | 'all';
