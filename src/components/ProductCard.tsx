@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
-import { CATEGORY_LABEL } from '@/lib/categories';
+import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
 import {
   DOOR_CLEARANCE_CM,
   formatCm,
@@ -32,6 +32,35 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg">
+      <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white">
+        {showImage ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
+            onError={() => setImageFailed(true)}
+            unoptimized
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-slate-100">
+            <span className="text-3xl opacity-40" aria-hidden="true">
+              {CATEGORY_EMOJI[product.category]}
+            </span>
+            <span className="text-[9px] font-medium text-slate-300">
+              사진 준비 중
+            </span>
+          </div>
+        )}
+        {isRocket && (
+          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-0.5 rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+            <Rocket className="h-2.5 w-2.5" aria-hidden="true" />
+            로켓배송
+          </span>
+        )}
+      </div>
+
       <div className="flex flex-1 flex-col p-3">
         {/* 브랜드 · 카테고리 */}
         <div className="flex items-center gap-1.5 text-[11px]">
@@ -41,24 +70,9 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
         </div>
 
         {/* 썸네일 + 제품명 */}
-        <div className="mt-1.5 flex items-start gap-2.5">
-          {showImage && (
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-white">
-              <Image
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                sizes="64px"
-                className="object-contain"
-                onError={() => setImageFailed(true)}
-                unoptimized
-              />
-            </div>
-          )}
-          <h3 className="line-clamp-3 text-[13px] font-medium leading-snug text-slate-800">
-            {product.name}
-          </h3>
-        </div>
+        <h3 className="mt-1 line-clamp-2 text-[13px] font-medium leading-snug text-slate-800">
+          {product.name}
+        </h3>
 
         {/* 실측 치수 — 이 사이트의 핵심 정보 */}
         <div className="mt-2.5 rounded-lg bg-brand-50 px-2 py-1.5">
@@ -95,12 +109,6 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
 
         {/* 배송 배지 + 태그 */}
         <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          {isRocket && (
-            <span className="inline-flex items-center gap-0.5 rounded bg-sky-50 px-1.5 py-0.5 text-[10px] font-bold text-sky-600">
-              <Rocket className="h-2.5 w-2.5" aria-hidden="true" />
-              로켓배송
-            </span>
-          )}
           {restTags.map((tag) => (
             <span key={tag} className="text-[10px] text-slate-400">
               #{tag}

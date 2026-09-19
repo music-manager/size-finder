@@ -73,7 +73,7 @@ export default function PresetChips({
           <Zap className="h-3.5 w-3.5" aria-hidden="true" />
           규격으로 바로 찾기
         </h2>
-        <div className="-mx-4 mt-2 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+        <div className="-mx-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:thin] sm:mx-0 sm:px-0">
           {SPEC_PRESETS.map((preset) => {
             const active = isSpecPresetActive(filters, preset);
             return (
@@ -83,7 +83,7 @@ export default function PresetChips({
                 onClick={() => onSpecPreset(preset)}
                 aria-pressed={active}
                 className={[
-                  'shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition',
+                  'shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold transition',
                   active
                     ? 'border-slate-900 bg-slate-900 text-white'
                     : 'border-slate-200 bg-white text-slate-600 hover:border-slate-900 hover:text-slate-900',
