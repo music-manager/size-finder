@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ExternalLink } from 'lucide-react';
+import { BadgeCheck, ExternalLink } from 'lucide-react';
 import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
 import { formatCm } from '@/lib/products';
 import type { Product } from '@/lib/types';
@@ -51,8 +51,17 @@ export default function ProductCard({ product }: Props) {
 
         {/* 실측 정보 — 사진이 없는 만큼 카드의 시각적 중심이 된다 */}
         <div className="rounded-xl border border-brand-100 bg-brand-50/60 p-2.5">
-          <p className="mb-2 text-center text-[10px] font-bold tracking-wide text-brand-500">
+          <p className="mb-2 flex items-center justify-center gap-1 text-center text-[10px] font-bold tracking-wide text-brand-500">
             실측 크기 (cm)
+            {product.verified && (
+              <span
+                className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700"
+                title="제조사 상세페이지 스펙으로 확인한 치수입니다"
+              >
+                <BadgeCheck className="h-2.5 w-2.5" aria-hidden="true" />
+                스펙 확인
+              </span>
+            )}
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {[

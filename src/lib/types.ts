@@ -27,6 +27,8 @@ export interface Product {
   imageUrl: string;
   coupangUrl: string;
   tags: string[];
+  /** 제조사/상세페이지 스펙으로 치수를 직접 확인했는지 여부 */
+  verified: boolean;
 }
 
 export type TabId = CategoryId | 'all';
