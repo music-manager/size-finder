@@ -54,7 +54,7 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
           </div>
         )}
         {isRocket && (
-          <span className="absolute left-1.5 top-1.5 inline-flex items-center gap-0.5 rounded bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
+          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-md bg-sky-500/95 px-1.5 py-[3px] text-[10px] font-bold leading-none text-white">
             <Rocket className="h-2.5 w-2.5" aria-hidden="true" />
             로켓배송
           </span>

@@ -73,11 +73,12 @@ export default function PresetChips({
           <Zap className="h-3.5 w-3.5" aria-hidden="true" />
           규격으로 바로 찾기
         </h2>
-        <div className="-mx-4 mt-2 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:thin] sm:mx-0 sm:px-0">
-          {SPEC_PRESETS.map((preset) => {
-            const active = isSpecPresetActive(filters, preset);
-            return (
-              <button
+        <div className="relative mt-2">
+          <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:thin] sm:mx-0 sm:px-0">
+            {SPEC_PRESETS.map((preset) => {
+              const active = isSpecPresetActive(filters, preset);
+              return (
+                <button
                 key={preset.id}
                 type="button"
                 onClick={() => onSpecPreset(preset)}
@@ -90,9 +91,12 @@ export default function PresetChips({
                 ].join(' ')}
               >
                 {preset.label}
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+          {/* 오른쪽에 칩이 더 있음을 알리는 페이드 */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-slate-50 to-transparent" />
         </div>
       </section>
     </div>
