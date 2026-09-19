@@ -12,10 +12,15 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'refrigerator', label: '소형냉장고', emoji: '🧊' },
   { id: 'washing_machine', label: '미니세탁기', emoji: '🫧' },
   { id: 'dryer', label: '미니건조기', emoji: '🌀' },
+  { id: 'dishwasher', label: '미니식기세척기', emoji: '🍽️' },
   { id: 'microwave', label: '전자레인지장', emoji: '🍚' },
   { id: 'desk', label: '책상/선반', emoji: '🪑' },
+  { id: 'folding_table', label: '접이식테이블', emoji: '🍱' },
+  { id: 'niche', label: '틈새수납/트롤리', emoji: '🧺' },
   { id: 'bed', label: '침대', emoji: '🛏️' },
+  { id: 'sofa', label: '소파/좌식', emoji: '🛋️' },
   { id: 'hanger', label: '행거/옷장', emoji: '👕' },
+  { id: 'shoe_rack', label: '신발장', emoji: '👟' },
 ];
 
 /**
@@ -32,6 +37,11 @@ export const CATEGORY_MATCH: Record<TabId, CategoryId[] | null> = {
   shelf: ['desk', 'shelf'],
   bed: ['bed'],
   hanger: ['hanger'],
+  niche: ['niche'],
+  sofa: ['sofa'],
+  dishwasher: ['dishwasher'],
+  folding_table: ['folding_table'],
+  shoe_rack: ['shoe_rack'],
 };
 
 /** 카드 뱃지에 쓰이는 단일 카테고리 라벨 */
@@ -44,6 +54,11 @@ export const CATEGORY_LABEL: Record<CategoryId, string> = {
   shelf: '선반/수납',
   bed: '침대',
   hanger: '행거/옷장',
+  niche: '틈새수납',
+  sofa: '소파/좌식',
+  dishwasher: '식기세척기',
+  folding_table: '접이식테이블',
+  shoe_rack: '신발장',
 };
 
 const TAB_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
@@ -62,4 +77,9 @@ export const CATEGORY_EMOJI: Record<CategoryId, string> = {
   shelf: '🗄️',
   bed: '🛏️',
   hanger: '👕',
+  niche: '🧺',
+  sofa: '🛋️',
+  dishwasher: '🍽️',
+  folding_table: '🍱',
+  shoe_rack: '👟',
 };

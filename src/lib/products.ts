@@ -92,6 +92,7 @@ export const DOOR_CATEGORIES: CategoryId[] = [
   'microwave',
   'dryer',
   'washing_machine',
+  'dishwasher',
 ];
 
 /** 도어 개폐에 필요한 앞쪽 여유 (cm). 업계 통용 최소치 기준 */

@@ -60,6 +60,10 @@ export const SPEC_PRESETS: SpecPreset[] = [
   { id: 'shelf-w30', label: '폭 30cm 이하 틈새선반', category: 'desk', maxWidth: 30 },
   { id: 'bed-w120', label: '폭 120cm 이하 싱글·SS 침대', category: 'bed', maxWidth: 120 },
   { id: 'hanger-w100', label: '가로 100cm 이하 행거', category: 'hanger', maxWidth: 100 },
+  { id: 'niche-w20', label: '폭 20cm 이하 틈새수납장', category: 'niche', maxWidth: 20 },
+  { id: 'dish-w45', label: '가로 45cm 이하 식기세척기', category: 'dishwasher', maxWidth: 45 },
+  { id: 'sofa-w80', label: '가로 80cm 이하 1인 소파', category: 'sofa', maxWidth: 80 },
+  { id: 'shoe-d20', label: '깊이 20cm 이하 슬림 신발장', category: 'shoe_rack', maxDepth: 20 },
 ];
 
 /** 평수 프리셋 적용: 카테고리·검색어는 유지하고 치수 3개만 덮어쓴다 */

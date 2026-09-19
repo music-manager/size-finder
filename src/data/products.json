@@ -782,5 +782,405 @@
       "옷장대용"
     ],
     "verified": false
+  },
+  {
+    "id": "nic-001",
+    "name": "코멧홈 초슬림 틈새 수납장 12cm 5단",
+    "category": "niche",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 12,
+      "depth": 47,
+      "height": 88
+    },
+    "capacity_or_spec": "5단 / 폭 120mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EC%B4%88%EC%8A%AC%EB%A6%BC%20%ED%8B%88%EC%83%88%20%EC%88%98%EB%82%A9%EC%9E%A5%2012cm%205%EB%8B%A8",
+    "tags": [
+      "초슬림",
+      "바퀴형",
+      "틈새수납"
+    ],
+    "verified": false
+  },
+  {
+    "id": "nic-002",
+    "name": "코멧홈 바퀴형 틈새장 17cm 6단",
+    "category": "niche",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 17,
+      "depth": 50,
+      "height": 130
+    },
+    "capacity_or_spec": "6단 / 폭 170mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EB%B0%94%ED%80%B4%ED%98%95%20%ED%8B%88%EC%83%88%EC%9E%A5%2017cm%206%EB%8B%A8",
+    "tags": [
+      "초슬림",
+      "바퀴형",
+      "대용량"
+    ],
+    "verified": false
+  },
+  {
+    "id": "nic-003",
+    "name": "리빙스토리 틈새 수납장 25cm 4단",
+    "category": "niche",
+    "brand": "리빙스토리",
+    "dimensions": {
+      "width": 25,
+      "depth": 40,
+      "height": 80
+    },
+    "capacity_or_spec": "4단 / 폭 250mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%A6%AC%EB%B9%99%EC%8A%A4%ED%86%A0%EB%A6%AC%20%ED%8B%88%EC%83%88%20%EC%88%98%EB%82%A9%EC%9E%A5%2025cm%204%EB%8B%A8",
+    "tags": [
+      "틈새수납",
+      "조립쉬움",
+      "가성비"
+    ],
+    "verified": false
+  },
+  {
+    "id": "nic-004",
+    "name": "삼바스 3단 이동식 트롤리 카트",
+    "category": "niche",
+    "brand": "삼바스",
+    "dimensions": {
+      "width": 40,
+      "depth": 30,
+      "height": 68
+    },
+    "capacity_or_spec": "3단 / 이동식",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EB%B0%94%EC%8A%A4%203%EB%8B%A8%20%EC%9D%B4%EB%8F%99%EC%8B%9D%20%ED%8A%B8%EB%A1%A4%EB%A6%AC%20%EC%B9%B4%ED%8A%B8",
+    "tags": [
+      "바퀴형",
+      "다용도",
+      "로켓배송"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sfa-001",
+    "name": "지누스 1인용 미니 소파",
+    "category": "sofa",
+    "brand": "지누스",
+    "dimensions": {
+      "width": 75,
+      "depth": 78,
+      "height": 80
+    },
+    "capacity_or_spec": "1인용",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%A7%80%EB%88%84%EC%8A%A4%201%EC%9D%B8%EC%9A%A9%20%EB%AF%B8%EB%8B%88%20%EC%86%8C%ED%8C%8C",
+    "tags": [
+      "1인용",
+      "원룸추천",
+      "조립쉬움"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sfa-002",
+    "name": "리바트 컴팩트 2인용 소파 1200",
+    "category": "sofa",
+    "brand": "리바트",
+    "dimensions": {
+      "width": 120,
+      "depth": 75,
+      "height": 78
+    },
+    "capacity_or_spec": "2인용 / 1200mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%A6%AC%EB%B0%94%ED%8A%B8%20%EC%BB%B4%ED%8C%A9%ED%8A%B8%202%EC%9D%B8%EC%9A%A9%20%EC%86%8C%ED%8C%8C%201200",
+    "tags": [
+      "2인용",
+      "컴팩트",
+      "패브릭"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sfa-003",
+    "name": "코멧홈 접이식 소파베드 SS",
+    "category": "sofa",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 110,
+      "depth": 85,
+      "height": 70
+    },
+    "capacity_or_spec": "SS / 펼침 시 길이 190cm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EC%A0%91%EC%9D%B4%EC%8B%9D%20%EC%86%8C%ED%8C%8C%EB%B2%A0%EB%93%9C%20SS",
+    "tags": [
+      "접이식",
+      "소파베드",
+      "공간절약"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sfa-004",
+    "name": "삼바스 등받이 좌식 의자",
+    "category": "sofa",
+    "brand": "삼바스",
+    "dimensions": {
+      "width": 55,
+      "depth": 60,
+      "height": 55
+    },
+    "capacity_or_spec": "좌식 / 5단 각도조절",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EB%B0%94%EC%8A%A4%20%EB%93%B1%EB%B0%9B%EC%9D%B4%20%EC%A2%8C%EC%8B%9D%20%EC%9D%98%EC%9E%90",
+    "tags": [
+      "좌식",
+      "초소형",
+      "가성비"
+    ],
+    "verified": false
+  },
+  {
+    "id": "dsh-001",
+    "name": "미디어 카운터탑 식기세척기 3인용",
+    "category": "dishwasher",
+    "brand": "미디어",
+    "dimensions": {
+      "width": 42,
+      "depth": 43.5,
+      "height": 43.5
+    },
+    "capacity_or_spec": "3인용 / 무설치",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%AF%B8%EB%94%94%EC%96%B4%20%EC%B9%B4%EC%9A%B4%ED%84%B0%ED%83%91%20%EC%8B%9D%EA%B8%B0%EC%84%B8%EC%B2%99%EA%B8%B0%203%EC%9D%B8%EC%9A%A9",
+    "tags": [
+      "무설치",
+      "상판형",
+      "초소형"
+    ],
+    "verified": false
+  },
+  {
+    "id": "dsh-002",
+    "name": "파세코 카운터탑 식기세척기 4인용",
+    "category": "dishwasher",
+    "brand": "파세코",
+    "dimensions": {
+      "width": 42.5,
+      "depth": 44,
+      "height": 44.5
+    },
+    "capacity_or_spec": "4인용 / 무설치",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%ED%8C%8C%EC%84%B8%EC%BD%94%20%EC%B9%B4%EC%9A%B4%ED%84%B0%ED%83%91%20%EC%8B%9D%EA%B8%B0%EC%84%B8%EC%B2%99%EA%B8%B0%204%EC%9D%B8%EC%9A%A9",
+    "tags": [
+      "무설치",
+      "상판형",
+      "로켓배송"
+    ],
+    "verified": false
+  },
+  {
+    "id": "dsh-003",
+    "name": "쿠쿠 무설치 식기세척기 6인용",
+    "category": "dishwasher",
+    "brand": "쿠쿠",
+    "dimensions": {
+      "width": 55,
+      "depth": 50,
+      "height": 44
+    },
+    "capacity_or_spec": "6인용 / 무설치",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BF%A0%EC%BF%A0%20%EB%AC%B4%EC%84%A4%EC%B9%98%20%EC%8B%9D%EA%B8%B0%EC%84%B8%EC%B2%99%EA%B8%B0%206%EC%9D%B8%EC%9A%A9",
+    "tags": [
+      "무설치",
+      "대용량",
+      "살균건조"
+    ],
+    "verified": false
+  },
+  {
+    "id": "dsh-004",
+    "name": "SK매직 터치온 식기세척기 6인용",
+    "category": "dishwasher",
+    "brand": "SK매직",
+    "dimensions": {
+      "width": 55,
+      "depth": 50.5,
+      "height": 43.8
+    },
+    "capacity_or_spec": "6인용 / 무설치",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=SK%EB%A7%A4%EC%A7%81%20%ED%84%B0%EC%B9%98%EC%98%A8%20%EC%8B%9D%EA%B8%B0%EC%84%B8%EC%B2%99%EA%B8%B0%206%EC%9D%B8%EC%9A%A9",
+    "tags": [
+      "무설치",
+      "대용량",
+      "저소음"
+    ],
+    "verified": false
+  },
+  {
+    "id": "ftb-001",
+    "name": "코멧홈 접이식 좌식 밥상 600",
+    "category": "folding_table",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 60,
+      "depth": 40,
+      "height": 32
+    },
+    "capacity_or_spec": "600mm / 접이식",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EC%A0%91%EC%9D%B4%EC%8B%9D%20%EC%A2%8C%EC%8B%9D%20%EB%B0%A5%EC%83%81%20600",
+    "tags": [
+      "접이식",
+      "좌식",
+      "초소형"
+    ],
+    "verified": false
+  },
+  {
+    "id": "ftb-002",
+    "name": "삼바스 접이식 테이블 800",
+    "category": "folding_table",
+    "brand": "삼바스",
+    "dimensions": {
+      "width": 80,
+      "depth": 50,
+      "height": 70
+    },
+    "capacity_or_spec": "800mm / 접이식",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EB%B0%94%EC%8A%A4%20%EC%A0%91%EC%9D%B4%EC%8B%9D%20%ED%85%8C%EC%9D%B4%EB%B8%94%20800",
+    "tags": [
+      "접이식",
+      "다용도",
+      "로켓배송"
+    ],
+    "verified": false
+  },
+  {
+    "id": "ftb-003",
+    "name": "리바트 폴딩 사이드 테이블 500",
+    "category": "folding_table",
+    "brand": "리바트",
+    "dimensions": {
+      "width": 50,
+      "depth": 35,
+      "height": 55
+    },
+    "capacity_or_spec": "500mm / 접이식",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EB%A6%AC%EB%B0%94%ED%8A%B8%20%ED%8F%B4%EB%94%A9%20%EC%82%AC%EC%9D%B4%EB%93%9C%20%ED%85%8C%EC%9D%B4%EB%B8%94%20500",
+    "tags": [
+      "접이식",
+      "침대옆",
+      "초슬림"
+    ],
+    "verified": false
+  },
+  {
+    "id": "ftb-004",
+    "name": "코멧홈 베드 트레이 테이블 600",
+    "category": "folding_table",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 60,
+      "depth": 33,
+      "height": 27
+    },
+    "capacity_or_spec": "600mm / 침대 트레이",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EB%B2%A0%EB%93%9C%20%ED%8A%B8%EB%A0%88%EC%9D%B4%20%ED%85%8C%EC%9D%B4%EB%B8%94%20600",
+    "tags": [
+      "침대옆",
+      "초경량",
+      "접이식"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sho-001",
+    "name": "코멧홈 초슬림 플랩 신발장 3단",
+    "category": "shoe_rack",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 60,
+      "depth": 17,
+      "height": 100
+    },
+    "capacity_or_spec": "3단 / 플랩도어",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%EC%B4%88%EC%8A%AC%EB%A6%BC%20%ED%94%8C%EB%9E%A9%20%EC%8B%A0%EB%B0%9C%EC%9E%A5%203%EB%8B%A8",
+    "tags": [
+      "초슬림",
+      "플랩도어",
+      "현관"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sho-002",
+    "name": "코멧홈 현관 슬림 선반 15cm",
+    "category": "shoe_rack",
+    "brand": "코멧홈",
+    "dimensions": {
+      "width": 45,
+      "depth": 15,
+      "height": 90
+    },
+    "capacity_or_spec": "4단 / 깊이 150mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%BD%94%EB%A9%A7%ED%99%88%20%ED%98%84%EA%B4%80%20%EC%8A%AC%EB%A6%BC%20%EC%84%A0%EB%B0%98%2015cm",
+    "tags": [
+      "초슬림",
+      "현관",
+      "조립쉬움"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sho-003",
+    "name": "삼바스 1열 신발 정리대",
+    "category": "shoe_rack",
+    "brand": "삼바스",
+    "dimensions": {
+      "width": 60,
+      "depth": 20,
+      "height": 80
+    },
+    "capacity_or_spec": "4단 / 1열",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%EC%82%BC%EB%B0%94%EC%8A%A4%201%EC%97%B4%20%EC%8B%A0%EB%B0%9C%20%EC%A0%95%EB%A6%AC%EB%8C%80",
+    "tags": [
+      "초슬림",
+      "가성비",
+      "로켓배송"
+    ],
+    "verified": false
+  },
+  {
+    "id": "sho-004",
+    "name": "한샘 슬림 신발장 4단 800",
+    "category": "shoe_rack",
+    "brand": "한샘",
+    "dimensions": {
+      "width": 80,
+      "depth": 19,
+      "height": 120
+    },
+    "capacity_or_spec": "4단 / 800mm",
+    "imageUrl": "",
+    "coupangUrl": "https://www.coupang.com/np/search?q=%ED%95%9C%EC%83%98%20%EC%8A%AC%EB%A6%BC%20%EC%8B%A0%EB%B0%9C%EC%9E%A5%204%EB%8B%A8%20800",
+    "tags": [
+      "초슬림",
+      "대용량",
+      "플랩도어"
+    ],
+    "verified": false
   }
 ]

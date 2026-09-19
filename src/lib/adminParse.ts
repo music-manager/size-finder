@@ -48,6 +48,11 @@ export const CATEGORY_PREFIX: Record<CategoryId, string> = {
   shelf: 'shf',
   bed: 'bed',
   hanger: 'hng',
+  niche: 'nic',
+  sofa: 'sfa',
+  dishwasher: 'dsh',
+  folding_table: 'ftb',
+  shoe_rack: 'sho',
 };
 
 /** 같은 카테고리에서 겹치지 않는 다음 id 를 만든다 */

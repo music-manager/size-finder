@@ -6,7 +6,12 @@ export type CategoryId =
   | 'desk'
   | 'shelf'
   | 'bed'
-  | 'hanger';
+  | 'hanger'
+  | 'niche'
+  | 'sofa'
+  | 'dishwasher'
+  | 'folding_table'
+  | 'shoe_rack';
 
 export interface Dimensions {
   /** 가로 (cm) */
