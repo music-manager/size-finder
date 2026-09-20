@@ -7,10 +7,10 @@
  *
  * 환경변수
  *   COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY  (필수)
- *   SYNC_LIMIT      키워드당 조회 수        기본 20
- *   SYNC_MAX_RANK   채택할 검색 순위 상한   기본 20
+ *   SYNC_LIMIT      키워드당 조회 수        기본 10 (쿠팡 검색 API 최대 10)
+ *   SYNC_MAX_RANK   채택할 검색 순위 상한   기본 10
  *   SYNC_ROCKET_ONLY 로켓배송만            기본 true
- *   SYNC_DELAY_MS   호출 간 간격            기본 400
+ *   SYNC_DELAY_MS   호출 간 간격            기본 1300
  *
  * API 가 치수와 리뷰 수를 주지 않으므로,
  *  - 상품명에서 치수를 뽑아낸 것만 products.json 에 넣고
@@ -50,10 +50,23 @@ const CATEGORY_PREFIX = {
 
 const dryRun = process.argv.includes('--dry-run');
 const num = (name, fallback) => Number(process.env[name] ?? fallback);
-const LIMIT = num('SYNC_LIMIT', 20);
-const MAX_RANK = num('SYNC_MAX_RANK', 20);
-const DELAY_MS = num('SYNC_DELAY_MS', 400);
+const LIMIT = num('SYNC_LIMIT', 10);
+const MAX_RANK = num('SYNC_MAX_RANK', 10);
+const DELAY_MS = num('SYNC_DELAY_MS', 1300);
 const ROCKET_ONLY = (process.env.SYNC_ROCKET_ONLY ?? 'true') !== 'false';
+
+if (!Number.isInteger(LIMIT) || LIMIT < 1 || LIMIT > 10) {
+  console.error(`SYNC_LIMIT은 1~10만 허용됩니다. 현재 값: ${LIMIT}`);
+  process.exit(1);
+}
+if (!Number.isInteger(MAX_RANK) || MAX_RANK < 1 || MAX_RANK > 10) {
+  console.error(`SYNC_MAX_RANK는 1~10만 허용됩니다. 현재 값: ${MAX_RANK}`);
+  process.exit(1);
+}
+if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) {
+  console.error(`SYNC_DELAY_MS는 0 이상의 숫자여야 합니다. 현재 값: ${DELAY_MS}`);
+  process.exit(1);
+}
 
 const accessKey = process.env.COUPANG_ACCESS_KEY;
 const secretKey = process.env.COUPANG_SECRET_KEY;
@@ -203,3 +216,9 @@ if (stats.실패키워드.length) {
   stats.실패키워드.slice(0, 5).forEach((k) => console.log(`    - ${k}`));
 }
 console.log(`전체 ${products.length}종 / 대기열 ${pending.length}건${dryRun ? ' (dry-run, 파일 미기록)' : ''}`);
+
+// API 전체 실패나 설정 오류가 '성공'으로 보이지 않게 한다.
+if (stats.조회 === 0) {
+  console.error('수집 실패: 실제 쿠팡 상품 조회가 0건입니다. 실패 키워드 로그를 확인하세요.');
+  process.exitCode = 1;
+}
