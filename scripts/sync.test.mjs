@@ -15,6 +15,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 
+// coupangApi.mjs 보다 먼저 평가되어야 실제 쿠팡 호스트가 굳는 것을 막는다
+import './testEnv.mjs';
 import {
   CoupangRateLimitError,
   parseHourlyRateLimit,
@@ -80,6 +82,11 @@ before(async () => {
       res.end('{}');
       return;
     }
+    if (mode === 'empty-200') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ rCode: '0', data: { productData: [] } }));
+      return;
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(
@@ -139,9 +146,9 @@ describe('키워드 cursor 순환', () => {
     assert.equal(normalizeCursor(64, 68), 64);
   });
 
-  it('중단 지점까지만 cursor 를 민다', () => {
-    // 8개 배정, 3개만 호출을 끝낸 채 중단 → 다음은 3번부터
-    assert.equal(advanceCursor(0, 3, 68), 3);
+  it('정상 응답을 받은 만큼만 cursor 를 민다', () => {
+    // 8개 배정, 2개 성공 뒤 3번째에서 실패 → 다음은 실패한 2번부터 재시도
+    assert.equal(advanceCursor(0, 2, 68), 2);
     assert.equal(advanceCursor(64, 4, 68), 0);
   });
 });
@@ -294,7 +301,7 @@ describe('sync-coupang.mjs 전체 실행', () => {
   });
 
   it('시간당 한도 403 을 만나면 그 즉시 멈추고 더 호출하지 않는다', async () => {
-    // 0,1번은 정상. 2번째 호출에서 한도 초과.
+    // 0,1번은 정상. 3번째 호출에서 한도 초과.
     resetMock((i) => (i >= 2 ? 'rate-limit-403' : 'ok'));
     const dir = makeDataDir();
     const { code, stdout, stderr } = await runSync(dir);
@@ -302,8 +309,74 @@ describe('sync-coupang.mjs 전체 실행', () => {
     assert.equal(requests.length, 3, '한도 초과 응답을 받은 뒤 추가 호출이 없어야 한다');
     assert.equal(code, 1, '한도 초과 실행은 실패로 끝나야 한다');
     assert.match(stderr, /시간당 호출 한도 초과/);
-    assert.equal(readCursor(dir), 2, '호출을 끝낸 2개만큼만 cursor 를 민다');
-    assert.match(stdout, /호출 완료 2개/);
+    assert.equal(readCursor(dir), 2, '정상 응답 2개만큼만 cursor 를 민다');
+    assert.match(stdout, /정상 응답 2개/);
+  });
+
+  it('HTTP 500 이 3번째 요청에서 나면 그 즉시 멈춘다', async () => {
+    resetMock((i) => (i >= 2 ? 'error-500' : 'ok'));
+    const dir = makeDataDir();
+    const { code, stdout, stderr } = await runSync(dir);
+
+    assert.equal(requests.length, 3, '500 이후 추가 호출이 없어야 한다');
+    assert.equal(code, 1);
+    assert.equal(readCursor(dir), 2, '실패한 2번 키워드부터 다시 시도해야 한다');
+    assert.match(stderr, /수집 중단\(API 오류\)/);
+    assert.match(stdout, /정상 응답 2개/);
+  });
+
+  it('인증 403(시간당 표현 없음)에서도 즉시 중단한다', async () => {
+    resetMock((i) => (i >= 1 ? 'plain-403' : 'ok'));
+    const dir = makeDataDir();
+    const { code, stderr } = await runSync(dir);
+
+    assert.equal(requests.length, 2, '인증 실패 뒤 추가 호출이 없어야 한다');
+    assert.equal(code, 1);
+    assert.equal(readCursor(dir), 1);
+    assert.match(stderr, /수집 중단\(API 오류\)/);
+  });
+
+  it('200 + productData 빈 배열 8회는 전체 실패가 아니다', async () => {
+    resetMock(() => 'empty-200');
+    const dir = makeDataDir();
+    const { code, stdout } = await runSync(dir);
+
+    assert.equal(code, 0, '빈 결과는 실패가 아니다');
+    assert.equal(requests.length, 8);
+    assert.match(stdout, /정상 응답 8개 \/ 조회 0건/);
+    assert.equal(readCursor(dir), 8, '빈 결과여도 cursor 는 8로 전진한다');
+  });
+
+  it('한 번도 정상 응답을 못 받으면 전체 실패로 본다', async () => {
+    resetMock(() => 'error-500');
+    const dir = makeDataDir();
+    const { code, stderr } = await runSync(dir);
+
+    assert.equal(code, 1);
+    assert.equal(requests.length, 1, '첫 실패에서 바로 멈춘다');
+    assert.equal(readCursor(dir), 0, '성공이 없으면 cursor 는 그대로다');
+    assert.match(stderr, /수집 중단\(API 오류\)/);
+  });
+
+  it('dry-run 설정(SYNC_BATCH_SIZE=1)은 키워드 1개만 호출한다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const res = await execFileAsync('node', [SYNC_SCRIPT, '--dry-run'], {
+      env: {
+        ...process.env,
+        COUPANG_API_HOST: baseUrl,
+        COUPANG_ACCESS_KEY: 'test-access',
+        COUPANG_SECRET_KEY: 'test-secret',
+        SYNC_DATA_DIR: dir,
+        SYNC_DELAY_MS: '0',
+        // 워크플로가 dry_run=true 일 때 넘기는 값
+        SYNC_BATCH_SIZE: '1',
+      },
+    });
+
+    assert.equal(requests.length, 1, 'dry-run 검증은 1회만 써야 한다');
+    assert.match(res.stdout, /1~1번 1개 배정/);
+    assert.equal(readCursor(dir), 0, 'dry-run 은 cursor 를 저장하지 않는다');
   });
 
   it('SYNC_MAX_RANK 상한이 없어 999 도 그대로 동작한다', async () => {
@@ -356,5 +429,39 @@ describe('sync-coupang.mjs 전체 실행', () => {
     });
     assert.equal(readCursor(dir2), 0, 'dry-run 은 상태를 바꾸지 않는다');
     assert.match(res.stdout, /dry-run 이라 저장하지 않음/);
+  });
+});
+
+// ── 5. 안전장치 ──────────────────────────────────────────────────────────
+describe('실제 쿠팡 API 차단', () => {
+  it('테스트 중 API 호스트는 언제나 로컬이다', () => {
+    assert.match(process.env.COUPANG_API_HOST, /^http:\/\/127\.0\.0\.1:/);
+    assert.ok(
+      !process.env.COUPANG_API_HOST.includes('coupang.com'),
+      '테스트가 실제 쿠팡 서버를 가리키면 안 된다',
+    );
+  });
+});
+
+// ── 6. 워크플로 설정 ──────────────────────────────────────────────────────
+describe('워크플로 설정', () => {
+  const yml = readFileSync(new URL('../.github/workflows/sync-coupang.yml', import.meta.url), 'utf8');
+
+  it('자동 schedule 이 꺼져 있다', () => {
+    const active = yml
+      .split('\n')
+      .filter((line) => !line.trim().startsWith('#'))
+      .join('\n');
+    assert.ok(!/^\s*schedule:/m.test(active), '활성화된 schedule 트리거가 있으면 안 된다');
+    assert.ok(!/^\s*-\s*cron:/m.test(active), '활성화된 cron 이 있으면 안 된다');
+    assert.match(active, /^\s*workflow_dispatch:/m, 'workflow_dispatch 는 남아 있어야 한다');
+  });
+
+  it('dry-run 은 1회, 실제 수집은 8회로 배치를 나눈다', () => {
+    assert.match(yml, /SYNC_BATCH_SIZE:\s*\$\{\{\s*inputs\.dry_run\s*&&\s*'1'\s*\|\|\s*'8'\s*\}\}/);
+  });
+
+  it('cursor 파일을 함께 커밋한다', () => {
+    assert.match(yml, /git add .*src\/data\/sync-state\.json/);
   });
 });

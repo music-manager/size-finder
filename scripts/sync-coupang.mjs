@@ -148,26 +148,25 @@ const state = readState(STATE_PATH);
 const cursor = normalizeCursor(state.keywordCursor, ALL_KEYWORDS.length);
 const batch = takeBatch(ALL_KEYWORDS, cursor, BATCH_SIZE);
 
-// 호출을 끝낸 키워드 수. cursor 를 이만큼만 밀어야 중단 지점부터 다시 시작한다.
-let processed = 0;
-let rateLimited = null;
+// 정상 응답을 받은 키워드 수. cursor 는 이만큼만 민다.
+// 실패한 키워드는 포함하지 않으므로 다음 실행이 그 키워드부터 다시 시도한다.
+let successfulRequests = 0;
+// 중단시킨 오류. 한도 초과든 일반 오류든 남은 키워드는 호출하지 않는다.
+let abortedBy = null;
 
 for (const { keyword, category } of batch) {
   let items = [];
   try {
     items = await searchProducts(keyword, { limit: LIMIT, accessKey, secretKey });
   } catch (error) {
-    // 시간당 한도를 넘었다면 남은 키워드는 건드리지 않고 즉시 멈춘다
-    if (error?.isRateLimit) {
-      rateLimited = error;
-      break;
-    }
+    // 한도 초과든 500/인증 오류든, 실패한 상태로 남은 키워드까지 계속 부르면
+    // 시간당 호출 예산만 태운다. 첫 실패에서 배치를 통째로 멈춘다.
+    abortedBy = error;
     stats.실패키워드.push(`${keyword} (${error.message})`);
-    processed += 1;
-    await sleep(DELAY_MS);
-    continue;
+    break;
   }
-  processed += 1;
+  // 200 응답이면 productData 가 비어 있어도 성공한 호출로 센다
+  successfulRequests += 1;
   stats.조회 += items.length;
 
   for (const item of items) {
@@ -238,8 +237,9 @@ for (const { keyword, category } of batch) {
   await sleep(DELAY_MS);
 }
 
-// 중단됐더라도 호출을 끝낸 만큼은 cursor 를 밀어 다음 실행이 이어받게 한다
-const nextCursor = advanceCursor(cursor, processed, ALL_KEYWORDS.length);
+// 정상 응답을 받은 만큼만 cursor 를 민다.
+// 실패한 키워드는 다음 실행이 그 자리에서 다시 시도한다.
+const nextCursor = advanceCursor(cursor, successfulRequests, ALL_KEYWORDS.length);
 
 // undefined 필드는 JSON 에 남기지 않는다
 const compact = (list) =>
@@ -251,7 +251,9 @@ if (!dryRun) {
   writeState(STATE_PATH, {
     keywordCursor: nextCursor,
     lastRunAt: new Date().toISOString(),
-    lastResult: rateLimited ? 'rate_limited' : 'ok',
+    lastResult: abortedBy
+      ? (abortedBy.isRateLimit ? 'rate_limited' : 'aborted')
+      : 'ok',
   });
 }
 
@@ -259,7 +261,7 @@ const batchEnd = cursor + batch.length;
 console.log('── 쿠팡 수집 결과 ──');
 console.log(
   `키워드 ${ALL_KEYWORDS.length}개 중 ${cursor + 1}~${batchEnd}번 ${batch.length}개 배정` +
-    ` / 호출 완료 ${processed}개 / 조회 ${stats.조회}건`,
+    ` / 정상 응답 ${successfulRequests}개 / 조회 ${stats.조회}건`,
 );
 console.log(`  로켓배송 아님 제외 ${stats.로켓제외}`);
 console.log(`  ${MAX_RANK}위 밖 제외   ${stats.순위제외}`);
@@ -278,13 +280,14 @@ console.log(
     `${dryRun ? ' — dry-run 이라 저장하지 않음' : ''}`,
 );
 
-if (rateLimited) {
-  // 한도 초과는 재시도해도 소용이 없다. 다음 시간대 실행이 cursor 부터 이어받는다.
-  console.error(`수집 중단: ${rateLimited.message}`);
-  console.error(`  남은 키워드는 호출하지 않았습니다. 다음 실행이 ${nextCursor}번부터 이어갑니다.`);
+if (abortedBy) {
+  const reason = abortedBy.isRateLimit ? '시간당 호출 한도 초과' : 'API 오류';
+  console.error(`수집 중단(${reason}): ${abortedBy.message}`);
+  console.error(`  남은 키워드는 호출하지 않았습니다. 다음 실행이 ${nextCursor}번부터 다시 시도합니다.`);
   process.exitCode = 1;
-} else if (stats.조회 === 0) {
-  // API 전체 실패나 설정 오류가 '성공'으로 보이지 않게 한다.
-  console.error('수집 실패: 실제 쿠팡 상품 조회가 0건입니다. 실패 키워드 로그를 확인하세요.');
+} else if (successfulRequests === 0) {
+  // 200 응답인데 productData 가 비어 있는 것은 정상이므로 조회 건수로 판정하지 않는다.
+  // 한 번도 정상 응답을 못 받은 경우만 전체 실패로 본다.
+  console.error('수집 실패: 정상 응답을 받은 요청이 0건입니다. 실패 키워드 로그를 확인하세요.');
   process.exitCode = 1;
 }

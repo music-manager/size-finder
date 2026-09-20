@@ -63,8 +63,9 @@ jobs:
           SYNC_MAX_RANK: '10'
           SYNC_ROCKET_ONLY: 'true'
           SYNC_DELAY_MS: '1300'
-          # 시간당 10회 한도에서 2회를 여유로 남긴다
-          SYNC_BATCH_SIZE: '8'
+          # 시간당 10회 한도를 dry-run 과 실제 수집이 같이 써야 한다.
+          # 검증용 dry-run 은 1회만 쓰고, 실제 수집이 8회를 쓴다 (합계 최대 9회).
+          SYNC_BATCH_SIZE: ${{ inputs.dry_run && '1' || '8' }}
         run: |
           set -o pipefail
           # 여기서 바로 죽으면 cursor 가 커밋되지 않아 다음 실행이 같은 키워드를
