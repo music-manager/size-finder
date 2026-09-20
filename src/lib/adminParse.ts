@@ -47,12 +47,13 @@ export function parseCoupangBlob(text: string): ParsedBlob {
 
   const htmlTag = text.match(/<iframe[\s\S]*?<\/iframe>/i)?.[0] ?? '';
 
-  let imageUrl =
+  // 쿠팡이 준 주소를 그대로 저장한다. 해상도 경로를 임의로 바꾸면
+  // 그 크기가 없는 상품에서 이미지가 통째로 깨진다.
+  // 더 큰 썸네일은 카드에서 시도하고, 실패하면 이 원본으로 되돌아간다.
+  const imageUrl =
     text.match(
       /https:\/\/[\w.-]*coupangcdn\.com\/[^\s"'<>)]+\.(?:jpg|jpeg|png|webp)/i,
     )?.[0] ?? '';
-  // 썸네일 해상도를 카드 표시에 맞게 올린다 (212x212ex -> 492x492ex)
-  if (imageUrl) imageUrl = imageUrl.replace(/\/\d+x\d+ex\//, '/492x492ex/');
 
   // URL 과 HTML 태그를 걷어낸 나머지 텍스트에서 가격과 제품명을 찾는다
   const rest = text

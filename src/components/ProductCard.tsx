@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
 import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
@@ -23,14 +23,17 @@ const ROCKET_TAG = '로켓배송';
 
 export default function ProductCard({ product, doorClearance = false }: Props) {
   const { width, depth, height } = product.dimensions;
-  // 쿠팡 썸네일은 해상도를 올린 경로(492x492ex)가 없는 상품이 있어,
-  // 실패하면 원본 해상도로 한 번 더 시도한 뒤에야 플레이스홀더로 넘어간다.
-  const [imageStep, setImageStep] = useState<0 | 1 | 2>(0);
-  const imageSrc =
-    imageStep === 0
-      ? product.imageUrl
-      : product.imageUrl.replace(/\/\d+x\d+ex\//, '/212x212ex/');
-  const showImage = Boolean(product.imageUrl) && imageStep < 2;
+  // 큰 썸네일을 먼저 시도하고, 그 해상도가 없는 상품이면 쿠팡이 준 원본으로
+  // 되돌아간다. 둘 다 실패해야 플레이스홀더로 넘어간다.
+  const sources = useMemo(() => {
+    if (!product.imageUrl) return [];
+    const upgraded = product.imageUrl.replace(/\/\d+x\d+ex\//, '/492x492ex/');
+    return upgraded === product.imageUrl ? [product.imageUrl] : [upgraded, product.imageUrl];
+  }, [product.imageUrl]);
+
+  const [sourceIndex, setSourceIndex] = useState(0);
+  const imageSrc = sources[sourceIndex];
+  const showImage = Boolean(imageSrc);
 
   const showDoorNote = doorClearance && needsDoorClearance(product);
   const isRocket = product.tags.includes(ROCKET_TAG);
@@ -47,7 +50,7 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
-            onError={() => setImageStep((step) => (step === 0 ? 1 : 2))}
+            onError={() => setSourceIndex((i) => i + 1)}
             unoptimized
           />
         ) : (
