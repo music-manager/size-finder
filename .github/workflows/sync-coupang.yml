@@ -54,10 +54,12 @@ jobs:
         env:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
-          SYNC_LIMIT: '20'
-          SYNC_MAX_RANK: '20'
+          SYNC_LIMIT: '10'
+          SYNC_MAX_RANK: '10'
           SYNC_ROCKET_ONLY: 'true'
+          SYNC_DELAY_MS: '1300'
         run: |
+          set -o pipefail
           node scripts/sync-coupang.mjs ${{ inputs.dry_run && '--dry-run' || '' }} | tee sync-report.txt
 
       - name: 데이터 검증
