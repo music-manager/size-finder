@@ -8,11 +8,37 @@ export interface AdminRecord extends Product {
   htmlTag?: string;
 }
 
-/** 쿠팡 파트너스에서 복사한 덩어리에서 링크·이미지·iframe 을 한 번에 추출한다 */
+/** 쿠팡 파트너스에서 복사한 덩어리에서 한 번에 뽑아내는 값들 */
 export interface ParsedBlob {
   coupangUrl: string;
   imageUrl: string;
   htmlTag: string;
+  name: string;
+  brand: string;
+  price: string;
+  category: CategoryId | '';
+}
+
+/** 제품명에 들어 있는 단어로 카테고리를 추측한다. 앞에 있는 규칙이 우선. */
+const CATEGORY_HINTS: [RegExp, CategoryId][] = [
+  [/식기세척기|식세기/, 'dishwasher'],
+  [/건조기/, 'dryer'],
+  [/세탁기/, 'washing_machine'],
+  [/냉장고|김치냉장|냉동고/, 'refrigerator'],
+  [/전자레인지|전자렌지|레인지장/, 'microwave'],
+  [/신발장|슈즈랙/, 'shoe_rack'],
+  [/틈새|트롤리|카트/, 'niche'],
+  [/소파|좌식|빈백/, 'sofa'],
+  [/침대|매트리스|프레임/, 'bed'],
+  [/행거|옷장|드레스룸/, 'hanger'],
+  [/밥상|좌탁|접이식\s*테이블|폴딩\s*테이블|트레이/, 'folding_table'],
+  [/책상|데스크/, 'desk'],
+  [/선반|책장|수납장|협탁/, 'shelf'],
+];
+
+export function guessCategory(name: string): CategoryId | '' {
+  const hit = CATEGORY_HINTS.find(([re]) => re.test(name));
+  return hit ? hit[1] : '';
 }
 
 export function parseCoupangBlob(text: string): ParsedBlob {
@@ -28,7 +54,35 @@ export function parseCoupangBlob(text: string): ParsedBlob {
   // 썸네일 해상도를 카드 표시에 맞게 올린다 (212x212ex -> 492x492ex)
   if (imageUrl) imageUrl = imageUrl.replace(/\/\d+x\d+ex\//, '/492x492ex/');
 
-  return { coupangUrl, imageUrl, htmlTag };
+  // URL 과 HTML 태그를 걷어낸 나머지 텍스트에서 가격과 제품명을 찾는다
+  const rest = text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/https?:\/\/\S+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // "201,270원" 처럼 천단위 구분이 있거나 네 자리 이상인 숫자만 가격으로 본다.
+  // (제품명의 "2.5kg", "3단" 같은 숫자를 가격으로 오인하지 않기 위함)
+  const priceMatch = rest.match(/(\d{1,3}(?:,\d{3})+|\d{4,})\s*원/);
+  const price = priceMatch ? priceMatch[1].replace(/,/g, '') : '';
+
+  const name = (priceMatch ? rest.replace(priceMatch[0], ' ') : rest)
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+
+  // 한국 상품명은 보통 브랜드가 맨 앞에 온다
+  const brand = name ? (name.split(' ')[0] ?? '') : '';
+
+  return {
+    coupangUrl,
+    imageUrl,
+    htmlTag,
+    name,
+    brand,
+    price,
+    category: guessCategory(name),
+  };
 }
 
 /** mm 문자열("가로 506 × 세로 695 × 폭 506") 또는 cm 숫자를 cm 으로 정규화 */

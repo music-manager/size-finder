@@ -23,8 +23,14 @@ const ROCKET_TAG = '로켓배송';
 
 export default function ProductCard({ product, doorClearance = false }: Props) {
   const { width, depth, height } = product.dimensions;
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = Boolean(product.imageUrl) && !imageFailed;
+  // 쿠팡 썸네일은 해상도를 올린 경로(492x492ex)가 없는 상품이 있어,
+  // 실패하면 원본 해상도로 한 번 더 시도한 뒤에야 플레이스홀더로 넘어간다.
+  const [imageStep, setImageStep] = useState<0 | 1 | 2>(0);
+  const imageSrc =
+    imageStep === 0
+      ? product.imageUrl
+      : product.imageUrl.replace(/\/\d+x\d+ex\//, '/212x212ex/');
+  const showImage = Boolean(product.imageUrl) && imageStep < 2;
 
   const showDoorNote = doorClearance && needsDoorClearance(product);
   const isRocket = product.tags.includes(ROCKET_TAG);
@@ -35,12 +41,13 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
       <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white">
         {showImage ? (
           <Image
-            src={product.imageUrl}
+            key={imageSrc}
+            src={imageSrc}
             alt={product.name}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
-            onError={() => setImageFailed(true)}
+            onError={() => setImageStep((step) => (step === 0 ? 1 : 2))}
             unoptimized
           />
         ) : (

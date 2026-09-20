@@ -121,7 +121,7 @@ export default function AdminTool() {
     return () => window.clearTimeout(t);
   }, [copied]);
 
-  /** 쿠팡에서 복사한 덩어리를 붙여넣으면 링크·이미지·HTML 을 자동으로 채운다 */
+  /** 붙여넣은 덩어리에서 링크·이미지·HTML·제품명·브랜드·가격·카테고리를 채운다 */
   const applyBlob = useCallback(() => {
     const parsed = parseCoupangBlob(blob);
     setDraft((prev) => ({
@@ -129,6 +129,10 @@ export default function AdminTool() {
       coupangUrl: parsed.coupangUrl || prev.coupangUrl,
       imageUrl: parsed.imageUrl || prev.imageUrl,
       htmlTag: parsed.htmlTag || prev.htmlTag,
+      name: parsed.name || prev.name,
+      brand: parsed.brand || prev.brand,
+      price: parsed.price || prev.price,
+      category: parsed.category || prev.category,
     }));
   }, [blob]);
 
@@ -229,8 +233,8 @@ export default function AdminTool() {
           센치픽 상품 관리 <span className="text-brand-600">Admin</span>
         </h1>
         <p className="mt-1 text-xs text-slate-500">
-          쿠팡에서 복사한 내용을 붙여넣으면 링크·이미지·HTML 이 자동으로 채워집니다.
-          입력값은 이 브라우저에만 저장됩니다.
+          쿠팡에서 복사한 내용을 붙여넣으면 제품명·브랜드·가격·카테고리·링크·이미지가
+          자동으로 채워집니다. 치수만 직접 입력하시면 됩니다. 입력값은 이 브라우저에만 저장됩니다.
         </p>
       </header>
 
@@ -256,7 +260,7 @@ export default function AdminTool() {
           value={blob}
           onChange={(e) => setBlob(e.target.value)}
           rows={4}
-          placeholder={'링크·이미지주소·iframe 을 순서 상관없이 통째로 붙여넣으세요.\nhttps://link.coupang.com/a/...\nhttps://thumbnail10.coupangcdn.com/...\n<iframe src="https://coupa.ng/..."></iframe>'}
+          placeholder={'제품명·가격·링크·이미지주소·iframe 을 순서 상관없이 통째로 붙여넣으세요.\n201,270원 마이디어 미니 건조기 MDD02A25 2.5kg\nhttps://link.coupang.com/a/...\nhttps://t5c.coupangcdn.com/...\n<iframe src="https://coupa.ng/..."></iframe>'}
           className="mt-2 w-full rounded-lg border border-slate-200 p-2.5 font-mono text-xs focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
         <button
