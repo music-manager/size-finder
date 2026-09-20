@@ -1,0 +1,41 @@
+name: 쿠팡 수집 진단
+
+on:
+  push:
+    branches:
+      - claude/compassionate-planck-0onxi1
+    paths:
+      - '.github/workflows/diagnose-coupang.yml'
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Secrets 존재 여부 확인
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+        run: |
+          if [ -z "$COUPANG_ACCESS_KEY" ]; then echo "COUPANG_ACCESS_KEY=MISSING"; else echo "COUPANG_ACCESS_KEY=SET"; fi
+          if [ -z "$COUPANG_SECRET_KEY" ]; then echo "COUPANG_SECRET_KEY=MISSING"; else echo "COUPANG_SECRET_KEY=SET"; fi
+
+      - name: 실제 쿠팡 API dry-run
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          SYNC_LIMIT: '3'
+          SYNC_MAX_RANK: '3'
+          SYNC_ROCKET_ONLY: 'true'
+          SYNC_DELAY_MS: '500'
+        run: node scripts/sync-coupang.mjs --dry-run
