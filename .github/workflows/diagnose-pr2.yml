@@ -1,0 +1,38 @@
+name: PR2 쿠팡 dry-run 진단
+
+on:
+  push:
+    branches:
+      - fix/coupang-search-limit
+    paths:
+      - '.github/workflows/diagnose-pr2.yml'
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/coupang-search-limit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: PR2 실제 쿠팡 API dry-run
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          SYNC_LIMIT: '10'
+          SYNC_MAX_RANK: '10'
+          SYNC_ROCKET_ONLY: 'true'
+          SYNC_DELAY_MS: '1300'
+        run: |
+          set -o pipefail
+          node scripts/sync-coupang.mjs --dry-run | tee sync-report.txt
+
+      - name: 수집 결과 요약
+        if: always()
+        run: cat sync-report.txt >> $GITHUB_STEP_SUMMARY || true
