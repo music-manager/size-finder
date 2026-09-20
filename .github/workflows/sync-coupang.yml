@@ -54,6 +54,21 @@ jobs:
           fi
           echo "쿠팡 API Secrets 확인 완료"
 
+      # 여기부터 '빌드' 까지가 사전 검증이다.
+      # 하나라도 실패하면 아래 '상품 수집' 은 아예 실행되지 않으므로
+      # 코드가 깨진 상태에서 쿠팡 API 를 소모하는 일이 없다.
+      - name: 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      - name: 테스트
+        run: npm run test
+
+      - name: 린트
+        run: npm run lint
+
+      - name: 빌드
+        run: npm run build
+
       - name: 상품 수집
         id: collect
         env:
@@ -74,14 +89,6 @@ jobs:
           node scripts/sync-coupang.mjs ${{ inputs.dry_run && '--dry-run' || '' }} \
             | tee sync-report.txt || status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
-
-      - name: 데이터 검증
-        run: |
-          set -o pipefail
-          npm ci --no-audit --no-fund
-          npm run test
-          npm run lint
-          npm run build
 
       - name: 변경분 커밋
         if: ${{ !inputs.dry_run }}

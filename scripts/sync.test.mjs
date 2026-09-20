@@ -447,6 +447,65 @@ describe('실제 쿠팡 API 차단', () => {
 describe('워크플로 설정', () => {
   const yml = readFileSync(new URL('../.github/workflows/sync-coupang.yml', import.meta.url), 'utf8');
 
+  /**
+   * 스텝을 순서대로 뽑는다. `- name:` 또는 `- uses:` 로 시작하는 줄을 경계로
+   * 잘라, 각 스텝의 이름과 본문을 함께 돌려준다.
+   */
+  function parseSteps(text) {
+    const lines = text.split('\n');
+    const steps = [];
+    let current = null;
+    for (const line of lines) {
+      const head = line.match(/^ {6}- (?:name|uses): (.+)$/);
+      if (head) {
+        if (current) steps.push(current);
+        current = { name: head[1].trim(), body: '' };
+        continue;
+      }
+      if (current) current.body += line + '\n';
+    }
+    if (current) steps.push(current);
+    return steps;
+  }
+
+  const steps = parseSteps(yml);
+  const indexOfStepRunning = (cmd) =>
+    steps.findIndex((st) => st.body.includes(cmd) || st.name.includes(cmd));
+  const collectIndex = steps.findIndex((st) => st.name === '상품 수집');
+
+  it('상품 수집 스텝을 찾을 수 있다', () => {
+    assert.ok(collectIndex >= 0, '상품 수집 스텝이 있어야 한다');
+  });
+
+  for (const cmd of ['npm run test', 'npm run lint', 'npm run build']) {
+    it(`${cmd} 이 상품 수집보다 먼저 실행된다`, () => {
+      const idx = indexOfStepRunning(cmd);
+      assert.ok(idx >= 0, `${cmd} 을 실행하는 스텝이 있어야 한다`);
+      assert.ok(
+        idx < collectIndex,
+        `${cmd}(${idx + 1}번째)은 상품 수집(${collectIndex + 1}번째)보다 앞이어야 한다. ` +
+          '검증이 뒤에 있으면 코드가 깨진 채로 쿠팡 API 를 먼저 소모한다.',
+      );
+    });
+  }
+
+  it('npm ci 도 상품 수집보다 먼저 실행된다', () => {
+    const idx = indexOfStepRunning('npm ci');
+    assert.ok(idx >= 0 && idx < collectIndex);
+  });
+
+  it('검증 스텝에는 쿠팡 인증 정보가 넘어가지 않는다', () => {
+    const before = steps.slice(0, collectIndex);
+    const verify = before.filter((st) => /npm (ci|run)/.test(st.body));
+    assert.ok(verify.length >= 4, '의존성 설치 + 테스트 + 린트 + 빌드 4개가 있어야 한다');
+    for (const st of verify) {
+      assert.ok(
+        !st.body.includes('COUPANG_ACCESS_KEY'),
+        `검증 스텝 "${st.name}" 에 쿠팡 키가 들어가면 안 된다`,
+      );
+    }
+  });
+
   it('자동 schedule 이 꺼져 있다', () => {
     const active = yml
       .split('\n')
