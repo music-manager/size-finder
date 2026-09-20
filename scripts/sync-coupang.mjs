@@ -8,9 +8,15 @@
  * 환경변수
  *   COUPANG_ACCESS_KEY / COUPANG_SECRET_KEY  (필수)
  *   SYNC_LIMIT      키워드당 조회 수        기본 10 (쿠팡 검색 API 최대 10)
- *   SYNC_MAX_RANK   채택할 검색 순위 상한   기본 10
+ *   SYNC_MAX_RANK   채택할 검색 순위 상한   기본 10 (API 파라미터 아님, 상한 없음)
  *   SYNC_ROCKET_ONLY 로켓배송만            기본 true
  *   SYNC_DELAY_MS   호출 간 간격            기본 1300
+ *   SYNC_BATCH_SIZE 한 번에 처리할 키워드 수 기본 8 (시간당 10회 한도 대비 여유분 2)
+ *   SYNC_DATA_DIR   데이터 디렉터리          기본 ../src/data (테스트용 덮어쓰기)
+ *
+ * 쿠팡 상품검색은 시간당 10회만 허용되므로 키워드 68개를 한 번에 돌리지 않는다.
+ * 한 번 실행에 SYNC_BATCH_SIZE 개만 처리하고, 다음 키워드 위치를
+ * sync-state.json 에 남겨 다음 실행이 이어받는다. 끝까지 가면 0 으로 돌아온다.
  *
  * API 가 치수와 리뷰 수를 주지 않으므로,
  *  - 상품명에서 치수를 뽑아낸 것만 products.json 에 넣고
@@ -18,8 +24,18 @@
  * 리뷰 수 대신 검색 순위(rank)를 인기도 기준으로 쓴다.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ALL_KEYWORDS } from './keywords.mjs';
 import { searchProducts, sleep } from './coupangApi.mjs';
+import {
+  DEFAULT_BATCH_SIZE,
+  advanceCursor,
+  normalizeCursor,
+  readState,
+  takeBatch,
+  writeState,
+} from './syncState.mjs';
 import {
   buildTags,
   cleanImageUrl,
@@ -29,8 +45,13 @@ import {
   todayIso,
 } from './normalize.mjs';
 
-const PRODUCTS_PATH = new URL('../src/data/products.json', import.meta.url);
-const PENDING_PATH = new URL('../src/data/pending.json', import.meta.url);
+// 테스트가 임시 디렉터리를 물릴 수 있도록 데이터 위치를 바꿀 수 있게 둔다
+const DATA_DIR = process.env.SYNC_DATA_DIR
+  ? pathToFileURL(resolve(process.env.SYNC_DATA_DIR) + '/')
+  : new URL('../src/data/', import.meta.url);
+const PRODUCTS_PATH = new URL('products.json', DATA_DIR);
+const PENDING_PATH = new URL('pending.json', DATA_DIR);
+const STATE_PATH = new URL('sync-state.json', DATA_DIR);
 
 const CATEGORY_PREFIX = {
   refrigerator: 'ref',
@@ -53,18 +74,25 @@ const num = (name, fallback) => Number(process.env[name] ?? fallback);
 const LIMIT = num('SYNC_LIMIT', 10);
 const MAX_RANK = num('SYNC_MAX_RANK', 10);
 const DELAY_MS = num('SYNC_DELAY_MS', 1300);
+const BATCH_SIZE = num('SYNC_BATCH_SIZE', DEFAULT_BATCH_SIZE);
 const ROCKET_ONLY = (process.env.SYNC_ROCKET_ONLY ?? 'true') !== 'false';
 
 if (!Number.isInteger(LIMIT) || LIMIT < 1 || LIMIT > 10) {
   console.error(`SYNC_LIMIT은 1~10만 허용됩니다. 현재 값: ${LIMIT}`);
   process.exit(1);
 }
-if (!Number.isInteger(MAX_RANK) || MAX_RANK < 1 || MAX_RANK > 10) {
-  console.error(`SYNC_MAX_RANK는 1~10만 허용됩니다. 현재 값: ${MAX_RANK}`);
+// MAX_RANK 는 API 파라미터가 아니라 내려받은 결과를 거르는 로컬 기준이므로 상한을 두지 않는다
+if (!Number.isInteger(MAX_RANK) || MAX_RANK < 1) {
+  console.error(`SYNC_MAX_RANK는 1 이상의 정수여야 합니다. 현재 값: ${MAX_RANK}`);
   process.exit(1);
 }
 if (!Number.isFinite(DELAY_MS) || DELAY_MS < 0) {
   console.error(`SYNC_DELAY_MS는 0 이상의 숫자여야 합니다. 현재 값: ${DELAY_MS}`);
+  process.exit(1);
+}
+// 시간당 10회 한도를 넘는 배치는 애초에 허용하지 않는다
+if (!Number.isInteger(BATCH_SIZE) || BATCH_SIZE < 1 || BATCH_SIZE > 10) {
+  console.error(`SYNC_BATCH_SIZE는 1~10만 허용됩니다. 현재 값: ${BATCH_SIZE}`);
   process.exit(1);
 }
 
@@ -115,15 +143,31 @@ const byProductId = new Map(
   products.filter((p) => p.productId).map((p) => [p.productId, p]),
 );
 
-for (const { keyword, category } of ALL_KEYWORDS) {
+// 이번 실행이 담당할 구간을 cursor 에서 이어받는다
+const state = readState(STATE_PATH);
+const cursor = normalizeCursor(state.keywordCursor, ALL_KEYWORDS.length);
+const batch = takeBatch(ALL_KEYWORDS, cursor, BATCH_SIZE);
+
+// 호출을 끝낸 키워드 수. cursor 를 이만큼만 밀어야 중단 지점부터 다시 시작한다.
+let processed = 0;
+let rateLimited = null;
+
+for (const { keyword, category } of batch) {
   let items = [];
   try {
     items = await searchProducts(keyword, { limit: LIMIT, accessKey, secretKey });
   } catch (error) {
+    // 시간당 한도를 넘었다면 남은 키워드는 건드리지 않고 즉시 멈춘다
+    if (error?.isRateLimit) {
+      rateLimited = error;
+      break;
+    }
     stats.실패키워드.push(`${keyword} (${error.message})`);
+    processed += 1;
     await sleep(DELAY_MS);
     continue;
   }
+  processed += 1;
   stats.조회 += items.length;
 
   for (const item of items) {
@@ -194,6 +238,9 @@ for (const { keyword, category } of ALL_KEYWORDS) {
   await sleep(DELAY_MS);
 }
 
+// 중단됐더라도 호출을 끝낸 만큼은 cursor 를 밀어 다음 실행이 이어받게 한다
+const nextCursor = advanceCursor(cursor, processed, ALL_KEYWORDS.length);
+
 // undefined 필드는 JSON 에 남기지 않는다
 const compact = (list) =>
   list.map((p) => JSON.parse(JSON.stringify(p)));
@@ -201,10 +248,19 @@ const compact = (list) =>
 if (!dryRun) {
   writeFileSync(PRODUCTS_PATH, JSON.stringify(compact(products), null, 2) + '\n');
   writeFileSync(PENDING_PATH, JSON.stringify(compact(pending), null, 2) + '\n');
+  writeState(STATE_PATH, {
+    keywordCursor: nextCursor,
+    lastRunAt: new Date().toISOString(),
+    lastResult: rateLimited ? 'rate_limited' : 'ok',
+  });
 }
 
+const batchEnd = cursor + batch.length;
 console.log('── 쿠팡 수집 결과 ──');
-console.log(`키워드 ${ALL_KEYWORDS.length}개 / 조회 ${stats.조회}건`);
+console.log(
+  `키워드 ${ALL_KEYWORDS.length}개 중 ${cursor + 1}~${batchEnd}번 ${batch.length}개 배정` +
+    ` / 호출 완료 ${processed}개 / 조회 ${stats.조회}건`,
+);
 console.log(`  로켓배송 아님 제외 ${stats.로켓제외}`);
 console.log(`  ${MAX_RANK}위 밖 제외   ${stats.순위제외}`);
 console.log(`  이미 있음 제외    ${stats.중복}`);
@@ -216,9 +272,19 @@ if (stats.실패키워드.length) {
   stats.실패키워드.slice(0, 5).forEach((k) => console.log(`    - ${k}`));
 }
 console.log(`전체 ${products.length}종 / 대기열 ${pending.length}건${dryRun ? ' (dry-run, 파일 미기록)' : ''}`);
+console.log(
+  `다음 실행 cursor: ${nextCursor}` +
+    `${nextCursor === 0 ? ' (한 바퀴 완료, 처음부터 다시)' : ''}` +
+    `${dryRun ? ' — dry-run 이라 저장하지 않음' : ''}`,
+);
 
-// API 전체 실패나 설정 오류가 '성공'으로 보이지 않게 한다.
-if (stats.조회 === 0) {
+if (rateLimited) {
+  // 한도 초과는 재시도해도 소용이 없다. 다음 시간대 실행이 cursor 부터 이어받는다.
+  console.error(`수집 중단: ${rateLimited.message}`);
+  console.error(`  남은 키워드는 호출하지 않았습니다. 다음 실행이 ${nextCursor}번부터 이어갑니다.`);
+  process.exitCode = 1;
+} else if (stats.조회 === 0) {
+  // API 전체 실패나 설정 오류가 '성공'으로 보이지 않게 한다.
   console.error('수집 실패: 실제 쿠팡 상품 조회가 0건입니다. 실패 키워드 로그를 확인하세요.');
   process.exitCode = 1;
 }

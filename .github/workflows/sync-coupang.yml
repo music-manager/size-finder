@@ -1,9 +1,12 @@
 name: 쿠팡 상품 수집
 
+# 자동 schedule 은 꺼 둔다.
+# 쿠팡 상품검색이 시간당 10회 한도라 무인 실행이 조용히 한도를 태울 수 있다.
+# 배치 수집이 실증될 때까지 수동 실행(workflow_dispatch)만 허용한다.
+#
+# schedule:
+#   - cron: '0 20 * * *'   # 매일 한국시간 새벽 5시 (UTC 20:00)
 on:
-  schedule:
-    # 매일 한국시간 새벽 5시 (UTC 20:00)
-    - cron: '0 20 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -51,6 +54,7 @@ jobs:
           echo "쿠팡 API Secrets 확인 완료"
 
       - name: 상품 수집
+        id: collect
         env:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
@@ -58,26 +62,37 @@ jobs:
           SYNC_MAX_RANK: '10'
           SYNC_ROCKET_ONLY: 'true'
           SYNC_DELAY_MS: '1300'
+          # 시간당 10회 한도에서 2회를 여유로 남긴다
+          SYNC_BATCH_SIZE: '8'
         run: |
           set -o pipefail
-          node scripts/sync-coupang.mjs ${{ inputs.dry_run && '--dry-run' || '' }} | tee sync-report.txt
+          # 여기서 바로 죽으면 cursor 가 커밋되지 않아 다음 실행이 같은 키워드를
+          # 다시 호출한다. 종료 코드만 들고 있다가 커밋 뒤에 실패시킨다.
+          status=0
+          node scripts/sync-coupang.mjs ${{ inputs.dry_run && '--dry-run' || '' }} \
+            | tee sync-report.txt || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
 
       - name: 데이터 검증
         run: |
+          set -o pipefail
           npm ci --no-audit --no-fund
+          npm run test
           npm run lint
           npm run build
 
       - name: 변경분 커밋
         if: ${{ !inputs.dry_run }}
         run: |
+          set -o pipefail
           if git diff --quiet src/data; then
             echo "변경 없음 — 커밋하지 않습니다."
             exit 0
           fi
           git config user.name "cmpick-bot"
           git config user.email "ktntopia@gmail.com"
-          git add src/data/products.json src/data/pending.json
+          # sync-state.json 을 같이 커밋해야 다음 실행이 cursor 를 이어받는다
+          git add src/data/products.json src/data/pending.json src/data/sync-state.json
           {
             echo "chore: 쿠팡 상품 자동 수집"
             echo
@@ -88,3 +103,10 @@ jobs:
       - name: 수집 결과 요약
         if: always()
         run: cat sync-report.txt >> $GITHUB_STEP_SUMMARY || true
+
+      # cursor 와 수집분을 커밋한 뒤에 실패를 알린다
+      - name: 수집 실패 처리
+        if: ${{ always() && steps.collect.outputs.status != '0' }}
+        run: |
+          echo "::error::수집 스크립트가 실패했습니다 (exit ${{ steps.collect.outputs.status }}). 수집 결과 요약을 확인하세요."
+          exit 1

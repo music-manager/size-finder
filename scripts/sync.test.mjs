@@ -1,0 +1,360 @@
+/**
+ * 쿠팡 수집 파이프라인 테스트.
+ *
+ * 실제 쿠팡 API 는 절대 부르지 않는다. 모든 HTTP 요청은 이 파일이 띄우는
+ * 로컬 목 서버로 가며, COUPANG_API_HOST 로 주소를 바꿔 물린다.
+ *
+ *   node --test scripts/sync.test.mjs
+ */
+import { after, before, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
+import { execFile } from 'node:child_process';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
+
+import {
+  CoupangRateLimitError,
+  parseHourlyRateLimit,
+  searchProducts,
+} from './coupangApi.mjs';
+import {
+  DEFAULT_BATCH_SIZE,
+  advanceCursor,
+  normalizeCursor,
+  takeBatch,
+} from './syncState.mjs';
+import { ALL_KEYWORDS } from './keywords.mjs';
+
+const execFileAsync = promisify(execFile);
+const SYNC_SCRIPT = new URL('./sync-coupang.mjs', import.meta.url).pathname;
+
+// ── 목 서버 ───────────────────────────────────────────────────────────────
+// 요청을 모두 기록하고, 시나리오에 따라 정상/한도초과 응답을 돌려준다.
+let server;
+let baseUrl;
+let requests = [];
+/** (index) => 'ok' | 'rate-limit-403' | 'plain-403' | 'error-500' */
+let responder = () => 'ok';
+
+function product(i, { rank = 1, rocket = true } = {}) {
+  return {
+    productId: 900000 + i,
+    productName: `테스트 소형 냉장고 ${i} 가로45 깊이50 높이85`,
+    productPrice: 100000 + i,
+    productImage: `https://thumbnail10.coupangcdn.com/thumbnails/remote/212x212ex/image/${i}.jpg`,
+    productUrl: `https://link.coupang.com/a/testlink${i}`,
+    categoryName: '가전',
+    keyword: '테스트',
+    rank,
+    isRocket: rocket,
+    isFreeShipping: true,
+  };
+}
+
+before(async () => {
+  server = createServer((req, res) => {
+    const index = requests.length;
+    requests.push(req.url);
+    const mode = responder(index);
+
+    if (mode === 'rate-limit-403') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          rCode: 'ERROR',
+          rMessage: '시간당 호출 가능 횟수(10회)를 초과하였습니다. 사용 11회',
+        }),
+      );
+      return;
+    }
+    if (mode === 'plain-403') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ rCode: 'ERROR', rMessage: 'Invalid signature' }));
+      return;
+    }
+    if (mode === 'error-500') {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end('{}');
+      return;
+    }
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        rCode: '0',
+        data: { productData: [product(index)] },
+      }),
+    );
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  baseUrl = `http://127.0.0.1:${server.address().port}`;
+});
+
+after(() => server?.close());
+
+function resetMock(fn = () => 'ok') {
+  requests = [];
+  responder = fn;
+}
+
+// ── 1. cursor 순환 (순수 함수) ────────────────────────────────────────────
+describe('키워드 cursor 순환', () => {
+  it('68개를 8개씩 돌면 9회차 뒤 0으로 돌아온다', () => {
+    const total = 68;
+    const size = 8;
+    const seen = [];
+    let cursor = 0;
+
+    for (let run = 0; run < 9; run += 1) {
+      seen.push({ cursor, size: takeBatch(Array.from({ length: total }), cursor, size).length });
+      cursor = advanceCursor(cursor, seen[run].size, total);
+    }
+
+    assert.deepEqual(
+      seen.map((s) => s.cursor),
+      [0, 8, 16, 24, 32, 40, 48, 56, 64],
+    );
+    assert.deepEqual(
+      seen.map((s) => s.size),
+      [8, 8, 8, 8, 8, 8, 8, 8, 4],
+      '마지막 9회차는 남은 4개만 처리한다',
+    );
+    assert.equal(cursor, 0, '9회차 뒤 cursor 는 0으로 복귀한다');
+  });
+
+  it('실제 키워드 개수도 8개씩 9회면 한 바퀴다', () => {
+    assert.equal(ALL_KEYWORDS.length, 68);
+    assert.equal(Math.ceil(ALL_KEYWORDS.length / DEFAULT_BATCH_SIZE), 9);
+  });
+
+  it('깨진 cursor 는 0으로 되돌린다', () => {
+    assert.equal(normalizeCursor(-1, 68), 0);
+    assert.equal(normalizeCursor(68, 68), 0);
+    assert.equal(normalizeCursor(1.5, 68), 0);
+    assert.equal(normalizeCursor('abc', 68), 0);
+    assert.equal(normalizeCursor(64, 68), 64);
+  });
+
+  it('중단 지점까지만 cursor 를 민다', () => {
+    // 8개 배정, 3개만 호출을 끝낸 채 중단 → 다음은 3번부터
+    assert.equal(advanceCursor(0, 3, 68), 3);
+    assert.equal(advanceCursor(64, 4, 68), 0);
+  });
+});
+
+// ── 2. 403 시간당 한도 감지 (순수 함수) ───────────────────────────────────
+describe('시간당 한도 403 감지', () => {
+  it('시간당 사용 횟수가 담긴 403 을 잡아낸다', () => {
+    const hit = parseHourlyRateLimit(403, '시간당 호출 가능 횟수(10회)를 초과하였습니다. 사용 11회');
+    assert.ok(hit);
+    assert.equal(hit.usage, '10');
+  });
+
+  it('영문 메시지도 잡아낸다', () => {
+    const hit = parseHourlyRateLimit(403, 'Exceeded hourly quota: 10 calls per hour');
+    assert.ok(hit);
+    assert.equal(hit.usage, '10');
+  });
+
+  it('시간당 표현이 없는 403 은 한도 초과로 보지 않는다', () => {
+    assert.equal(parseHourlyRateLimit(403, 'Invalid signature'), null);
+  });
+
+  it('403 이 아닌 응답은 한도 초과로 보지 않는다', () => {
+    assert.equal(parseHourlyRateLimit(429, '시간당 10회'), null);
+    assert.equal(parseHourlyRateLimit(200, '시간당 10회'), null);
+  });
+});
+
+// ── 3. searchProducts (목 서버) ───────────────────────────────────────────
+describe('searchProducts', () => {
+  const creds = { accessKey: 'test-access', secretKey: 'test-secret' };
+
+  it('정상 응답에서 productData 를 돌려준다', async () => {
+    process.env.COUPANG_API_HOST = baseUrl;
+    resetMock();
+    const { searchProducts: fresh } = await import(`./coupangApi.mjs?host=${Date.now()}`);
+    const items = await fresh('소형 냉장고', { limit: 10, ...creds });
+    assert.equal(items.length, 1);
+    assert.equal(requests.length, 1);
+    assert.match(requests[0], /limit=10/);
+  });
+
+  it('limit 이 범위를 벗어나면 요청을 보내기 전에 막는다', async () => {
+    resetMock();
+    await assert.rejects(
+      () => searchProducts('소형 냉장고', { limit: 20, ...creds }),
+      RangeError,
+    );
+    assert.equal(requests.length, 0, 'limit 검증 실패 시 HTTP 요청이 나가면 안 된다');
+  });
+
+  it('시간당 한도 403 은 CoupangRateLimitError 로 던진다', async () => {
+    process.env.COUPANG_API_HOST = baseUrl;
+    resetMock(() => 'rate-limit-403');
+    const { searchProducts: fresh } = await import(`./coupangApi.mjs?host=${Date.now()}-rl`);
+    await assert.rejects(
+      () => fresh('소형 냉장고', { limit: 10, ...creds }),
+      (err) => {
+        assert.ok(err instanceof CoupangRateLimitError || err.isRateLimit);
+        assert.equal(err.isRateLimit, true);
+        return true;
+      },
+    );
+  });
+
+  it('시간당 표현이 없는 403 은 일반 오류로 던진다', async () => {
+    process.env.COUPANG_API_HOST = baseUrl;
+    resetMock(() => 'plain-403');
+    const { searchProducts: fresh } = await import(`./coupangApi.mjs?host=${Date.now()}-p403`);
+    await assert.rejects(
+      () => fresh('소형 냉장고', { limit: 10, ...creds }),
+      (err) => {
+        assert.equal(err.isRateLimit, undefined);
+        return true;
+      },
+    );
+  });
+});
+
+// ── 4. sync-coupang.mjs 전체 실행 (목 서버 + 임시 데이터 디렉터리) ────────
+function makeDataDir({ cursor = 0 } = {}) {
+  const dir = mkdtempSync(join(tmpdir(), 'cmpick-sync-'));
+  writeFileSync(join(dir, 'products.json'), '[]\n');
+  writeFileSync(join(dir, 'pending.json'), '[]\n');
+  writeFileSync(
+    join(dir, 'sync-state.json'),
+    JSON.stringify({ keywordCursor: cursor, lastRunAt: null, lastResult: null }, null, 2) + '\n',
+  );
+  return dir;
+}
+
+async function runSync(dir, extraEnv = {}) {
+  try {
+    const { stdout } = await execFileAsync('node', [SYNC_SCRIPT], {
+      env: {
+        ...process.env,
+        COUPANG_API_HOST: baseUrl,
+        COUPANG_ACCESS_KEY: 'test-access',
+        COUPANG_SECRET_KEY: 'test-secret',
+        SYNC_DATA_DIR: dir,
+        SYNC_DELAY_MS: '0',
+        ...extraEnv,
+      },
+    });
+    return { code: 0, stdout };
+  } catch (err) {
+    return { code: err.code ?? 1, stdout: err.stdout ?? '', stderr: err.stderr ?? '' };
+  }
+}
+
+const readCursor = (dir) =>
+  JSON.parse(readFileSync(join(dir, 'sync-state.json'), 'utf8')).keywordCursor;
+
+describe('sync-coupang.mjs 전체 실행', () => {
+  it('한 번 실행에 8개만 호출하고 cursor 를 8로 저장한다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const { code, stdout } = await runSync(dir);
+
+    assert.equal(code, 0, stdout);
+    assert.equal(requests.length, 8, '시간당 10회 한도 안에서 8회만 호출해야 한다');
+    assert.equal(readCursor(dir), 8);
+    assert.match(stdout, /1~8번 8개 배정/);
+    assert.match(stdout, /다음 실행 cursor: 8/);
+  });
+
+  it('다음 실행은 저장된 cursor 부터 이어받는다', async () => {
+    resetMock();
+    const dir = makeDataDir({ cursor: 8 });
+    const { code, stdout } = await runSync(dir);
+
+    assert.equal(code, 0, stdout);
+    assert.equal(requests.length, 8);
+    assert.equal(readCursor(dir), 16);
+    assert.match(stdout, /9~16번 8개 배정/);
+    // 9번째 키워드가 실제로 요청에 담겼는지 확인
+    assert.match(requests[0], new RegExp(encodeURIComponent(ALL_KEYWORDS[8].keyword)));
+  });
+
+  it('마지막 배치는 남은 4개만 처리하고 cursor 가 0으로 돌아간다', async () => {
+    resetMock();
+    const dir = makeDataDir({ cursor: 64 });
+    const { code, stdout } = await runSync(dir);
+
+    assert.equal(code, 0, stdout);
+    assert.equal(requests.length, 4, '68개 중 마지막 4개만 남는다');
+    assert.equal(readCursor(dir), 0);
+    assert.match(stdout, /65~68번 4개 배정/);
+    assert.match(stdout, /한 바퀴 완료/);
+  });
+
+  it('시간당 한도 403 을 만나면 그 즉시 멈추고 더 호출하지 않는다', async () => {
+    // 0,1번은 정상. 2번째 호출에서 한도 초과.
+    resetMock((i) => (i >= 2 ? 'rate-limit-403' : 'ok'));
+    const dir = makeDataDir();
+    const { code, stdout, stderr } = await runSync(dir);
+
+    assert.equal(requests.length, 3, '한도 초과 응답을 받은 뒤 추가 호출이 없어야 한다');
+    assert.equal(code, 1, '한도 초과 실행은 실패로 끝나야 한다');
+    assert.match(stderr, /시간당 호출 한도 초과/);
+    assert.equal(readCursor(dir), 2, '호출을 끝낸 2개만큼만 cursor 를 민다');
+    assert.match(stdout, /호출 완료 2개/);
+  });
+
+  it('SYNC_MAX_RANK 상한이 없어 999 도 그대로 동작한다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const { code, stdout } = await runSync(dir, { SYNC_MAX_RANK: '999' });
+
+    assert.equal(code, 0, stdout);
+    assert.match(stdout, /999위 밖 제외/);
+    assert.equal(requests.length, 8);
+  });
+
+  it('SYNC_MAX_RANK 0 은 여전히 거부한다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const { code, stderr } = await runSync(dir, { SYNC_MAX_RANK: '0' });
+
+    assert.equal(code, 1);
+    assert.match(stderr, /SYNC_MAX_RANK는 1 이상/);
+    assert.equal(requests.length, 0);
+  });
+
+  it('SYNC_BATCH_SIZE 가 10 을 넘으면 호출 전에 거부한다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const { code, stderr } = await runSync(dir, { SYNC_BATCH_SIZE: '20' });
+
+    assert.equal(code, 1);
+    assert.match(stderr, /SYNC_BATCH_SIZE는 1~10/);
+    assert.equal(requests.length, 0);
+  });
+
+  it('dry-run 은 cursor 를 저장하지 않는다', async () => {
+    resetMock();
+    const dir = makeDataDir();
+    const { code, stdout } = await runSync(dir, {}).then((r) => r);
+    assert.equal(code, 0, stdout);
+
+    resetMock();
+    const dir2 = makeDataDir();
+    const res = await execFileAsync('node', [SYNC_SCRIPT, '--dry-run'], {
+      env: {
+        ...process.env,
+        COUPANG_API_HOST: baseUrl,
+        COUPANG_ACCESS_KEY: 'test-access',
+        COUPANG_SECRET_KEY: 'test-secret',
+        SYNC_DATA_DIR: dir2,
+        SYNC_DELAY_MS: '0',
+      },
+    });
+    assert.equal(readCursor(dir2), 0, 'dry-run 은 상태를 바꾸지 않는다');
+    assert.match(res.stdout, /dry-run 이라 저장하지 않음/);
+  });
+});
