@@ -3,6 +3,8 @@ import crypto from 'node:crypto';
 // 테스트에서 가짜 서버를 물릴 수 있도록 호스트를 바꿀 수 있게 둔다
 const HOST = process.env.COUPANG_API_HOST || 'https://api-gateway.coupang.com';
 const SEARCH_PATH = '/v2/providers/affiliate_open_api/apis/openapi/products/search';
+const SEARCH_LIMIT_MIN = 1;
+const SEARCH_LIMIT_MAX = 10;
 
 /**
  * 쿠팡 Open API 의 CEA HMAC 서명을 만든다.
@@ -21,9 +23,20 @@ function authorization(method, pathWithQuery, accessKey, secretKey) {
   return `CEA algorithm=HmacSHA256, access-key=${accessKey}, signed-date=${signedDate}, signature=${signature}`;
 }
 
-/** 키워드 하나를 검색한다. 실패해도 예외를 던지지 않고 빈 배열을 돌려준다. */
-export async function searchProducts(keyword, { limit = 20, accessKey, secretKey }) {
-  const pathWithQuery = `${SEARCH_PATH}?keyword=${encodeURIComponent(keyword)}&limit=${limit}`;
+/** 키워드 하나를 검색한다. 상품검색 API limit 은 1~10만 허용한다. */
+export async function searchProducts(keyword, { limit = 10, accessKey, secretKey }) {
+  const numericLimit = Number(limit);
+  if (
+    !Number.isInteger(numericLimit) ||
+    numericLimit < SEARCH_LIMIT_MIN ||
+    numericLimit > SEARCH_LIMIT_MAX
+  ) {
+    throw new RangeError(
+      `쿠팡 상품검색 limit은 ${SEARCH_LIMIT_MIN}~${SEARCH_LIMIT_MAX}만 허용됩니다. 받은 값: ${limit}`,
+    );
+  }
+
+  const pathWithQuery = `${SEARCH_PATH}?keyword=${encodeURIComponent(keyword)}&limit=${numericLimit}`;
 
   const res = await fetch(`${HOST}${pathWithQuery}`, {
     method: 'GET',
