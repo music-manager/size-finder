@@ -6,17 +6,27 @@ import type { Product } from '@/lib/types';
 
 interface Props {
   products: Product[];
-  doorClearance: boolean;
-  onReset: () => void;
+  doorClearance?: boolean;
+  /**
+   * 빈 상태에서 필터를 되돌리는 동작.
+   * 서버 컴포넌트에서는 함수를 넘길 수 없으므로 선택값으로 둔다.
+   */
+  onReset?: () => void;
 }
 
 export default function ProductGrid({
   products,
-  doorClearance,
+  doorClearance = false,
   onReset,
 }: Props) {
   if (products.length === 0) {
-    return <EmptyState onReset={onReset} />;
+    return onReset ? (
+      <EmptyState onReset={onReset} />
+    ) : (
+      <p className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-sm text-slate-400">
+        해당하는 제품이 없습니다.
+      </p>
+    );
   }
 
   return (
