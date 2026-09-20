@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ClipboardPaste,
+  ImagePlus,
   Copy,
   Check,
   Download,
@@ -13,7 +14,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { CATEGORIES, CATEGORY_LABEL } from '@/lib/categories';
+import { CATEGORY_LABEL } from '@/lib/categories';
 import { products as seedProducts } from '@/lib/products';
 import {
   hasDeepLink,
@@ -24,6 +25,7 @@ import {
   toWon,
   type AdminRecord,
 } from '@/lib/adminParse';
+import { formatBytes, shrinkImageFile } from '@/lib/imageFile';
 import type { CategoryId } from '@/lib/types';
 
 const STORAGE_KEY = 'cmpick-admin-v1';
@@ -62,10 +64,12 @@ const EMPTY: Draft = {
   price: '',
 };
 
-const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c.id !== 'all') as {
-  id: CategoryId;
-  label: string;
-}[];
+// 탭 목록(CATEGORIES)은 '책상/선반' 처럼 두 카테고리를 한 탭으로 묶기 때문에
+// 관리 툴의 선택지는 실제 카테고리 전체(CATEGORY_LABEL)에서 만든다.
+const CATEGORY_OPTIONS = (Object.keys(CATEGORY_LABEL) as CategoryId[]).map((id) => ({
+  id,
+  label: CATEGORY_LABEL[id],
+}));
 
 function toDraft(p: AdminRecord): Draft {
   return {
@@ -94,6 +98,8 @@ export default function AdminTool() {
   const [keyword, setKeyword] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [uploadNote, setUploadNote] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // 최초 1회 로컬 저장본 복원 (없으면 사이트 데이터로 시작)
   useEffect(() => {
@@ -133,8 +139,28 @@ export default function AdminTool() {
       brand: parsed.brand || prev.brand,
       price: parsed.price || prev.price,
       category: parsed.category || prev.category,
+      width: parsed.width || prev.width,
+      depth: parsed.depth || prev.depth,
+      height: parsed.height || prev.height,
+      capacity_or_spec: parsed.capacity_or_spec || prev.capacity_or_spec,
+      tags: parsed.tags || prev.tags,
     }));
   }, [blob]);
+
+  /** 사진 파일을 줄여 이미지 주소에 넣는다 (정적 사이트라 서버 업로드가 없다) */
+  const pickImageFile = useCallback(async (file?: File | null) => {
+    if (!file) return;
+    setUploadNote('사진을 줄이는 중…');
+    try {
+      const shrunk = await shrinkImageFile(file);
+      setDraft((prev) => ({ ...prev, imageUrl: shrunk.dataUrl }));
+      setUploadNote(
+        `${file.name} → ${shrunk.width}×${shrunk.height}px, ${formatBytes(shrunk.bytes)} 로 넣었습니다.`,
+      );
+    } catch (error) {
+      setUploadNote(error instanceof Error ? error.message : '사진을 넣지 못했습니다.');
+    }
+  }, []);
 
   const copy = useCallback(async (text: string, key: string) => {
     try {
@@ -188,6 +214,7 @@ export default function AdminTool() {
     });
     setDraft(EMPTY);
     setBlob('');
+    setUploadNote('');
   }, [draft, list]);
 
   const remove = useCallback((id: string) => {
@@ -263,13 +290,36 @@ export default function AdminTool() {
           placeholder={'제품명·가격·링크·이미지주소·iframe 을 순서 상관없이 통째로 붙여넣으세요.\n201,270원 마이디어 미니 건조기 MDD02A25 2.5kg\nhttps://link.coupang.com/a/...\nhttps://t5c.coupangcdn.com/...\n<iframe src="https://coupa.ng/..."></iframe>'}
           className="mt-2 w-full rounded-lg border border-slate-200 p-2.5 font-mono text-xs focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         />
-        <button
-          type="button"
-          onClick={applyBlob}
-          className="mt-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700"
-        >
-          자동 추출해서 아래 채우기
-        </button>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={applyBlob}
+            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-brand-700"
+          >
+            자동 추출해서 아래 채우기
+          </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            title="사진 파일 올리기"
+            className="flex items-center gap-1 rounded-lg border border-brand-300 bg-white px-3 py-2 text-sm font-bold text-brand-700 transition hover:bg-brand-50"
+          >
+            <ImagePlus className="h-4 w-4" aria-hidden="true" />+ 사진 파일
+          </button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              void pickImageFile(e.target.files?.[0]);
+              e.target.value = '';
+            }}
+          />
+          {uploadNote && (
+            <span className="text-[11px] font-semibold text-brand-700">{uploadNote}</span>
+          )}
+        </div>
       </section>
 
       {/* 2단계: 제품 정보 */}
@@ -378,13 +428,40 @@ export default function AdminTool() {
             />
           </label>
           <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
-            이미지 주소
-            <input
-              className={field}
-              value={draft.imageUrl}
-              onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })}
-              placeholder="https://thumbnail10.coupangcdn.com/..."
-            />
+            이미지 주소 (또는 올린 사진)
+            <div className="flex items-start gap-2">
+              {draft.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={draft.imageUrl}
+                  alt="미리보기"
+                  className="h-12 w-12 shrink-0 rounded border border-slate-200 object-contain"
+                />
+              )}
+              <input
+                className={field}
+                value={
+                  draft.imageUrl.startsWith('data:')
+                    ? `[올린 사진 · ${formatBytes(Math.round((draft.imageUrl.length * 3) / 4))}]`
+                    : draft.imageUrl
+                }
+                onChange={(e) => setDraft({ ...draft, imageUrl: e.target.value })}
+                readOnly={draft.imageUrl.startsWith('data:')}
+                placeholder="https://thumbnail10.coupangcdn.com/..."
+              />
+              {draft.imageUrl && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraft({ ...draft, imageUrl: '' });
+                    setUploadNote('');
+                  }}
+                  className="shrink-0 rounded border border-slate-200 px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50"
+                >
+                  지우기
+                </button>
+              )}
+            </div>
           </label>
           <label className="text-xs font-semibold text-slate-600 sm:col-span-2">
             HTML 태그 (보관용 · 사이트에는 안 쓰임)
@@ -413,6 +490,7 @@ export default function AdminTool() {
               onClick={() => {
                 setDraft(EMPTY);
                 setBlob('');
+                setUploadNote('');
               }}
               className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-50"
             >

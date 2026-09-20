@@ -43,16 +43,28 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg">
       <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white">
         {showImage ? (
-          <Image
-            key={imageSrc}
-            src={imageSrc}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
-            onError={() => setSourceIndex((i) => i + 1)}
-            unoptimized
-          />
+          // next/image 는 data: URL 을 거부하므로, 직접 올린 사진은 img 로 그린다
+          imageSrc.startsWith('data:') ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={imageSrc}
+              src={imageSrc}
+              alt={product.name}
+              className="absolute inset-0 h-full w-full object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
+              onError={() => setSourceIndex((i) => i + 1)}
+            />
+          ) : (
+            <Image
+              key={imageSrc}
+              src={imageSrc}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
+              onError={() => setSourceIndex((i) => i + 1)}
+              unoptimized
+            />
+          )
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-slate-100">
             <span className="text-3xl opacity-40" aria-hidden="true">

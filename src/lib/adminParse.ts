@@ -17,6 +17,41 @@ export interface ParsedBlob {
   brand: string;
   price: string;
   category: CategoryId | '';
+  /** "480*400*560" 처럼 본문에 적힌 치수 (cm 로 환산된 문자열) */
+  width: string;
+  depth: string;
+  height: string;
+  capacity_or_spec: string;
+  tags: string;
+}
+
+/** 본문 단어로 자동으로 붙이는 태그. 앞에 있는 것부터 최대 4개. */
+const TAG_HINTS: [RegExp, string][] = [
+  [/로켓\s*배송|로켓와우/, '로켓배송'],
+  [/로켓\s*설치/, '로켓설치'],
+  [/무설치/, '무설치'],
+  [/고객\s*직접\s*설치|직접\s*설치/, '직접설치'],
+  [/설치\s*불필요/, '설치불필요'],
+  [/인버터/, '인버터'],
+  [/저소음|정숙/, '저소음'],
+  [/히트\s*펌프/, '히트펌프'],
+  [/1등급|일등급/, '1등급'],
+  [/벽걸이/, '벽걸이'],
+  [/접이식|폴딩/, '접이식'],
+  [/초슬림|슬림/, '슬림'],
+  [/틈새/, '틈새수납'],
+  [/바퀴|이동식/, '바퀴형'],
+  [/대용량/, '대용량'],
+  [/1인\s*가구|원룸|자취/, '원룸추천'],
+];
+
+function pickTags(text: string): string[] {
+  const hit: string[] = [];
+  for (const [re, tag] of TAG_HINTS) {
+    if (hit.length >= 4) break;
+    if (re.test(text) && !hit.includes(tag)) hit.push(tag);
+  }
+  return hit;
 }
 
 /** 제품명에 들어 있는 단어로 카테고리를 추측한다. 앞에 있는 규칙이 우선. */
@@ -67,13 +102,39 @@ export function parseCoupangBlob(text: string): ParsedBlob {
   const priceMatch = rest.match(/(\d{1,3}(?:,\d{3})+|\d{4,})\s*원/);
   const price = priceMatch ? priceMatch[1].replace(/,/g, '') : '';
 
-  const name = (priceMatch ? rest.replace(priceMatch[0], ' ') : rest)
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 80);
+  // "480*400*560", "520 x 434 x 640mm", "52×43.4×64cm" 등을 치수로 인식한다
+  const dimMatch = rest.match(
+    /(\d{1,4}(?:\.\d+)?)\s*(?:mm|cm)?\s*[x*×✕X]\s*(\d{1,4}(?:\.\d+)?)\s*(?:mm|cm)?\s*[x*×✕X]\s*(\d{1,4}(?:\.\d+)?)\s*(mm|cm)?/i,
+  );
+  const unit = dimMatch?.[4]?.toLowerCase();
+  const asCm = (raw: string) => {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return '';
+    // 단위가 적혀 있으면 그대로 따르고, 없으면 200 이상을 mm 로 본다
+    const cm = unit === 'mm' || (!unit && n >= 200) ? n / 10 : n;
+    return String(Math.round(cm * 10) / 10);
+  };
+  const width = dimMatch ? asCm(dimMatch[1]) : '';
+  const depth = dimMatch ? asCm(dimMatch[2]) : '';
+  const height = dimMatch ? asCm(dimMatch[3]) : '';
+
+  // 가격과 치수 표기는 제품명에서 걷어낸다 (제목에 그대로 붙던 문제)
+  let name = rest;
+  if (priceMatch) name = name.replace(priceMatch[0], ' ');
+  if (dimMatch) name = name.replace(dimMatch[0], ' ');
+  name = name.replace(/\s+/g, ' ').trim().slice(0, 80);
 
   // 한국 상품명은 보통 브랜드가 맨 앞에 온다
   const brand = name ? (name.split(' ')[0] ?? '') : '';
+
+  // 용량(2.5kg / 86L / 6인용 / 3단) 과 모델코드(MDD02A25/WB-KR) 를 스펙으로 묶는다
+  const capacity = name.match(
+    /\d+(?:\.\d+)?\s*(?:kg|KG|Kg|L|ℓ|리터|인용|인|단)\b/,
+  )?.[0];
+  const modelCode = name.match(
+    /\b[A-Z][A-Z0-9]{2,}(?:[-/][A-Z0-9]+)*\b/,
+  )?.[0];
+  const capacity_or_spec = [capacity, modelCode].filter(Boolean).join(' · ');
 
   return {
     coupangUrl,
@@ -83,6 +144,11 @@ export function parseCoupangBlob(text: string): ParsedBlob {
     brand,
     price,
     category: guessCategory(name),
+    width,
+    depth,
+    height,
+    capacity_or_spec,
+    tags: pickTags(rest).join(', '),
   };
 }
 
