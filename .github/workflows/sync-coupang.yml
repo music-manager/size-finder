@@ -31,6 +31,25 @@ jobs:
         with:
           node-version: 22
 
+      - name: 쿠팡 API Secrets 사전검사
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+        run: |
+          missing=0
+          if [ -z "$COUPANG_ACCESS_KEY" ]; then
+            echo "::error::COUPANG_ACCESS_KEY GitHub Actions Secret이 등록되지 않았습니다."
+            missing=1
+          fi
+          if [ -z "$COUPANG_SECRET_KEY" ]; then
+            echo "::error::COUPANG_SECRET_KEY GitHub Actions Secret이 등록되지 않았습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "쿠팡 API Secrets 확인 완료"
+
       - name: 상품 수집
         env:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
@@ -57,11 +76,11 @@ jobs:
           git config user.name "cmpick-bot"
           git config user.email "ktntopia@gmail.com"
           git add src/data/products.json src/data/pending.json
-          git commit -F - <<'MSG'
-          chore: 쿠팡 상품 자동 수집
-
-          $(cat sync-report.txt)
-          MSG
+          {
+            echo "chore: 쿠팡 상품 자동 수집"
+            echo
+            cat sync-report.txt
+          } | git commit -F -
           git push origin main
 
       - name: 수집 결과 요약
