@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
 import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
 import {
@@ -41,7 +42,11 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg">
-      <div className="relative aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white">
+      <Link
+        href={`/p/${product.id}`}
+        className="relative block aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white"
+        aria-label={`${product.name} 상세 보기`}
+      >
         {showImage ? (
           // next/image 는 data: URL 을 거부하므로, 직접 올린 사진은 img 로 그린다
           imageSrc.startsWith('data:') ? (
@@ -81,7 +86,7 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
             로켓배송
           </span>
         )}
-      </div>
+      </Link>
 
       <div className="flex flex-1 flex-col p-3">
         {/* 브랜드 · 카테고리 */}
@@ -93,7 +98,9 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
 
         {/* 썸네일 + 제품명 */}
         <h3 className="mt-1 line-clamp-2 text-[13px] font-medium leading-snug text-slate-800">
-          {product.name}
+          <Link href={`/p/${product.id}`} className="hover:text-brand-700 hover:underline">
+            {product.name}
+          </Link>
         </h3>
 
         {/* 실측 치수 — 이 사이트의 핵심 정보 */}
