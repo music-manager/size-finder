@@ -201,6 +201,8 @@ export function toProductJson(list: AdminRecord[]): string {
     tags: p.tags,
     verified: p.verified,
     ...(p.price ? { price: p.price, priceCheckedAt: p.priceCheckedAt } : {}),
+    // 자동 수집분의 재수집·가격 갱신 기준이므로 반드시 함께 내보낸다
+    ...(p.productId ? { productId: p.productId } : {}),
   }));
   return JSON.stringify(clean, null, 2);
 }

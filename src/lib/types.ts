@@ -38,6 +38,18 @@ export interface Product {
   price?: number;
   /** 가격을 확인한 날짜 (YYYY-MM-DD). 가격과 함께 기준일을 노출해 오인을 막는다 */
   priceCheckedAt?: string;
+  /** 쿠팡 상품 번호. 자동 수집분에만 있으며 재수집 시 중복·가격 갱신 판단에 쓴다 */
+  productId?: number;
+}
+
+/**
+ * 쿠팡 API 로 수집했지만 치수를 몰라 아직 사이트에 못 올린 상품.
+ * API 가 치수를 주지 않으므로, 관리자가 상세페이지를 보고 3개만 채우면 된다.
+ */
+export interface PendingProduct extends Omit<Product, 'dimensions' | 'verified'> {
+  keyword: string;
+  rank: number | null;
+  collectedAt: string;
 }
 
 export type TabId = CategoryId | 'all';

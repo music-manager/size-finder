@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { CATEGORY_LABEL } from '@/lib/categories';
-import { products as seedProducts } from '@/lib/products';
+import { pendingProducts, products as seedProducts } from '@/lib/products';
 import {
   hasDeepLink,
   nextId,
@@ -26,9 +26,11 @@ import {
   type AdminRecord,
 } from '@/lib/adminParse';
 import { formatBytes, shrinkImageFile } from '@/lib/imageFile';
+import PendingQueue from './PendingQueue';
 import type { CategoryId } from '@/lib/types';
 
 const STORAGE_KEY = 'cmpick-admin-v1';
+const DONE_KEY = 'cmpick-admin-done-v1';
 
 interface Draft {
   id: string;
@@ -99,6 +101,9 @@ export default function AdminTool() {
   const [copied, setCopied] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [uploadNote, setUploadNote] = useState('');
+  const [tab, setTab] = useState<'manual' | 'queue'>('manual');
+  // 대기열에서 처리(등록/제외)한 항목은 다시 보이지 않게 브라우저에 기록한다
+  const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
   // 최초 1회 로컬 저장본 복원 (없으면 사이트 데이터로 시작)
@@ -106,6 +111,8 @@ export default function AdminTool() {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setList(JSON.parse(raw) as AdminRecord[]);
+      const done = window.localStorage.getItem(DONE_KEY);
+      if (done) setDoneIds(new Set(JSON.parse(done) as string[]));
     } catch {
       /* 저장소 접근 불가 시 사이트 데이터 그대로 사용 */
     }
@@ -116,10 +123,11 @@ export default function AdminTool() {
     if (!loaded) return;
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      window.localStorage.setItem(DONE_KEY, JSON.stringify(Array.from(doneIds)));
     } catch {
       /* 시크릿 모드 등에서는 저장을 건너뛴다 */
     }
-  }, [list, loaded]);
+  }, [list, doneIds, loaded]);
 
   useEffect(() => {
     if (!copied) return;
@@ -217,10 +225,32 @@ export default function AdminTool() {
     setUploadNote('');
   }, [draft, list]);
 
+  const registerFromQueue = useCallback((product: AdminRecord) => {
+    setList((prev) => {
+      const i = prev.findIndex((p) => p.id === product.id);
+      if (i >= 0) {
+        const next = [...prev];
+        next[i] = product;
+        return next;
+      }
+      return [...prev, product];
+    });
+    setDoneIds((prev) => new Set(prev).add(product.id));
+  }, []);
+
+  const skipFromQueue = useCallback((id: string) => {
+    setDoneIds((prev) => new Set(prev).add(id));
+  }, []);
+
   const remove = useCallback((id: string) => {
     if (!window.confirm(`${id} 를 목록에서 지울까요?`)) return;
     setList((prev) => prev.filter((p) => p.id !== id));
   }, []);
+
+  const pendingCount = useMemo(
+    () => pendingProducts.filter((p) => !doneIds.has(p.id)).length,
+    [doneIds],
+  );
 
   const stats = useMemo(() => {
     const linked = list.filter(hasDeepLink).length;
@@ -265,6 +295,28 @@ export default function AdminTool() {
         </p>
       </header>
 
+      <div className="mb-4 flex gap-1.5">
+        {(
+          [
+            ['manual', '직접 입력'],
+            ['queue', `수집 대기열 ${pendingCount}`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
+              tab === key
+                ? 'bg-slate-900 text-white'
+                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="mb-5 grid grid-cols-3 gap-2">
         {[
           { label: '전체 제품', value: stats.total, tone: 'text-slate-900' },
@@ -278,6 +330,18 @@ export default function AdminTool() {
         ))}
       </div>
 
+      {tab === 'queue' && (
+        <div className="mb-4">
+          <PendingQueue
+            doneIds={doneIds}
+            onRegister={registerFromQueue}
+            onSkip={skipFromQueue}
+          />
+        </div>
+      )}
+
+      {tab === 'manual' && (
+      <>
       {/* 1단계: 붙여넣기 */}
       <section className="mb-4 rounded-2xl border border-brand-200 bg-brand-50/50 p-4">
         <h2 className="flex items-center gap-1.5 text-sm font-bold text-brand-800">
@@ -508,6 +572,9 @@ export default function AdminTool() {
           </div>
         </div>
       </section>
+
+      </>
+      )}
 
       {/* 3단계: 목록 */}
       <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">

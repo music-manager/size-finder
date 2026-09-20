@@ -1,7 +1,9 @@
 import rawProducts from '@/data/products.json';
+import rawPending from '@/data/pending.json';
 import { CATEGORY_MATCH } from './categories';
 import type {
   CategoryId,
+  PendingProduct,
   DimensionBounds,
   Filters,
   Product,
@@ -9,6 +11,9 @@ import type {
 } from './types';
 
 export const products = rawProducts as Product[];
+
+/** 치수 입력을 기다리는 자동 수집 상품 */
+export const pendingProducts = rawPending as PendingProduct[];
 
 /** 슬라이더 최대값: 실데이터 최대치를 10cm 단위로 올림 (여유 10cm) */
 function ceilTo10(value: number): number {

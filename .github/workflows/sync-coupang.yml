@@ -1,0 +1,69 @@
+name: 쿠팡 상품 수집
+
+on:
+  schedule:
+    # 매일 한국시간 새벽 5시 (UTC 20:00)
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '파일을 쓰지 않고 결과만 확인'
+        type: boolean
+        default: false
+
+# 동시에 두 번 돌면 같은 파일을 서로 덮어쓴다
+concurrency:
+  group: sync-coupang
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 상품 수집
+        env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
+          SYNC_LIMIT: '20'
+          SYNC_MAX_RANK: '20'
+          SYNC_ROCKET_ONLY: 'true'
+        run: |
+          node scripts/sync-coupang.mjs ${{ inputs.dry_run && '--dry-run' || '' }} | tee sync-report.txt
+
+      - name: 데이터 검증
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+          npm run build
+
+      - name: 변경분 커밋
+        if: ${{ !inputs.dry_run }}
+        run: |
+          if git diff --quiet src/data; then
+            echo "변경 없음 — 커밋하지 않습니다."
+            exit 0
+          fi
+          git config user.name "cmpick-bot"
+          git config user.email "ktntopia@gmail.com"
+          git add src/data/products.json src/data/pending.json
+          git commit -F - <<'MSG'
+          chore: 쿠팡 상품 자동 수집
+
+          $(cat sync-report.txt)
+          MSG
+          git push origin main
+
+      - name: 수집 결과 요약
+        if: always()
+        run: cat sync-report.txt >> $GITHUB_STEP_SUMMARY || true
