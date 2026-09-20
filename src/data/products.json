@@ -304,6 +304,28 @@
     "priceCheckedAt": "2026-09-19"
   },
   {
+    "id": "dry-008",
+    "name": "마이디어 미니 건조기 MDD02A25 2.5kg",
+    "category": "dryer",
+    "brand": "마이디어",
+    "dimensions": {
+      "width": 52,
+      "depth": 43.4,
+      "height": 64
+    },
+    "capacity_or_spec": "2.5kg · MDD02A25/WB-KR · 직접설치",
+    "imageUrl": "https://t5c.coupangcdn.com/thumbnails/remote/492x492ex/image/retail/images/445398865857735-e536ece9-c621-4dd8-89fe-9a0b010574b0.jpg",
+    "coupangUrl": "https://link.coupang.com/a/hccXPGgZbg",
+    "tags": [
+      "초소형",
+      "직접설치",
+      "1인가구"
+    ],
+    "verified": true,
+    "price": 201270,
+    "priceCheckedAt": "2026-09-20"
+  },
+  {
     "id": "mic-001",
     "name": "쿠쿠 전자레인지 20L 화이트",
     "category": "microwave",
