@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { ALL_KEYWORDS } from './keywords.mjs';
+import { findMockLeaks } from './coordinator/mockCatalog.mjs';
 
 const LAST_RESULTS = [null, 'ok', 'rate_limited', 'aborted'];
 
@@ -131,6 +132,13 @@ export function validateData({ products, pending, state, totalKeywords = ALL_KEY
     ...products.map((item, index) => ({ item, where: 'products', index })),
     ...pending.map((item, index) => ({ item, where: 'pending', index })),
   ];
+  // 개발용 가짜 상품이 운영 데이터에 섞이면 안 된다
+  for (const [list, where] of [[products, 'products'], [pending, 'pending']]) {
+    for (const leak of findMockLeaks(list)) {
+      errors.push(`${where}: 개발용 mock 상품이 운영 데이터에 섞였습니다 (id: ${JSON.stringify(leak?.id)})`);
+    }
+  }
+
   checkDuplicates(entries, 'id', errors);
   // 손으로 채운 기존 상품에는 productId 가 없으므로 있는 것끼리만 본다
   checkDuplicates(entries, 'productId', errors, { skipMissing: true });

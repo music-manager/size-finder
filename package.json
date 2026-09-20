@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "test": "node --test scripts/*.test.mjs",
+    "validate": "node scripts/validate-data.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
