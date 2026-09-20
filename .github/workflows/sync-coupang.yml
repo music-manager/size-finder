@@ -90,6 +90,13 @@ jobs:
             | tee sync-report.txt || status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
 
+      # 수집 결과가 망가졌으면 여기서 멈춘다. 빌드를 다시 돌리지 않고
+      # 파일 구조만 보므로 쿠팡 API 를 추가로 부르지 않는다.
+      # 이 스텝이 실패하면 아래 '변경분 커밋' 은 실행되지 않아
+      # 잘못된 데이터가 main 으로 넘어가지 않는다.
+      - name: 데이터 검증
+        run: node scripts/validate-data.mjs
+
       - name: 변경분 커밋
         if: ${{ !inputs.dry_run }}
         run: |
