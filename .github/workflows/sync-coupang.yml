@@ -1,9 +1,8 @@
 name: 쿠팡 상품 수집
 
 on:
-  schedule:
-    # 매일 한국시간 새벽 5시 (UTC 20:00)
-    - cron: '0 20 * * *'
+  # 쿠팡 Search API 호출 제한 위반으로 자동 스케줄을 일시중지한다.
+  # 안전한 배치 수집 구조를 반영한 뒤 다시 활성화한다.
   workflow_dispatch:
     inputs:
       dry_run:
