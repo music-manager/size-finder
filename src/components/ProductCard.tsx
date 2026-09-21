@@ -190,11 +190,12 @@ export default function ProductCard({
             <p className="text-[11px] font-medium text-slate-400">쿠팡에서 가격 확인</p>
           )}
 
+          {/* 센치픽 밖(쿠팡)으로 나가는 유일한 버튼이라 브랜드 파랑과 색을 나눈다 */}
           <a
             href={product.coupangUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-brand-600 py-2.5 text-[13px] font-bold text-white transition hover:bg-brand-700 active:scale-[0.99]"
+            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-orange-500 py-2.5 text-[13px] font-bold text-white transition hover:bg-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             쿠팡에서 보기
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
