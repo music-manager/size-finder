@@ -29,6 +29,17 @@
 }
 
 @layer components {
+  /* 숫자 스피너가 좁은 화면에서 자릿수를 밀어내 값이 잘렸다 */
+  .dim-number::-webkit-outer-spin-button,
+  .dim-number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .dim-number {
+    -moz-appearance: textfield;
+  }
+
   .dim-slider {
     @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200;
   }

@@ -7,9 +7,11 @@ import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
 import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
 import {
   DOOR_CLEARANCE_CM,
+  effectiveDepth,
   formatCm,
   needsDoorClearance,
 } from '@/lib/products';
+import { fitClearance, fitLabel, isTightFit, type DimensionTriple } from '@/lib/fit';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
 import type { Product } from '@/lib/types';
 
@@ -17,12 +19,21 @@ interface Props {
   product: Product;
   /** 도어 개폐 공간 포함 필터가 켜져 있는지 */
   doorClearance?: boolean;
+  /**
+   * 사용자가 실제로 치수를 좁혔을 때만 넘어온다.
+   * 넘어오면 "얼마나 여유 있게 들어가는지" 를 카드에 표시한다.
+   */
+  fitContext?: DimensionTriple;
 }
 
 /** 태그에서 배지로 승격시킬 항목 — 커머스 관습대로 배송 조건을 가장 먼저 보여준다 */
 const ROCKET_TAG = '로켓배송';
 
-export default function ProductCard({ product, doorClearance = false }: Props) {
+export default function ProductCard({
+  product,
+  doorClearance = false,
+  fitContext,
+}: Props) {
   const { width, depth, height } = product.dimensions;
   // 큰 썸네일을 먼저 시도하고, 그 해상도가 없는 상품이면 쿠팡이 준 원본으로
   // 되돌아간다. 둘 다 실패해야 플레이스홀더로 넘어간다.
@@ -37,6 +48,18 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
   const showImage = Boolean(imageSrc);
 
   const showDoorNote = doorClearance && needsDoorClearance(product);
+
+  // 도어 여유를 켰다면 그만큼 더 깊은 자리가 필요하므로 같은 기준으로 비교한다
+  const clearance = fitContext
+    ? fitClearance({
+        width,
+        depth: effectiveDepth(product, doorClearance),
+        height,
+        maxWidth: fitContext.maxWidth,
+        maxDepth: fitContext.maxDepth,
+        maxHeight: fitContext.maxHeight,
+      })
+    : null;
   const isRocket = product.tags.includes(ROCKET_TAG);
   const restTags = product.tags.filter((t) => t !== ROCKET_TAG);
 
@@ -125,6 +148,18 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
           <p className="text-center text-[9px] font-medium text-brand-400">
             가로 × 깊이 × 높이
           </p>
+          {clearance !== null && (
+            <p
+              className={[
+                'mt-1 rounded py-0.5 text-center text-[10px] font-bold',
+                isTightFit(clearance)
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-50 text-emerald-700',
+              ].join(' ')}
+            >
+              내 공간에 {fitLabel(clearance)}
+            </p>
+          )}
           {showDoorNote && (
             <p className="mt-1 rounded bg-white/70 py-0.5 text-center text-[9px] font-bold text-brand-700">
               문 열면 깊이 {formatCm(depth + DOOR_CLEARANCE_CM)}cm 필요
