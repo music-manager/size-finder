@@ -4,12 +4,15 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
-import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
+import ImagePlaceholder from './ImagePlaceholder';
+import { CATEGORY_LABEL } from '@/lib/categories';
 import {
   DOOR_CLEARANCE_CM,
+  effectiveDepth,
   formatCm,
   needsDoorClearance,
 } from '@/lib/products';
+import { fitClearance, fitLabel, isTightFit, type DimensionTriple } from '@/lib/fit';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
 import type { Product } from '@/lib/types';
 
@@ -17,12 +20,21 @@ interface Props {
   product: Product;
   /** 도어 개폐 공간 포함 필터가 켜져 있는지 */
   doorClearance?: boolean;
+  /**
+   * 사용자가 실제로 치수를 좁혔을 때만 넘어온다.
+   * 넘어오면 "얼마나 여유 있게 들어가는지" 를 카드에 표시한다.
+   */
+  fitContext?: DimensionTriple;
 }
 
 /** 태그에서 배지로 승격시킬 항목 — 커머스 관습대로 배송 조건을 가장 먼저 보여준다 */
 const ROCKET_TAG = '로켓배송';
 
-export default function ProductCard({ product, doorClearance = false }: Props) {
+export default function ProductCard({
+  product,
+  doorClearance = false,
+  fitContext,
+}: Props) {
   const { width, depth, height } = product.dimensions;
   // 큰 썸네일을 먼저 시도하고, 그 해상도가 없는 상품이면 쿠팡이 준 원본으로
   // 되돌아간다. 둘 다 실패해야 플레이스홀더로 넘어간다.
@@ -37,6 +49,18 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
   const showImage = Boolean(imageSrc);
 
   const showDoorNote = doorClearance && needsDoorClearance(product);
+
+  // 도어 여유를 켰다면 그만큼 더 깊은 자리가 필요하므로 같은 기준으로 비교한다
+  const clearance = fitContext
+    ? fitClearance({
+        width,
+        depth: effectiveDepth(product, doorClearance),
+        height,
+        maxWidth: fitContext.maxWidth,
+        maxDepth: fitContext.maxDepth,
+        maxHeight: fitContext.maxHeight,
+      })
+    : null;
   const isRocket = product.tags.includes(ROCKET_TAG);
   const restTags = product.tags.filter((t) => t !== ROCKET_TAG);
 
@@ -71,18 +95,11 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
             />
           )
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-slate-100">
-            <span className="text-3xl opacity-40" aria-hidden="true">
-              {CATEGORY_EMOJI[product.category]}
-            </span>
-            <span className="text-[9px] font-medium text-slate-300">
-              사진 준비 중
-            </span>
-          </div>
+          <ImagePlaceholder />
         )}
         {isRocket && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-md bg-sky-500/95 px-1.5 py-[3px] text-[10px] font-bold leading-none text-white">
-            <Rocket className="h-2.5 w-2.5" aria-hidden="true" />
+          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-white/95 px-1.5 py-[3px] text-[9px] font-bold leading-none text-slate-600 shadow-sm">
+            <Rocket className="h-2.5 w-2.5 text-sky-500" aria-hidden="true" />
             로켓배송
           </span>
         )}
@@ -104,7 +121,7 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
         </h3>
 
         {/* 실측 치수 — 이 사이트의 핵심 정보 */}
-        <div className="mt-2.5 rounded-lg bg-brand-50 px-2 py-1.5">
+        <div className="mt-2.5 rounded-lg bg-brand-50/60 px-2 py-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-brand-500">실측 크기</span>
             {product.verified && (
@@ -125,6 +142,18 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
           <p className="text-center text-[9px] font-medium text-brand-400">
             가로 × 깊이 × 높이
           </p>
+          {clearance !== null && (
+            <p
+              className={[
+                'mt-1 rounded py-0.5 text-center text-[10px] font-bold',
+                isTightFit(clearance)
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-50 text-emerald-700',
+              ].join(' ')}
+            >
+              내 공간에 {fitLabel(clearance)}
+            </p>
+          )}
           {showDoorNote && (
             <p className="mt-1 rounded bg-white/70 py-0.5 text-center text-[9px] font-bold text-brand-700">
               문 열면 깊이 {formatCm(depth + DOOR_CLEARANCE_CM)}cm 필요
@@ -161,11 +190,12 @@ export default function ProductCard({ product, doorClearance = false }: Props) {
             <p className="text-[11px] font-medium text-slate-400">쿠팡에서 가격 확인</p>
           )}
 
+          {/* 센치픽 밖(쿠팡)으로 나가는 유일한 버튼이라 브랜드 파랑과 색을 나눈다 */}
           <a
             href={product.coupangUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-rose-500 py-2.5 text-[13px] font-bold text-white transition hover:bg-rose-600 active:scale-[0.99]"
+            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-orange-700 py-2.5 text-[13px] font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
           >
             쿠팡에서 보기
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />

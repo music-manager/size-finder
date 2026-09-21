@@ -42,7 +42,7 @@ export default function PresetChips({
                   'rounded-xl border px-2 py-2.5 text-center transition',
                   active
                     ? 'border-brand-600 bg-brand-50 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-brand-300',
+                    : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50',
                 ].join(' ')}
               >
                 <span
@@ -86,8 +86,8 @@ export default function PresetChips({
                 className={[
                   'shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold transition',
                   active
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-900 hover:text-slate-900',
+                    ? 'border-brand-600 bg-brand-50 text-brand-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700',
                 ].join(' ')}
               >
                 {preset.label}

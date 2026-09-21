@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { BadgeCheck, DoorOpen, ExternalLink, Rocket } from 'lucide-react';
-import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
+import ImagePlaceholder from './ImagePlaceholder';
+import { CATEGORY_LABEL } from '@/lib/categories';
 import {
   DOOR_CLEARANCE_CM,
   ROCKET_TAG,
@@ -91,18 +92,11 @@ export default function ProductDetail({ product }: Props) {
               />
             )
           ) : (
-            <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-slate-100">
-              <span className="text-5xl opacity-40" aria-hidden="true">
-                {CATEGORY_EMOJI[product.category]}
-              </span>
-              <span className="text-[11px] font-medium text-slate-300">
-                사진 준비 중
-              </span>
-            </div>
+            <ImagePlaceholder size="lg" />
           )}
           {isRocket && (
-            <span className="absolute left-3 top-3 inline-flex items-center gap-0.5 rounded-md bg-sky-500/95 px-2 py-1 text-[11px] font-bold leading-none text-white">
-              <Rocket className="h-3 w-3" aria-hidden="true" />
+            <span className="absolute left-3 top-3 inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-white/95 px-2 py-1 text-[10px] font-bold leading-none text-slate-600 shadow-sm">
+              <Rocket className="h-3 w-3 text-sky-500" aria-hidden="true" />
               로켓배송
             </span>
           )}
@@ -205,7 +199,7 @@ export default function ProductDetail({ product }: Props) {
               href={product.coupangUrl}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-rose-500 py-3.5 text-sm font-bold text-white transition hover:bg-rose-600 active:scale-[0.99]"
+              className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-700 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               쿠팡에서 보기
               <ExternalLink className="h-4 w-4" aria-hidden="true" />

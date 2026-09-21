@@ -92,11 +92,13 @@ export default function MobileFilterDrawer({
             </div>
 
             <div className="px-4 pt-4">
+              {/* 드로어를 열면 히어로가 화면 밖이므로 여기서는 3축을 유지한다 */}
               <FilterPanel
                 filters={filters}
                 dirty={dirty}
                 onPatch={onPatch}
                 onReset={onReset}
+                showDimensions
               />
             </div>
 

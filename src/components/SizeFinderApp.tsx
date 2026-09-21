@@ -1,12 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CategoryTabs from './CategoryTabs';
+import CurrentSpaceSummary from './CurrentSpaceSummary';
 import FilterPanel from './FilterPanel';
+import HeroSizeFinder from './HeroSizeFinder';
 import MobileFilterDrawer from './MobileFilterDrawer';
 import PresetChips from './PresetChips';
 import ProductGrid from './ProductGrid';
+import QuickSpaceFinder from './QuickSpaceFinder';
 import ShareButton from './ShareButton';
 import SortSelect from './SortSelect';
 import { CATEGORIES } from '@/lib/categories';
@@ -23,6 +26,7 @@ import {
   type RoomPreset,
   type SpecPreset,
 } from '@/lib/presets';
+import { isSizeFilterActive } from '@/lib/fit';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
 import type { Filters, SortKey, TabId } from '@/lib/types';
 
@@ -34,6 +38,8 @@ export default function SizeFinderApp() {
     paramsToFilters(new URLSearchParams(searchParams.toString())),
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const resultsRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   // 상태 -> URL 반영. 슬라이더 드래그마다 호출되면 사파리가 replaceState 를
   // 스로틀링하므로 짧게 디바운스한다.
@@ -80,6 +86,26 @@ export default function SizeFinderApp() {
 
   const dirty = isFilterDirty(filters);
 
+  // 기본값 그대로면 "최소 100cm 여유" 같은 쓸모없는 문구를 띄우지 않는다
+  const sizeFilterActive = isSizeFilterActive(filters, DEFAULT_FILTERS);
+  const fitContext = sizeFilterActive
+    ? {
+        maxWidth: filters.maxWidth,
+        maxDepth: filters.maxDepth,
+        maxHeight: filters.maxHeight,
+      }
+    : undefined;
+
+  /** 히어로 CTA — 페이지를 다시 불러오지 않고 결과로 내려보낸다 */
+  const scrollToResults = useCallback(() => {
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  /** 사이드바의 "치수 수정" — 입력이 있는 히어로로 되돌려 보낸다 */
+  const scrollToHero = useCallback(() => {
+    heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const handleCategory = useCallback(
     (category: TabId) => patchFilters({ category }),
     [patchFilters],
@@ -88,31 +114,37 @@ export default function SizeFinderApp() {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-16">
-      <section className="rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 px-4 py-3.5 text-white sm:px-6 sm:py-4">
-        <h1 className="text-[15px] font-extrabold leading-snug sm:text-lg">
-          줄자로 잰 숫자만 넣으세요. 들어가는 제품만 남습니다.
-        </h1>
-        <p className="mt-0.5 text-[11px] leading-relaxed text-brand-100 sm:text-xs">
-          원룸·자취방 빈틈에 맞는 가전·가구를 가로(W) × 깊이(D) × 높이(H)로 골라드립니다.
-        </p>
-      </section>
+    <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-8">
+      <div ref={heroRef} className="scroll-mt-20">
+        <HeroSizeFinder
+          filters={filters}
+          resultCount={visible.length}
+          onPatch={patchFilters}
+          onSubmit={scrollToResults}
+        />
+      </div>
 
-      {/* 필터를 왼쪽 최상단에 두어 3축 슬라이더가 스크롤 없이 보이게 한다 */}
+      <div className="mt-5">
+        <QuickSpaceFinder value={filters.category} onSelect={handleCategory} />
+      </div>
+
       <div className="mt-4 lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:gap-6">
-        {/* 데스크톱: 스티키 사이드 필터 */}
+        {/* 데스크톱: 스티키 사이드 필터.
+            치수 입력은 히어로 한 곳에만 두고, 여기서는 요약 + 상세 조건만. */}
         <aside className="hidden lg:block">
-          <div className="sticky top-20">
+          <div className="sticky top-20 space-y-3">
+            <CurrentSpaceSummary filters={filters} onEdit={scrollToHero} />
             <FilterPanel
               filters={filters}
               dirty={dirty}
               onPatch={patchFilters}
               onReset={resetFilters}
+              showDimensions={false}
             />
           </div>
         </aside>
 
-        <section>
+        <section ref={resultsRef} id="results" className="scroll-mt-24">
           <PresetChips
             filters={filters}
             onRoomPreset={handleRoomPreset}
@@ -128,12 +160,12 @@ export default function SizeFinderApp() {
           </div>
 
           <div className="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-bold text-slate-900">
-              검색 결과 <span className="text-brand-600">{visible.length}</span>
-              개
-              <span className="ml-2 text-xs font-normal text-slate-400">
-                최대 {filters.maxWidth} × {filters.maxDepth} ×{' '}
-                {filters.maxHeight} cm 이하
+            <p className="min-w-0 text-sm font-bold text-slate-900">
+              {sizeFilterActive ? '내 공간에 맞는 상품 ' : '검색 결과 '}
+              <span className="text-brand-600">{visible.length}</span>개
+              <span className="ml-2 block text-xs font-normal tabular-nums text-slate-400 sm:ml-2 sm:inline">
+                {filters.maxWidth} × {filters.maxDepth} × {filters.maxHeight}cm
+                이하
               </span>
             </p>
             <div className="flex items-center gap-2">
@@ -148,6 +180,7 @@ export default function SizeFinderApp() {
           <ProductGrid
             products={visible}
             doorClearance={filters.doorClearance}
+            fitContext={fitContext}
             onReset={resetFilters}
           />
         </section>

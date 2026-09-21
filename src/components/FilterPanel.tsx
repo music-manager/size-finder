@@ -11,6 +11,14 @@ interface Props {
   dirty: boolean;
   onPatch: (patch: Partial<Filters>) => void;
   onReset: () => void;
+  /**
+   * 가로·깊이·높이 슬라이더 표시 여부.
+   *
+   * 데스크톱에서는 히어로에 같은 3축 입력이 이미 있어 사이드바까지 띄우면
+   * "어느 쪽이 진짜인지" 헷갈린다. 그래서 데스크톱 사이드바는 false 로 두고
+   * 모바일 드로어는(히어로가 스크롤 밖으로 나가므로) 기본값 true 를 쓴다.
+   */
+  showDimensions?: boolean;
 }
 
 export default function FilterPanel({
@@ -18,6 +26,7 @@ export default function FilterPanel({
   dirty,
   onPatch,
   onReset,
+  showDimensions = true,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -29,7 +38,7 @@ export default function FilterPanel({
       <div className="space-y-3.5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="whitespace-nowrap text-sm font-bold text-slate-900">
-            📐 내 공간 최대 치수
+            {showDimensions ? '📐 내 공간 최대 치수' : '⚙️ 상세 조건'}
           </h2>
           <button
             type="button"
@@ -42,32 +51,41 @@ export default function FilterPanel({
           </button>
         </div>
 
-        <DimensionSlider
-          label="최대 가로"
-          hint="W"
-          value={filters.maxWidth}
-          min={DIMENSION_MIN}
-          max={DIMENSION_BOUNDS.width}
-          onChange={(maxWidth) => onPatch({ maxWidth })}
-        />
-        <DimensionSlider
-          label="최대 깊이"
-          hint="D"
-          value={filters.maxDepth}
-          min={DIMENSION_MIN}
-          max={DIMENSION_BOUNDS.depth}
-          onChange={(maxDepth) => onPatch({ maxDepth })}
-        />
-        <DimensionSlider
-          label="최대 높이"
-          hint="H"
-          value={filters.maxHeight}
-          min={DIMENSION_MIN}
-          max={DIMENSION_BOUNDS.height}
-          onChange={(maxHeight) => onPatch({ maxHeight })}
-        />
+        {showDimensions && (
+          <>
+            <DimensionSlider
+              label="최대 가로"
+              hint="W"
+              value={filters.maxWidth}
+              min={DIMENSION_MIN}
+              max={DIMENSION_BOUNDS.width}
+              onChange={(maxWidth) => onPatch({ maxWidth })}
+            />
+            <DimensionSlider
+              label="최대 깊이"
+              hint="D"
+              value={filters.maxDepth}
+              min={DIMENSION_MIN}
+              max={DIMENSION_BOUNDS.depth}
+              onChange={(maxDepth) => onPatch({ maxDepth })}
+            />
+            <DimensionSlider
+              label="최대 높이"
+              hint="H"
+              value={filters.maxHeight}
+              min={DIMENSION_MIN}
+              max={DIMENSION_BOUNDS.height}
+              onChange={(maxHeight) => onPatch({ maxHeight })}
+            />
+          </>
+        )}
 
-        <div className="space-y-2 border-t border-slate-100 pt-3">
+        <div
+          className={[
+            'space-y-2',
+            showDimensions ? 'border-t border-slate-100 pt-3' : '',
+          ].join(' ')}
+        >
           <label className="flex cursor-pointer items-start gap-2">
             <input
               type="checkbox"
@@ -101,10 +119,12 @@ export default function FilterPanel({
           </label>
         </div>
 
-        <p className="rounded-lg bg-brand-50 px-3 py-2 text-[11px] leading-relaxed text-brand-800">
-          💡 벽·문틀 여유를 위해 실측값에서 2~5cm 빼고 입력하면 설치 실패를
-          막을 수 있어요.
-        </p>
+        {showDimensions && (
+          <p className="rounded-lg bg-brand-50 px-3 py-2 text-[11px] leading-relaxed text-brand-800">
+            💡 벽·문틀 여유를 위해 실측값에서 2~5cm 빼고 입력하면 설치 실패를
+            막을 수 있어요.
+          </p>
+        )}
       </div>
     </div>
   );

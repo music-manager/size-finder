@@ -62,7 +62,8 @@ export default function HomePage() {
           <SizeFinderApp />
         </Suspense>
       </main>
-      <Footer />
+      {/* 홈에는 모바일 하단 고정 필터 바가 있다 */}
+      <Footer hasMobileBottomBar />
     </>
   );
 }

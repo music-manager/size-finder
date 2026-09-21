@@ -3,24 +3,23 @@ import type { CategoryId, TabId } from './types';
 export interface CategoryMeta {
   id: TabId;
   label: string;
-  emoji: string;
 }
 
 /** 필터 탭에 노출되는 카테고리 목록 (순서 고정) */
 export const CATEGORIES: CategoryMeta[] = [
-  { id: 'all', label: '전체', emoji: '🏠' },
-  { id: 'refrigerator', label: '소형냉장고', emoji: '🧊' },
-  { id: 'washing_machine', label: '미니세탁기', emoji: '🫧' },
-  { id: 'dryer', label: '미니건조기', emoji: '🌀' },
-  { id: 'dishwasher', label: '미니식기세척기', emoji: '🍽️' },
-  { id: 'microwave', label: '전자레인지장', emoji: '🍚' },
-  { id: 'desk', label: '책상/선반', emoji: '🪑' },
-  { id: 'folding_table', label: '접이식테이블', emoji: '🍱' },
-  { id: 'niche', label: '틈새수납/트롤리', emoji: '🧺' },
-  { id: 'bed', label: '침대', emoji: '🛏️' },
-  { id: 'sofa', label: '소파/좌식', emoji: '🛋️' },
-  { id: 'hanger', label: '행거/옷장', emoji: '👕' },
-  { id: 'shoe_rack', label: '신발장', emoji: '👟' },
+  { id: 'all', label: '전체' },
+  { id: 'refrigerator', label: '소형냉장고' },
+  { id: 'washing_machine', label: '미니세탁기' },
+  { id: 'dryer', label: '미니건조기' },
+  { id: 'dishwasher', label: '미니식기세척기' },
+  { id: 'microwave', label: '전자레인지장' },
+  { id: 'desk', label: '책상/선반' },
+  { id: 'folding_table', label: '접이식테이블' },
+  { id: 'niche', label: '틈새수납/트롤리' },
+  { id: 'bed', label: '침대' },
+  { id: 'sofa', label: '소파/좌식' },
+  { id: 'hanger', label: '행거/옷장' },
+  { id: 'shoe_rack', label: '신발장' },
 ];
 
 /**
@@ -66,20 +65,3 @@ const TAB_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
 export function isTabId(value: string | null | undefined): value is TabId {
   return !!value && TAB_IDS.has(value);
 }
-
-/** 카드 상단에 붙는 카테고리 이모지 (사진을 생략한 카드의 시각적 단서) */
-export const CATEGORY_EMOJI: Record<CategoryId, string> = {
-  refrigerator: '🧊',
-  washing_machine: '🫧',
-  dryer: '🌀',
-  microwave: '🍚',
-  desk: '🪑',
-  shelf: '🗄️',
-  bed: '🛏️',
-  hanger: '👕',
-  niche: '🧺',
-  sofa: '🛋️',
-  dishwasher: '🍽️',
-  folding_table: '🍱',
-  shoe_rack: '👟',
-};
