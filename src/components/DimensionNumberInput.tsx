@@ -12,6 +12,17 @@ interface Props {
   min: number;
   max: number;
   onChange: (next: number) => void;
+  /** 바깥 래퍼에 덧붙일 클래스 */
+  className?: string;
+  /** 라벨에 덧붙일 클래스 */
+  labelClassName?: string;
+  /**
+   * 입력 상자에 덧붙일 클래스.
+   *
+   * 데스크톱에서 세 칸을 하나의 측정 패널로 묶을 때, 칸마다 있는 테두리를
+   * 바깥에서 지우기 위해 쓴다. 모바일은 칸별 테두리를 그대로 둔다.
+   */
+  boxClassName?: string;
 }
 
 /**
@@ -27,6 +38,9 @@ export default function DimensionNumberInput({
   min,
   max,
   onChange,
+  className,
+  labelClassName,
+  boxClassName,
 }: Props) {
   const id = useId();
   const [draft, setDraft] = useState(String(value));
@@ -48,16 +62,28 @@ export default function DimensionNumberInput({
   };
 
   return (
-    <div className="flex-1">
+    <div className={['flex-1', className].filter(Boolean).join(' ')}>
       <label
         htmlFor={id}
-        className="block text-xs font-bold text-slate-600 sm:text-[13px]"
+        className={[
+          'block text-xs font-bold text-slate-600 sm:text-[13px]',
+          labelClassName,
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {label}{' '}
         <span className="font-extrabold text-brand-600">{axis}</span>
       </label>
 
-      <div className="mt-1.5 flex items-baseline rounded-xl border border-slate-300 bg-white px-2 py-2 transition focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-200 sm:px-2.5">
+      <div
+        className={[
+          'mt-1.5 flex items-baseline rounded-xl border border-slate-300 bg-white px-2 py-2 transition focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-200 sm:px-2.5',
+          boxClassName,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         <input
           id={id}
           type="number"

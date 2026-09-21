@@ -32,26 +32,28 @@ export default function HeroSizeFinder({
   onSubmit,
 }: Props) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-brand-100 bg-brand-50/70">
+    <section className="overflow-hidden rounded-2xl border border-amber-200/70 bg-[#FFF8E8]">
       <div className="grid gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center lg:gap-8 lg:px-8 lg:py-8">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-[11px] font-bold text-white shadow-sm">
             <Ruler className="h-3.5 w-3.5" aria-hidden="true" />
-            실측 기반 검색
+            원룸·자취방 실측 검색
           </p>
 
           <h1 className="mt-2.5 text-xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px] lg:text-[36px]">
-            줄자로 잰 숫자만 넣으세요.
+            빈 공간, 몇 cm인가요?
             <br />
-            <span className="text-brand-700">들어가는 제품만</span> 남습니다.
+            <span className="text-brand-700">들어가는 제품만</span> 남깁니다.
           </h1>
 
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600 sm:text-[15px]">
-            원룸·자취방의 빈 공간을 재고 가로 × 깊이 × 높이를 입력하세요.
+            줄자로 잰 가로 × 깊이 × 높이를 그대로 넣어 보세요.
           </p>
 
-          {/* 이 사이트의 핵심 입력 — 모바일에서도 접히지 않게 한 줄에 셋 */}
-          <div className="mt-4 flex items-start gap-2 sm:gap-3">
+          {/* 이 사이트의 핵심 입력 — 모바일에서도 접히지 않게 한 줄에 셋.
+              데스크톱에서는 '폼' 이 아니라 줄자 눈금처럼 보이도록 한 장의
+              얇은 흰 패널로 묶고 칸 사이만 선으로 나눈다. */}
+          <div className="mt-4 flex items-start gap-2 sm:gap-3 lg:gap-0 lg:divide-x lg:divide-slate-200 lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white lg:px-2 lg:py-2.5 lg:shadow-sm">
             <DimensionNumberInput
               label="가로"
               axis="W"
@@ -59,6 +61,9 @@ export default function HeroSizeFinder({
               min={DIMENSION_MIN}
               max={DIMENSION_BOUNDS.width}
               onChange={(maxWidth) => onPatch({ maxWidth })}
+              className="lg:flex lg:items-baseline lg:gap-2 lg:px-3"
+              labelClassName="lg:shrink-0 lg:whitespace-nowrap"
+              boxClassName="lg:mt-0 lg:min-w-0 lg:flex-1 lg:rounded-lg lg:border-transparent lg:bg-transparent lg:px-1 lg:py-1 lg:focus-within:bg-brand-50 lg:focus-within:ring-0"
             />
             <DimensionNumberInput
               label="깊이"
@@ -67,6 +72,9 @@ export default function HeroSizeFinder({
               min={DIMENSION_MIN}
               max={DIMENSION_BOUNDS.depth}
               onChange={(maxDepth) => onPatch({ maxDepth })}
+              className="lg:flex lg:items-baseline lg:gap-2 lg:px-3"
+              labelClassName="lg:shrink-0 lg:whitespace-nowrap"
+              boxClassName="lg:mt-0 lg:min-w-0 lg:flex-1 lg:rounded-lg lg:border-transparent lg:bg-transparent lg:px-1 lg:py-1 lg:focus-within:bg-brand-50 lg:focus-within:ring-0"
             />
             <DimensionNumberInput
               label="높이"
@@ -75,6 +83,9 @@ export default function HeroSizeFinder({
               min={DIMENSION_MIN}
               max={DIMENSION_BOUNDS.height}
               onChange={(maxHeight) => onPatch({ maxHeight })}
+              className="lg:flex lg:items-baseline lg:gap-2 lg:px-3"
+              labelClassName="lg:shrink-0 lg:whitespace-nowrap"
+              boxClassName="lg:mt-0 lg:min-w-0 lg:flex-1 lg:rounded-lg lg:border-transparent lg:bg-transparent lg:px-1 lg:py-1 lg:focus-within:bg-brand-50 lg:focus-within:ring-0"
             />
           </div>
 
@@ -85,11 +96,12 @@ export default function HeroSizeFinder({
               className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-brand-600/25 transition hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 active:scale-[0.99] lg:px-7 lg:py-3.5 lg:text-[15px]"
             >
               <Search className="h-4 w-4" aria-hidden="true" />내 공간에 맞는 상품
-              찾기
+              보기
             </button>
-            <p className="text-[13px] font-semibold text-slate-500">
+            {/* 결과 수는 CTA 를 이기지 않게 한 단계 낮춘다 */}
+            <p className="text-xs font-medium text-slate-500">
               조건에 맞는 상품{' '}
-              <span className="font-extrabold tabular-nums text-brand-600">
+              <span className="font-bold tabular-nums text-slate-700">
                 {resultCount}
               </span>
               개
