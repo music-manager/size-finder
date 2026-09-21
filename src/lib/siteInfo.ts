@@ -8,6 +8,10 @@ export const SITE_OPERATOR = {
   name: '임창호',
   phone: '010-2895-1000',
   email: 'ktntopia@gmail.com',
+  /** 푸터에서 쓰는 역할 표기 */
+  footerRole: '운영·문의',
+  /** 개인정보처리방침에서 쓰는 역할 표기 (개인정보 보호법상 명칭) */
+  privacyRole: '개인정보 보호책임자',
 } as const;
 
 /** 전화 걸기 링크용 (하이픈 제거) */

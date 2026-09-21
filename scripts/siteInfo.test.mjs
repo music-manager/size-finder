@@ -80,11 +80,24 @@ describe('운영자 정보', () => {
     }
   });
 
-  it('푸터가 운영자·문의·개인정보처리방침을 모두 내보낸다', () => {
-    assert.ok(footer.includes('운영자'));
-    assert.ok(footer.includes('문의'));
+  it('역할 표기가 화면마다 정확히 구분된다', () => {
+    // 푸터는 '운영·문의', 방침은 '개인정보 보호책임자'
+    assert.equal(SITE_OPERATOR.footerRole, '운영·문의');
+    assert.equal(SITE_OPERATOR.privacyRole, '개인정보 보호책임자');
+    assert.ok(footer.includes('footerRole'), '푸터가 운영·문의 표기를 쓰지 않는다');
+    assert.ok(privacy.includes('privacyRole'), '방침이 보호책임자 표기를 쓰지 않는다');
+    assert.ok(!footer.includes('개인정보 보호책임자'), '푸터에는 보호책임자 표기를 쓰지 않는다');
+  });
+
+  it('푸터가 연락처·방침 링크·제휴 고지를 모두 내보낸다', () => {
+    assert.ok(footer.includes('OPERATOR_TEL_HREF'));
+    assert.ok(footer.includes('OPERATOR_MAIL_HREF'));
     assert.ok(footer.includes('/privacy'));
     assert.ok(footer.includes('AFFILIATE_NOTICE'));
+  });
+
+  it('푸터가 brand 팔레트로 마감된다', () => {
+    assert.match(footer, /bg-brand-900/, '푸터가 brand 계열 진한 배경이 아니다');
   });
 
   it('쿠팡 파트너스 고지 문구는 정책 문구 그대로다', () => {

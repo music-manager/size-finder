@@ -201,28 +201,45 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="9. 문의처">
-          <ul className="ml-4 list-disc space-y-1">
-            <li>운영자: {SITE_OPERATOR.name}</li>
-            <li>
-              문의:{' '}
-              <a
-                href={OPERATOR_TEL_HREF}
-                className="font-semibold text-brand-700 underline-offset-2 hover:underline"
-              >
-                {SITE_OPERATOR.phone}
-              </a>
-            </li>
-            <li>
-              이메일:{' '}
-              <a
-                href={OPERATOR_MAIL_HREF}
-                className="font-semibold text-brand-700 underline-offset-2 hover:underline"
-              >
-                {SITE_OPERATOR.email}
-              </a>
-            </li>
-          </ul>
+        <Section title="9. 개인정보 보호책임자 및 문의처">
+          <p>
+            개인정보 처리에 관한 문의, 불만, 피해 구제는 아래로 연락해 주세요.
+            확인 후 답변드리겠습니다.
+          </p>
+          <div className="mt-3 rounded-xl border border-brand-100 bg-white px-4 py-4 shadow-sm">
+            <dl className="space-y-2.5">
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <dt className="text-xs font-bold text-slate-500">
+                  {SITE_OPERATOR.privacyRole}
+                </dt>
+                <dd className="text-[15px] font-extrabold text-slate-900">
+                  {SITE_OPERATOR.name}
+                </dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <dt className="text-xs font-bold text-slate-500">문의</dt>
+                <dd>
+                  <a
+                    href={OPERATOR_TEL_HREF}
+                    className="text-[15px] font-extrabold text-brand-700 underline underline-offset-4 hover:text-brand-800"
+                  >
+                    {SITE_OPERATOR.phone}
+                  </a>
+                </dd>
+              </div>
+              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <dt className="text-xs font-bold text-slate-500">이메일</dt>
+                <dd>
+                  <a
+                    href={OPERATOR_MAIL_HREF}
+                    className="break-all text-[15px] font-extrabold text-brand-700 underline underline-offset-4 hover:text-brand-800"
+                  >
+                    {SITE_OPERATOR.email}
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </div>
         </Section>
 
         <Section title="10. 방침 변경">
