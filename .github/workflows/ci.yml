@@ -1,0 +1,37 @@
+name: CI
+
+# Foundation 단계에서는 검증만 돌린다.
+# 쿠팡 수집 workflow 는 만들지 않는다. 실제 호출 권한은 공용 Coordinator 에만 있다.
+# 자세한 정책은 docs/coupang-api-policy.md 를 본다.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    # 쿠팡 인증 정보를 넘기지 않는다. 이 잡은 외부 API 를 부르지 않는다.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      - name: 테스트
+        run: npm run test
+
+      - name: 린트
+        run: npm run lint
+
+      - name: 빌드
+        run: npm run build
+
+      - name: 데이터 검증
+        run: npm run validate

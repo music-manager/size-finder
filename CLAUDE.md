@@ -72,6 +72,29 @@ UI 를 건드렸으면 실제 브라우저로 확인한다. 딥링크(`/?c=dryer
 
 ---
 
+## 쿠팡 API 규칙 (중요)
+
+**이 저장소는 쿠팡 Search API 를 직접 호출하지 않는다.**
+
+센치픽·차종픽·꿀템픽이 같은 파트너스 계정 하나를 쓰기 때문에, 각자 호출하면
+시간당 한도를 넘겨 계정이 막힌다. 실제로 막힌 적이 있다. 실제 호출 권한은
+공용 Coordinator 한 곳에만 둔다. 전체 정책은 `docs/coupang-api-policy.md`.
+
+따라서 이 저장소에 다시 만들면 안 되는 것:
+
+- `fetch('https://api-gateway.coupang.com/...')` 같은 직접 호출
+- 자체 HMAC 서명 (`createHmac`)
+- 실행 코드·Actions 에서 `COUPANG_ACCESS_KEY` / `COUPANG_SECRET_KEY` 사용
+- 쿠팡 수집 workflow, 특히 cron schedule
+- 저장소별 자체 quota 관리
+
+상품 조회가 필요하면 `scripts/coordinator/client.mjs` 만 쓴다. Foundation 단계에서는
+mock 만 동작하고 live 경로는 설정을 줘도 막혀 있다.
+
+`scripts/foundation.test.mjs` 가 위 항목을 매 테스트에서 검사한다. 되살리면 깨진다.
+
+---
+
 ## 하지 말 것
 
 - 제품과 무관한 스톡 이미지를 `imageUrl` 에 넣지 않는다. (신뢰도 훼손)
