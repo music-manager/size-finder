@@ -32,21 +32,21 @@ export default function HeroSizeFinder({
   onSubmit,
 }: Props) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+    <section className="overflow-hidden rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/80 via-white to-sky-50/60 shadow-sm">
       <div className="grid gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center lg:gap-8 lg:px-8 lg:py-8">
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-bold text-brand-700">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-[11px] font-bold text-white shadow-sm">
             <Ruler className="h-3.5 w-3.5" aria-hidden="true" />
             실측 기반 검색
           </p>
 
-          <h1 className="mt-2.5 text-xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px] lg:text-3xl">
+          <h1 className="mt-2.5 text-xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px] lg:text-[36px]">
             줄자로 잰 숫자만 넣으세요.
             <br />
             <span className="text-brand-600">들어가는 제품만</span> 남습니다.
           </h1>
 
-          <p className="mt-2 text-[13px] leading-relaxed text-slate-500 sm:text-sm">
+          <p className="mt-2 text-[13px] leading-relaxed text-slate-600 sm:text-[15px]">
             원룸·자취방의 빈 공간을 재고 가로 × 깊이 × 높이를 입력하세요.
           </p>
 

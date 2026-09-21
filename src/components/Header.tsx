@@ -16,7 +16,7 @@ export default function Header() {
               CmPick
             </span>
           </p>
-          <p className="mt-1 truncate text-[11px] leading-tight text-slate-500 sm:text-xs">
+          <p className="mt-0.5 truncate text-[12px] font-semibold leading-tight text-slate-700 sm:text-[13px]">
             내 원룸 맞춤 가전·가구 실측 검색기
           </p>
         </div>

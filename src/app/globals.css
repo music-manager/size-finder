@@ -15,7 +15,8 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    /* 카드가 흰색이라 바탕은 아주 옅은 blue-gray 로 둬야 서로 구분된다 */
+    @apply bg-[#f4f6fb] text-slate-900 antialiased;
     font-family: var(--font-pretendard);
     word-break: keep-all;
   }
