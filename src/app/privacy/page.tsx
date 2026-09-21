@@ -31,14 +31,17 @@ export const metadata: Metadata = {
  */
 
 function Section({
+  id,
   title,
   children,
 }: {
+  /** 푸터의 '문의' 링크가 /privacy#contact 로 찾아오는 섹션에만 쓴다 */
+  id?: string;
   title: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="mt-8">
+    <section id={id} className="mt-8 scroll-mt-20">
       <h2 className="text-base font-extrabold text-slate-900">{title}</h2>
       <div className="mt-2 space-y-2 text-[13px] leading-relaxed text-slate-600">
         {children}
@@ -201,7 +204,7 @@ export default function PrivacyPage() {
           </p>
         </Section>
 
-        <Section title="9. 개인정보 보호책임자 및 문의처">
+        <Section id="contact" title="9. 개인정보 보호책임자 및 문의처">
           <p>
             개인정보 처리에 관한 문의, 불만, 피해 구제는 아래로 연락해 주세요.
             확인 후 답변드리겠습니다.

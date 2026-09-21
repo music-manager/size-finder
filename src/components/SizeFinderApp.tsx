@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import CategoryTabs from './CategoryTabs';
+import CurrentSpaceSummary from './CurrentSpaceSummary';
 import FilterPanel from './FilterPanel';
 import HeroSizeFinder from './HeroSizeFinder';
 import MobileFilterDrawer from './MobileFilterDrawer';
@@ -38,6 +39,7 @@ export default function SizeFinderApp() {
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
   const resultsRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   // 상태 -> URL 반영. 슬라이더 드래그마다 호출되면 사파리가 replaceState 를
   // 스로틀링하므로 짧게 디바운스한다.
@@ -99,6 +101,11 @@ export default function SizeFinderApp() {
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
+  /** 사이드바의 "치수 수정" — 입력이 있는 히어로로 되돌려 보낸다 */
+  const scrollToHero = useCallback(() => {
+    heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   const handleCategory = useCallback(
     (category: TabId) => patchFilters({ category }),
     [patchFilters],
@@ -108,27 +115,31 @@ export default function SizeFinderApp() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-8">
-      <HeroSizeFinder
-        filters={filters}
-        resultCount={visible.length}
-        onPatch={patchFilters}
-        onSubmit={scrollToResults}
-      />
+      <div ref={heroRef} className="scroll-mt-20">
+        <HeroSizeFinder
+          filters={filters}
+          resultCount={visible.length}
+          onPatch={patchFilters}
+          onSubmit={scrollToResults}
+        />
+      </div>
 
       <div className="mt-5">
         <QuickSpaceFinder value={filters.category} onSelect={handleCategory} />
       </div>
 
-      {/* 필터를 왼쪽 최상단에 두어 3축 슬라이더가 스크롤 없이 보이게 한다 */}
       <div className="mt-4 lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:gap-6">
-        {/* 데스크톱: 스티키 사이드 필터 */}
+        {/* 데스크톱: 스티키 사이드 필터.
+            치수 입력은 히어로 한 곳에만 두고, 여기서는 요약 + 상세 조건만. */}
         <aside className="hidden lg:block">
-          <div className="sticky top-20">
+          <div className="sticky top-20 space-y-3">
+            <CurrentSpaceSummary filters={filters} onEdit={scrollToHero} />
             <FilterPanel
               filters={filters}
               dirty={dirty}
               onPatch={patchFilters}
               onReset={resetFilters}
+              showDimensions={false}
             />
           </div>
         </aside>

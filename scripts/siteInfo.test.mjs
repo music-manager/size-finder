@@ -81,19 +81,41 @@ describe('운영자 정보', () => {
   });
 
   it('역할 표기가 화면마다 정확히 구분된다', () => {
-    // 푸터는 '운영·문의', 방침은 '개인정보 보호책임자'
+    // 연락처를 싣는 곳은 방침 한 곳이므로 보호책임자 표기도 방침에만 있다
     assert.equal(SITE_OPERATOR.footerRole, '운영·문의');
     assert.equal(SITE_OPERATOR.privacyRole, '개인정보 보호책임자');
-    assert.ok(footer.includes('footerRole'), '푸터가 운영·문의 표기를 쓰지 않는다');
     assert.ok(privacy.includes('privacyRole'), '방침이 보호책임자 표기를 쓰지 않는다');
     assert.ok(!footer.includes('개인정보 보호책임자'), '푸터에는 보호책임자 표기를 쓰지 않는다');
   });
 
-  it('푸터가 연락처·방침 링크·제휴 고지를 모두 내보낸다', () => {
-    assert.ok(footer.includes('OPERATOR_TEL_HREF'));
-    assert.ok(footer.includes('OPERATOR_MAIL_HREF'));
-    assert.ok(footer.includes('/privacy'));
+  it('푸터는 연락처를 직접 노출하지 않고 방침으로 넘긴다', () => {
+    // 전화번호·이메일 원문은 크롤링 대상이 되므로 홈 푸터에 두지 않는다
+    assert.ok(
+      !footer.includes('OPERATOR_TEL_HREF'),
+      '푸터가 전화번호를 직접 노출한다',
+    );
+    assert.ok(
+      !footer.includes('OPERATOR_MAIL_HREF'),
+      '푸터가 이메일을 직접 노출한다',
+    );
+    assert.ok(!footer.includes(SITE_OPERATOR.phone));
+    assert.ok(!footer.includes(SITE_OPERATOR.email));
+    assert.ok(footer.includes('/privacy'), '푸터에 방침 링크가 없다');
+    assert.ok(
+      footer.includes('/privacy#contact'),
+      '푸터에 문의(보호책임자) 앵커 링크가 없다',
+    );
     assert.ok(footer.includes('AFFILIATE_NOTICE'));
+  });
+
+  it('방침의 문의처 섹션에 앵커가 있어 푸터 링크가 닿는다', () => {
+    assert.match(
+      privacy,
+      /id="contact"/,
+      '/privacy#contact 로 이동할 앵커가 없다',
+    );
+    assert.ok(privacy.includes('OPERATOR_TEL_HREF'));
+    assert.ok(privacy.includes('OPERATOR_MAIL_HREF'));
   });
 
   it('푸터가 brand 팔레트로 마감된다', () => {

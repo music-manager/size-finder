@@ -1,11 +1,6 @@
 import Link from 'next/link';
 import LogoMark from './LogoMark';
-import {
-  AFFILIATE_NOTICE,
-  OPERATOR_MAIL_HREF,
-  OPERATOR_TEL_HREF,
-  SITE_OPERATOR,
-} from '@/lib/siteInfo';
+import { AFFILIATE_NOTICE } from '@/lib/siteInfo';
 
 interface Props {
   /**
@@ -21,12 +16,12 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
     <footer className="mt-6 bg-brand-900 text-brand-100 sm:mt-8">
       <div
         className={[
-          'mx-auto max-w-7xl px-4 pt-6 sm:px-6 sm:pt-7 lg:px-8 lg:pb-7 lg:pt-8',
+          'mx-auto max-w-7xl px-4 pt-6 sm:px-6 sm:pt-7 lg:px-8 lg:pb-5 lg:pt-6',
           hasMobileBottomBar ? 'pb-28' : 'pb-6 sm:pb-7',
         ].join(' ')}
       >
-        {/* 데스크톱은 2열 — 왼쪽 브랜드, 오른쪽 연락처 */}
-        <div className="grid gap-5 sm:grid-cols-2 sm:gap-8">
+        {/* 데스크톱은 2열 — 왼쪽 브랜드, 오른쪽 링크 */}
+        <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
           <div>
             <div className="flex items-center gap-2.5">
               {/* 진한 파랑 위에서는 심볼을 한 톤 밝게 해야 형태가 산다 */}
@@ -49,57 +44,35 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
             </p>
           </div>
 
-          {/* 운영·문의 — 본인이 공개를 요청한 연락처 */}
-          <div className="sm:text-right">
-            <dl className="text-[13px]">
-              <div className="flex flex-wrap items-baseline gap-x-2 sm:justify-end">
-                <dt className="text-brand-300">{SITE_OPERATOR.footerRole}</dt>
-                <dd className="font-bold text-white">{SITE_OPERATOR.name}</dd>
-              </div>
-              <div className="mt-1.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 sm:justify-end">
-                <dt className="sr-only">전화</dt>
-                <dd>
-                  <a
-                    href={OPERATOR_TEL_HREF}
-                    className="font-bold text-white underline-offset-2 hover:text-brand-200 hover:underline"
-                  >
-                    {SITE_OPERATOR.phone}
-                  </a>
-                </dd>
-                <span className="text-brand-300/60" aria-hidden="true">
-                  ·
-                </span>
-                <dt className="sr-only">이메일</dt>
-                <dd>
-                  <a
-                    href={OPERATOR_MAIL_HREF}
-                    className="break-all font-bold text-white underline-offset-2 hover:text-brand-200 hover:underline"
-                  >
-                    {SITE_OPERATOR.email}
-                  </a>
-                </dd>
-              </div>
-            </dl>
-            <p className="mt-2">
-              <Link
-                href="/privacy"
-                className="text-[13px] font-bold text-brand-200 underline underline-offset-4 transition hover:text-white"
-              >
-                개인정보처리방침
-              </Link>
-            </p>
-          </div>
+          {/* 연락처 원문은 /privacy 의 보호책임자 카드에 둔다.
+              홈 푸터에는 전화번호·이메일을 그대로 노출하지 않는다. */}
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] font-bold sm:justify-end">
+            <Link
+              href="/privacy"
+              className="text-brand-200 underline underline-offset-4 transition hover:text-white"
+            >
+              개인정보처리방침
+            </Link>
+            <Link
+              href="/privacy#contact"
+              className="text-brand-200 underline underline-offset-4 transition hover:text-white"
+            >
+              문의
+            </Link>
+          </nav>
         </div>
 
-        {/* 어두운 배경 안에서 한 톤 밝은 얇은 바로 분리 */}
-        <p className="mt-4 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-[11px] leading-relaxed text-brand-100">
-          {AFFILIATE_NOTICE}
-        </p>
-
-        {/* 위계를 가장 낮게 */}
-        <p className="mt-3 text-[11px] text-brand-300/70">
-          © {new Date().getFullYear()} 센치픽 (CmPick). All rights reserved.
-        </p>
+        {/* 제휴 고지와 저작권을 한 줄에 묶어 푸터가 더 자라지 않게 한다.
+            고지는 쿠팡 파트너스 정책상 필수라 한 톤 밝은 바로 남겨 둔다. */}
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <p className="min-w-0 flex-1 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-[11px] leading-relaxed text-brand-100">
+            {AFFILIATE_NOTICE}
+          </p>
+          {/* 위계를 가장 낮게 */}
+          <p className="shrink-0 text-[11px] text-brand-300/70">
+            © {new Date().getFullYear()} 센치픽 (CmPick). All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );
