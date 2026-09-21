@@ -17,6 +17,13 @@ interface Props {
   /** 라벨에 덧붙일 클래스 */
   labelClassName?: string;
   /**
+   * 축 약자(W/D/H)에 줄 클래스.
+   *
+   * 모바일에서는 라벨이 어두운 히어로 배경 위에, 데스크톱에서는 흰 측정
+   * 패널 안에 놓인다. 같은 색을 쓸 수 없어 바깥에서 정한다.
+   */
+  axisClassName?: string;
+  /**
    * 입력 상자에 덧붙일 클래스.
    *
    * 데스크톱에서 세 칸을 하나의 측정 패널로 묶을 때, 칸마다 있는 테두리를
@@ -40,6 +47,7 @@ export default function DimensionNumberInput({
   onChange,
   className,
   labelClassName,
+  axisClassName = 'font-extrabold text-brand-600',
   boxClassName,
 }: Props) {
   const id = useId();
@@ -72,8 +80,7 @@ export default function DimensionNumberInput({
           .filter(Boolean)
           .join(' ')}
       >
-        {label}{' '}
-        <span className="font-extrabold text-brand-600">{axis}</span>
+        {label} <span className={axisClassName}>{axis}</span>
       </label>
 
       <div
@@ -100,10 +107,10 @@ export default function DimensionNumberInput({
               commit((event.target as HTMLInputElement).value);
             }
           }}
-          className="dim-number w-full min-w-0 bg-transparent text-right text-lg font-extrabold tabular-nums text-slate-900 outline-none sm:text-xl"
+          className="dim-number w-full min-w-0 bg-transparent text-right text-lg font-extrabold tabular-nums text-slate-900 outline-none sm:text-xl lg:text-[26px] lg:leading-tight"
         />
         <span
-          className="ml-1 shrink-0 text-xs font-bold text-slate-400 sm:text-sm"
+          className="ml-1 shrink-0 text-xs font-bold text-slate-400 sm:text-sm lg:text-xs lg:font-semibold"
           aria-hidden="true"
         >
           cm
