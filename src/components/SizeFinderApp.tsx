@@ -107,7 +107,7 @@ export default function SizeFinderApp() {
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-16">
+    <div className="mx-auto max-w-7xl px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-8">
       <HeroSizeFinder
         filters={filters}
         resultCount={visible.length}

@@ -32,7 +32,7 @@ export default function HeroSizeFinder({
   onSubmit,
 }: Props) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-brand-100 bg-gradient-to-br from-brand-50/80 via-white to-sky-50/60 shadow-sm">
+    <section className="overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-100/80 via-brand-50/40 to-sky-50/70 shadow-sm">
       <div className="grid gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center lg:gap-8 lg:px-8 lg:py-8">
         <div className="min-w-0">
           <p className="inline-flex items-center gap-1.5 rounded-full bg-brand-600 px-3 py-1 text-[11px] font-bold text-white shadow-sm">
@@ -43,7 +43,11 @@ export default function HeroSizeFinder({
           <h1 className="mt-2.5 text-xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-[26px] lg:text-[36px]">
             줄자로 잰 숫자만 넣으세요.
             <br />
-            <span className="text-brand-600">들어가는 제품만</span> 남습니다.
+            {/* 형광펜으로 그은 것처럼 아래쪽만 옅게 깔아 문장 흐름을 끊지 않는다 */}
+            <span className="box-decoration-clone bg-[linear-gradient(to_top,#bcdeff_0%,#bcdeff_34%,transparent_34%)] px-0.5 text-brand-700">
+              들어가는 제품만
+            </span>{' '}
+            남습니다.
           </h1>
 
           <p className="mt-2 text-[13px] leading-relaxed text-slate-600 sm:text-[15px]">
@@ -82,7 +86,7 @@ export default function HeroSizeFinder({
             <button
               type="button"
               onClick={onSubmit}
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-brand-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 active:scale-[0.99]"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-brand-600/25 transition hover:bg-brand-700 hover:shadow-lg hover:shadow-brand-600/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 focus-visible:ring-offset-2 active:scale-[0.99] lg:px-7 lg:py-3.5 lg:text-[15px]"
             >
               <Search className="h-4 w-4" aria-hidden="true" />내 공간에 맞는 상품
               찾기
@@ -101,9 +105,12 @@ export default function HeroSizeFinder({
           </p>
         </div>
 
-        {/* 그림은 입력을 밀어내지 않도록 모바일에서 숨긴다 */}
+        {/* 그림은 입력을 밀어내지 않도록 모바일에서 숨긴다.
+            카피·입력이 주인공이므로 패널에 넣어 한 겹 뒤로 물린다. */}
         <div className="hidden lg:block">
-          <SpaceDiagram className="h-auto w-full" />
+          <div className="rounded-2xl border border-brand-100 bg-white/70 p-4">
+            <SpaceDiagram className="h-auto w-full" />
+          </div>
         </div>
       </div>
     </section>
