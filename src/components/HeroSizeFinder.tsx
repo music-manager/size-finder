@@ -32,10 +32,10 @@ export default function HeroSizeFinder({
   onSubmit,
 }: Props) {
   return (
-    <section className="overflow-hidden rounded-2xl bg-[#0B1220]">
+    <section className="overflow-hidden rounded-2xl bg-[#111827]">
       <div className="grid gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center lg:gap-8 lg:px-8 lg:py-7">
         <div className="min-w-0">
-          <p className="inline-flex items-center gap-1.5 rounded-md border border-slate-700 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
             <Ruler className="h-3 w-3" aria-hidden="true" />
             실측 검색
           </p>

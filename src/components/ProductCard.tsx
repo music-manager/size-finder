@@ -4,7 +4,8 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { BadgeCheck, ChevronRight, Rocket } from 'lucide-react';
-import { CATEGORY_EMOJI, CATEGORY_LABEL } from '@/lib/categories';
+import ImagePlaceholder from './ImagePlaceholder';
+import { CATEGORY_LABEL } from '@/lib/categories';
 import {
   DOOR_CLEARANCE_CM,
   effectiveDepth,
@@ -94,18 +95,11 @@ export default function ProductCard({
             />
           )
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-b from-slate-50 to-slate-100">
-            <span className="text-3xl opacity-40" aria-hidden="true">
-              {CATEGORY_EMOJI[product.category]}
-            </span>
-            <span className="text-[9px] font-medium text-slate-300">
-              사진 준비 중
-            </span>
-          </div>
+          <ImagePlaceholder />
         )}
         {isRocket && (
-          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-md bg-sky-500/95 px-1.5 py-[3px] text-[10px] font-bold leading-none text-white">
-            <Rocket className="h-2.5 w-2.5" aria-hidden="true" />
+          <span className="absolute left-2 top-2 inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-white/95 px-1.5 py-[3px] text-[9px] font-bold leading-none text-slate-600 shadow-sm">
+            <Rocket className="h-2.5 w-2.5 text-sky-500" aria-hidden="true" />
             로켓배송
           </span>
         )}
@@ -127,7 +121,7 @@ export default function ProductCard({
         </h3>
 
         {/* 실측 치수 — 이 사이트의 핵심 정보 */}
-        <div className="mt-2.5 rounded-lg bg-brand-50 px-2 py-1.5">
+        <div className="mt-2.5 rounded-lg bg-brand-50/60 px-2 py-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-brand-500">실측 크기</span>
             {product.verified && (
@@ -200,7 +194,7 @@ export default function ProductCard({
             href={product.coupangUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-rose-500 py-2.5 text-[13px] font-bold text-white transition hover:bg-rose-600 active:scale-[0.99]"
+            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-brand-600 py-2.5 text-[13px] font-bold text-white transition hover:bg-brand-700 active:scale-[0.99]"
           >
             쿠팡에서 보기
             <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />

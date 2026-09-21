@@ -66,20 +66,3 @@ const TAB_IDS = new Set<string>(CATEGORIES.map((c) => c.id));
 export function isTabId(value: string | null | undefined): value is TabId {
   return !!value && TAB_IDS.has(value);
 }
-
-/** 카드 상단에 붙는 카테고리 이모지 (사진을 생략한 카드의 시각적 단서) */
-export const CATEGORY_EMOJI: Record<CategoryId, string> = {
-  refrigerator: '🧊',
-  washing_machine: '🫧',
-  dryer: '🌀',
-  microwave: '🍚',
-  desk: '🪑',
-  shelf: '🗄️',
-  bed: '🛏️',
-  hanger: '👕',
-  niche: '🧺',
-  sofa: '🛋️',
-  dishwasher: '🍽️',
-  folding_table: '🍱',
-  shoe_rack: '👟',
-};

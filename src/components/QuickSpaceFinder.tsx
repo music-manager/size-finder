@@ -68,7 +68,7 @@ export default function QuickSpaceFinder({ value, onSelect }: Props) {
                 'flex flex-col items-center gap-1.5 rounded-xl border px-1.5 py-3 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300',
                 active
                   ? 'border-brand-600 bg-brand-50'
-                  : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-slate-50',
+                  : 'border-slate-200 bg-white hover:border-brand-300 hover:bg-brand-50',
               ].join(' ')}
             >
               <Icon
