@@ -199,7 +199,7 @@ export default function ProductDetail({ product }: Props) {
               href={product.coupangUrl}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-600 py-3.5 text-sm font-bold text-white transition hover:bg-orange-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 focus-visible:ring-offset-2 active:scale-[0.99]"
+              className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-700 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
             >
               쿠팡에서 보기
               <ExternalLink className="h-4 w-4" aria-hidden="true" />
