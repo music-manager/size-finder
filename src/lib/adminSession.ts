@@ -7,7 +7,12 @@
  *
  * node:crypto 만 쓴다. 별도 인증 라이브러리를 설치하지 않는다.
  */
-import { createHmac, createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import {
+  createHmac as createSessionHmac,
+  createHash,
+  randomBytes,
+  timingSafeEqual,
+} from 'node:crypto';
 
 export const ADMIN_COOKIE = 'cmpick_admin';
 
@@ -33,8 +38,9 @@ export function isPasswordCorrect(input: unknown, expected: string | undefined):
   return safeEqual(input, expected);
 }
 
+/** 관리자 세션 전용 HMAC. Coupang API 서명과는 무관하다. */
 function sign(payload: string, secret: string): string {
-  return createHmac('sha256', secret).update(payload).digest('hex');
+  return createSessionHmac('sha256', secret).update(payload).digest('hex');
 }
 
 /** 서명된 세션 토큰을 만든다. 비밀번호는 담기지 않는다. */
