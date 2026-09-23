@@ -2,10 +2,13 @@ import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SizeFinderApp from '@/components/SizeFinderApp';
-import { products } from '@/lib/products';
+import { getLiveProducts } from '@/lib/liveCatalog';
+import type { Product } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 /** 검색 결과 리치 스니펫용 구조화 데이터 */
-function StructuredData() {
+function StructuredData({ products }: { products: Product[] }) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
@@ -46,10 +49,12 @@ function StructuredData() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const liveProducts = await getLiveProducts();
+
   return (
     <>
-      <StructuredData />
+      <StructuredData products={liveProducts} />
       <Header />
       <main>
         <Suspense
@@ -59,7 +64,7 @@ export default function HomePage() {
             </div>
           }
         >
-          <SizeFinderApp />
+          <SizeFinderApp initialProducts={liveProducts} />
         </Suspense>
       </main>
       {/* 홈에는 모바일 하단 고정 필터 바가 있다 */}
