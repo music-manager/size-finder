@@ -41,11 +41,16 @@ function rowToProduct(row: DbProductRow): Product {
   };
 }
 
+function verifiedOnly(products: Product[]): Product[] {
+  return products.filter((product) => product.verified);
+}
+
 /**
+ * 관리자용 전체 카탈로그.
  * 정적 seed를 안전한 fallback으로 유지하면서 DB 등록분을 같은 id 기준으로 덮어쓴다.
- * DB 장애 시 사이트 전체가 비는 대신 seed 목록으로 fail-soft 한다.
+ * DB 장애 시 관리자 목록이 비는 대신 seed 목록으로 fail-soft 한다.
  */
-export async function getLiveProducts(): Promise<Product[]> {
+export async function getAllLiveProducts(): Promise<Product[]> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) return seedProducts;
@@ -71,6 +76,14 @@ export async function getLiveProducts(): Promise<Product[]> {
   } catch {
     return seedProducts;
   }
+}
+
+/**
+ * 공개 카탈로그는 제조사/상세페이지에서 치수를 확인한 상품만 노출한다.
+ * verified=false 상품은 관리자에서 '검증 대기'로 관리하며 검색·추천·SEO에는 사용하지 않는다.
+ */
+export async function getLiveProducts(): Promise<Product[]> {
+  return verifiedOnly(await getAllLiveProducts());
 }
 
 export async function getLiveProductById(id: string): Promise<Product | undefined> {

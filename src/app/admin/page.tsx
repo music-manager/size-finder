@@ -5,7 +5,7 @@ import AdminTool from '@/components/AdminTool';
 import AdminLiveBootstrap from '@/components/AdminLiveBootstrap';
 import AdminLoginForm from '@/components/AdminLoginForm';
 import { ADMIN_COOKIE, verifySessionToken } from '@/lib/adminSession';
-import { getLiveProducts } from '@/lib/liveCatalog';
+import { getAllLiveProducts } from '@/lib/liveCatalog';
 import { logout } from './actions';
 
 export const metadata: Metadata = {
@@ -44,7 +44,8 @@ export default async function AdminPage() {
   const token = cookies().get(ADMIN_COOKIE)?.value;
   if (!verifySessionToken(token, secret)) return <AdminLoginForm />;
 
-  const liveProducts = await getLiveProducts();
+  // 관리자는 검증 대기 상품까지 포함한 전체 목록을 본다.
+  const liveProducts = await getAllLiveProducts();
 
   return (
     <>
