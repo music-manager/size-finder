@@ -1,26 +1,15 @@
 /**
- * Coupang API Coordinator 클라이언트.
+ * Coupang API Coordinator client.
  *
- * 센치픽·차종픽·꿀템픽은 하나의 쿠팡 파트너스 계정을 함께 쓴다.
- * 각 사이트가 스스로 Search API 를 부르면 세 배로 부르게 되고, 시간당
- * 한도를 넘겨 계정이 막힌다. 그래서 이 저장소는 쿠팡을 직접 부르지
- * 않는다. 공용 Coordinator 에 요청만 넣고, 실제 호출 권한과 quota,
- * HMAC 서명, circuit breaker 는 전부 Coordinator 가 가진다.
- *
- * 자세한 정책은 docs/coupang-api-policy.md 를 본다.
- *
- * Foundation 단계에서는 Coordinator 가 아직 없다. 그래서 mock 구현만
- * 동작하고 live 경로는 어떤 설정을 줘도 막혀 있다 (fail-closed).
+ * This repo never calls Coupang Search API directly. In live mode it only talks
+ * to the shared Coordinator, which owns quota, queue, cache, circuit breaker
+ * and Coupang credentials.
  */
 import { createHash } from 'node:crypto';
 import { MOCK_CATALOG } from './mockCatalog.mjs';
 
-/** Coordinator 가 아직 없으므로 live 경로는 구현되어 있지 않다. */
-export const FOUNDATION_PHASE = true;
-
+export const FOUNDATION_PHASE = false;
 export const COORDINATOR_MODES = ['mock', 'live'];
-
-/** 이 저장소를 가리키는 프로젝트 이름. Coordinator 가 공정성 계산에 쓴다. */
 export const PROJECT = 'cmpick';
 
 export class LiveModeBlockedError extends Error {
@@ -47,28 +36,18 @@ export class MockInProductionError extends Error {
   }
 }
 
-/**
- * 설정을 읽어 동작 모드를 정한다.
- *
- * 기본값은 언제나 mock 이고 live 는 거짓이다. live 로 가려면 모드와
- * 허용 플래그를 둘 다 명시해야 한다. 둘 중 하나라도 없으면 mock 이다.
- * 애매한 설정을 live 로 해석하지 않는다.
- */
 export function resolveMode(env = process.env) {
   const requested = env.COUPANG_COORDINATOR_MODE ?? 'mock';
   const allowLive = env.ALLOW_COUPANG_LIVE === 'true';
   const wantsLive = requested === 'live';
-
   return {
     requested,
     allowLive,
-    // 명시적 허용이 없으면 live 로 올라가지 않는다
     live: wantsLive && allowLive,
     mode: wantsLive && allowLive ? 'live' : 'mock',
   };
 }
 
-/** 같은 키워드를 두 번 부르지 않도록 Coordinator 가 쓰는 캐시 키. */
 export function keywordHash(keyword, category = '') {
   return createHash('sha256')
     .update(`${String(keyword).trim().toLowerCase()}::${category}`)
@@ -79,36 +58,97 @@ export function keywordHash(keyword, category = '') {
 function assertNotProduction(env) {
   if (env.NODE_ENV === 'production' && env.ALLOW_MOCK_PRODUCTS !== 'true') {
     throw new MockInProductionError(
-      'mock 상품은 개발·테스트 전용입니다. 운영 환경에 mock 을 노출하지 않습니다.',
+      'mock products are development/test only and are blocked in production.',
     );
   }
 }
 
-/**
- * Foundation 단계의 가짜 Coordinator.
- * 네트워크를 쓰지 않고 준비된 목록에서 돌려준다.
- */
 function mockTransport({ keyword, category }) {
-  const hash = keywordHash(keyword, category);
   const matched = MOCK_CATALOG.filter(
     (item) => !category || item.category === category,
   ).slice(0, 10);
-
   return {
-    // 실제로는 Coordinator 가 cached / queued / mock 중 하나를 준다
     status: 'mock',
-    keywordHash: hash,
+    keywordHash: keywordHash(keyword, category),
     products: matched.map((item) => ({ ...item, source: 'mock', isMock: true })),
-    quota: { actualApiCalled: false },
+    actualApiCalled: false,
   };
 }
 
-/**
- * Coordinator 클라이언트를 만든다.
- *
- * transport 를 넘기면 그것을 쓴다 (테스트에서 Coordinator 장애를 흉내낼 때).
- * 넘기지 않으면 mock 구현이 붙는다.
- */
+function liveConfig(env) {
+  const url = String(env.COUPANG_COORDINATOR_URL ?? '').trim();
+  const token = String(env.COUPANG_COORDINATOR_TOKEN ?? '').trim();
+  if (!url || !token) {
+    throw new CoordinatorUnavailableError(
+      'Coordinator live mode requires COUPANG_COORDINATOR_URL and COUPANG_COORDINATOR_TOKEN.',
+    );
+  }
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new CoordinatorUnavailableError('COUPANG_COORDINATOR_URL is invalid.');
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new CoordinatorUnavailableError('Coordinator URL must use HTTPS.');
+  }
+  return { url: parsed.toString(), token };
+}
+
+async function httpCoordinatorTransport({ env, action, project, keyword, category, priority = 0 }) {
+  const { url, token } = liveConfig(env);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5_000);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action, project, keyword, category, priority }),
+      signal: controller.signal,
+    });
+    const text = await response.text();
+    let payload = null;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      throw new CoordinatorUnavailableError(
+        `Coordinator returned invalid JSON (HTTP ${response.status}).`,
+      );
+    }
+    if (!response.ok) {
+      throw new CoordinatorUnavailableError(
+        `Coordinator rejected request (HTTP ${response.status}, ${payload?.error ?? 'unknown'}).`,
+      );
+    }
+    return payload;
+  } catch (error) {
+    if (error instanceof CoordinatorUnavailableError) throw error;
+    if (error?.name === 'AbortError') {
+      throw new CoordinatorUnavailableError('Coordinator request timed out.');
+    }
+    throw new CoordinatorUnavailableError(
+      `Coordinator request failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function assertSafeCoordinatorResult(result) {
+  if (!result || typeof result !== 'object') {
+    throw new CoordinatorUnavailableError('Coordinator response could not be interpreted.');
+  }
+  if (result.actualApiCalled === true || result.quota?.actualApiCalled === true) {
+    throw new LiveModeBlockedError(
+      'Site client received a response indicating a real Coupang call. Site clients are queue/cache only.',
+    );
+  }
+  return result;
+}
+
 export function createCoordinatorClient({
   project = PROJECT,
   env = process.env,
@@ -116,62 +156,65 @@ export function createCoordinatorClient({
 } = {}) {
   const resolved = resolveMode(env);
 
+  const liveCall = async (request) => {
+    const call = transport ?? httpCoordinatorTransport;
+    try {
+      return assertSafeCoordinatorResult(
+        await call({ env, project, ...request }),
+      );
+    } catch (error) {
+      if (
+        error instanceof CoordinatorUnavailableError ||
+        error instanceof LiveModeBlockedError
+      ) {
+        throw error;
+      }
+      throw new CoordinatorUnavailableError(
+        `Coordinator unavailable: ${error instanceof Error ? error.message : 'unknown error'}.`,
+      );
+    }
+  };
+
   return {
     project,
     mode: resolved.mode,
 
-    /**
-     * 키워드 하나에 대한 상품 목록을 Coordinator 에 요청한다.
-     * 이 저장소는 여기서 쿠팡을 직접 부르지 않는다.
-     */
-    async searchProducts({ keyword, category = '', requestId } = {}) {
+    async status() {
+      if (!resolved.live) {
+        return { status: 'mock', actualApiCalled: false };
+      }
+      return await liveCall({ action: 'status' });
+    },
+
+    async enqueueSearch({ keyword, category = '', priority = 0 } = {}) {
       if (typeof keyword !== 'string' || keyword.trim() === '') {
-        throw new TypeError('keyword 는 비어 있지 않은 문자열이어야 합니다.');
+        throw new TypeError('keyword must be a non-empty string.');
       }
-
-      if (resolved.live || FOUNDATION_PHASE === false) {
-        // Coordinator 가 준비되기 전에는 live 경로 자체가 없다.
-        throw new LiveModeBlockedError(
-          'Coordinator live 모드는 아직 구현되지 않았습니다. ' +
-            '이 저장소는 쿠팡 API 를 직접 부르지 않습니다 (docs/coupang-api-policy.md).',
+      if (!resolved.live) {
+        assertNotProduction(env);
+        return assertSafeCoordinatorResult(
+          (transport ?? mockTransport)({ project, keyword, category, priority }),
         );
       }
-
-      assertNotProduction(env);
-
-      const call = transport ?? mockTransport;
-      let result;
-      try {
-        result = await call({ project, keyword, category, requestId });
-      } catch (error) {
-        // Coordinator 상태를 모르면 요청하지 않는다. 직접 호출로 우회하지 않는다.
-        throw new CoordinatorUnavailableError(
-          `Coordinator 에 물어볼 수 없습니다: ${error.message}. ` +
-            '쿠팡 API 를 직접 부르지 않고 그대로 멈춥니다.',
-        );
-      }
-
-      if (!result || typeof result !== 'object') {
-        throw new CoordinatorUnavailableError('Coordinator 응답을 해석할 수 없습니다.');
-      }
-      if (result.quota?.actualApiCalled) {
-        // 이 단계에서 실제 호출이 일어났다면 설계가 깨진 것이다.
-        throw new LiveModeBlockedError(
-          'Foundation 단계에서 실제 쿠팡 API 가 호출됐다고 보고됐습니다.',
-        );
-      }
-
-      return {
-        status: result.status ?? 'mock',
-        products: result.products ?? [],
-        quota: { actualApiCalled: false, ...result.quota, actualApiCalled: false },
-      };
+      return await liveCall({ action: 'enqueue', keyword, category, priority });
     },
 
     /**
-     * 키워드를 Coordinator 큐에 넣는다. 실제 호출 시점은 Coordinator 가 정한다.
-     * Foundation 단계에서는 보낼 곳이 없으므로 보낼 내용만 만들어 돌려준다.
+     * Backward-compatible helper. In live mode this never runs Coupang itself:
+     * it asks Coordinator for cache-or-queue. Cached responses may contain
+     * products; queued responses intentionally return an empty product list.
      */
+    async searchProducts({ keyword, category = '', priority = 0 } = {}) {
+      const result = await this.enqueueSearch({ keyword, category, priority });
+      return {
+        status: result.status ?? (resolved.live ? 'queued' : 'mock'),
+        products: Array.isArray(result.products) ? result.products : [],
+        quota: { actualApiCalled: false },
+        job: result.job ?? null,
+        keywordHash: result.keywordHash ?? keywordHash(keyword, category),
+      };
+    },
+
     buildQueueJob({ keyword, category = '', priority = 0 } = {}) {
       return {
         project,
