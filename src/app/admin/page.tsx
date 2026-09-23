@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { LogOut } from 'lucide-react';
 import AdminTool from '@/components/AdminTool';
+import AdminLiveBootstrap from '@/components/AdminLiveBootstrap';
 import AdminLoginForm from '@/components/AdminLoginForm';
 import { ADMIN_COOKIE, verifySessionToken } from '@/lib/adminSession';
+import { getLiveProducts } from '@/lib/liveCatalog';
 import { logout } from './actions';
 
 export const metadata: Metadata = {
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** 쿠키를 봐야 하므로 캐시하지 않는다 */
+/** 쿠키와 실시간 상품 DB를 보므로 캐시하지 않는다 */
 export const dynamic = 'force-dynamic';
 
 function ConfigError() {
@@ -32,7 +34,7 @@ function ConfigError() {
   );
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
   const password = process.env.ADMIN_PASSWORD;
   const secret = process.env.ADMIN_SESSION_SECRET;
 
@@ -41,6 +43,8 @@ export default function AdminPage() {
 
   const token = cookies().get(ADMIN_COOKIE)?.value;
   if (!verifySessionToken(token, secret)) return <AdminLoginForm />;
+
+  const liveProducts = await getLiveProducts();
 
   return (
     <>
@@ -55,6 +59,7 @@ export default function AdminPage() {
           </button>
         </form>
       </div>
+      <AdminLiveBootstrap products={liveProducts} />
       <AdminTool />
     </>
   );
