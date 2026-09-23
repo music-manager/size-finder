@@ -8,8 +8,8 @@ import type { Product } from './types';
 
 export const SITE_URL = 'https://cmpick.esedy.com';
 
-export function findProduct(id: string): Product | undefined {
-  return products.find((p) => p.id === id);
+export function findProduct(id: string, list: Product[] = products): Product | undefined {
+  return list.find((p) => p.id === id);
 }
 
 /** "49 × 41.8 × 63.1" */
@@ -35,12 +35,16 @@ export function pageDescription(product: Product): string {
 }
 
 /** 부피가 가까운 같은 카테고리 제품 — 대안을 바로 보여줘 이탈을 줄인다 */
-export function similarProducts(product: Product, count = 4): Product[] {
+export function similarProducts(
+  product: Product,
+  count = 4,
+  list: Product[] = products,
+): Product[] {
   const volume = (p: Product) =>
     p.dimensions.width * p.dimensions.depth * p.dimensions.height;
   const base = volume(product);
 
-  return products
+  return list
     .filter((p) => p.id !== product.id && p.category === product.category)
     .sort((a, b) => Math.abs(volume(a) - base) - Math.abs(volume(b) - base))
     .slice(0, count);
