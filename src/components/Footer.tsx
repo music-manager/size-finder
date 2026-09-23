@@ -10,6 +10,17 @@ interface Props {
   hasMobileBottomBar?: boolean;
 }
 
+const FAMILY_SITES = [
+  { label: '생활계산기', href: 'https://esedy.com' },
+  { label: '센치픽', href: 'https://cmpick.esedy.com' },
+  { label: '차종픽', href: 'https://car.esedy.com' },
+  { label: '테슬라픽', href: 'https://teslapick.esedy.com' },
+  { label: '꿀템픽', href: 'https://item.esedy.com' },
+  { label: '펫담다', href: 'https://petdamda.com' },
+] as const;
+
+const CURRENT_SITE = 'https://cmpick.esedy.com';
+
 export default function Footer({ hasMobileBottomBar = false }: Props) {
   return (
     // 헤더·히어로의 brand blue 와 같은 팔레트로 페이지를 닫는다.
@@ -20,7 +31,7 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
           hasMobileBottomBar ? 'pb-28' : 'pb-6 sm:pb-7',
         ].join(' ')}
       >
-        {/* 데스크톱은 2열 — 왼쪽 브랜드, 오른쪽 링크 */}
+        {/* 데스크톱은 2열 — 왼쪽 브랜드, 오른쪽 링크/패밀리사이트 */}
         <div className="grid gap-4 sm:grid-cols-2 sm:gap-8">
           <div>
             <div className="flex items-center gap-2.5">
@@ -46,20 +57,55 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
 
           {/* 연락처 원문은 /privacy 의 보호책임자 카드에 둔다.
               홈 푸터에는 전화번호·이메일을 그대로 노출하지 않는다. */}
-          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] font-bold sm:justify-end">
-            <Link
-              href="/privacy"
-              className="text-brand-200 underline underline-offset-4 transition hover:text-white"
-            >
-              개인정보처리방침
-            </Link>
-            <Link
-              href="/privacy#contact"
-              className="text-brand-200 underline underline-offset-4 transition hover:text-white"
-            >
-              문의
-            </Link>
-          </nav>
+          <div className="flex flex-col gap-3 sm:items-end">
+            <nav className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px] font-bold sm:justify-end">
+              <Link
+                href="/privacy"
+                className="text-brand-200 underline underline-offset-4 transition hover:text-white"
+              >
+                개인정보처리방침
+              </Link>
+              <Link
+                href="/privacy#contact"
+                className="text-brand-200 underline underline-offset-4 transition hover:text-white"
+              >
+                문의
+              </Link>
+            </nav>
+
+            {/* JS 없이 열리는 네이티브 드롭다운. 링크는 일반 a 태그로 남겨
+                검색엔진과 키보드 사용자 모두 접근할 수 있게 한다. */}
+            <details className="group relative w-full sm:w-56">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg border border-white/20 bg-white/10 px-3 text-sm font-bold text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 [&::-webkit-details-marker]:hidden">
+                <span>패밀리사이트 바로가기</span>
+                <span className="text-brand-200 transition group-open:rotate-180" aria-hidden="true">
+                  ▾
+                </span>
+              </summary>
+              <div className="absolute bottom-full right-0 z-20 mb-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl">
+                {FAMILY_SITES.map((site) =>
+                  site.href === CURRENT_SITE ? (
+                    <span
+                      key={site.href}
+                      aria-current="page"
+                      className="flex min-h-11 items-center justify-between px-3 text-sm font-bold text-brand-700"
+                    >
+                      <span>{site.label}</span>
+                      <span className="text-[11px] font-semibold text-brand-500">현재</span>
+                    </span>
+                  ) : (
+                    <a
+                      key={site.href}
+                      href={site.href}
+                      className="flex min-h-11 items-center px-3 text-sm font-semibold text-slate-700 transition hover:bg-brand-50 hover:text-brand-700 focus:bg-brand-50 focus:text-brand-700 focus:outline-none"
+                    >
+                      {site.label}
+                    </a>
+                  ),
+                )}
+              </div>
+            </details>
+          </div>
         </div>
 
         {/* 제휴 고지와 저작권을 한 줄에 묶어 푸터가 더 자라지 않게 한다.
