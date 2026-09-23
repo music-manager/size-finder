@@ -12,12 +12,14 @@ interface Props {
 
 const FAMILY_SITES = [
   { label: '생활계산기', href: 'https://esedy.com' },
-  { label: '센치픽', href: 'https://cmpick.esedy.com', current: true },
+  { label: '센치픽', href: 'https://cmpick.esedy.com' },
   { label: '차종픽', href: 'https://car.esedy.com' },
   { label: '테슬라픽', href: 'https://teslapick.esedy.com' },
   { label: '꿀템픽', href: 'https://item.esedy.com' },
   { label: '펫담다', href: 'https://petdamda.com' },
 ] as const;
+
+const CURRENT_SITE = 'https://cmpick.esedy.com';
 
 export default function Footer({ hasMobileBottomBar = false }: Props) {
   return (
@@ -82,7 +84,7 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
               </summary>
               <div className="absolute bottom-full right-0 z-20 mb-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl">
                 {FAMILY_SITES.map((site) =>
-                  site.current ? (
+                  site.href === CURRENT_SITE ? (
                     <span
                       key={site.href}
                       aria-current="page"
