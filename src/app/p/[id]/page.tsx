@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import ProductDetail from '@/components/ProductDetail';
 import ProductGrid from '@/components/ProductGrid';
 import { products } from '@/lib/products';
+import { getLiveProducts } from '@/lib/liveCatalog';
 import {
   SITE_URL,
   findProduct,
@@ -20,12 +21,15 @@ interface Params {
   params: { id: string };
 }
 
+export const dynamic = 'force-dynamic';
+
 export function generateStaticParams() {
   return products.map((product) => ({ id: product.id }));
 }
 
-export function generateMetadata({ params }: Params): Metadata {
-  const product = findProduct(params.id);
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const catalog = await getLiveProducts();
+  const product = findProduct(params.id, catalog);
   if (!product) return { title: '없는 제품' };
 
   const title = pageTitle(product);
@@ -47,11 +51,12 @@ export function generateMetadata({ params }: Params): Metadata {
   };
 }
 
-export default function ProductPage({ params }: Params) {
-  const product = findProduct(params.id);
+export default async function ProductPage({ params }: Params) {
+  const catalog = await getLiveProducts();
+  const product = findProduct(params.id, catalog);
   if (!product) notFound();
 
-  const similar = similarProducts(product);
+  const similar = similarProducts(product, 4, catalog);
 
   return (
     <>

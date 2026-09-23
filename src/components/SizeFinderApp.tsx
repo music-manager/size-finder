@@ -17,7 +17,7 @@ import {
   DEFAULT_FILTERS,
   filterProducts,
   isFilterDirty,
-  products,
+  products as seedProducts,
   sortProducts,
 } from '@/lib/products';
 import {
@@ -28,10 +28,15 @@ import {
 } from '@/lib/presets';
 import { isSizeFilterActive } from '@/lib/fit';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
-import type { Filters, SortKey, TabId } from '@/lib/types';
+import type { Filters, Product, SortKey, TabId } from '@/lib/types';
 
-export default function SizeFinderApp() {
+interface Props {
+  initialProducts?: Product[];
+}
+
+export default function SizeFinderApp({ initialProducts = seedProducts }: Props) {
   const searchParams = useSearchParams();
+  const catalog = initialProducts;
 
   // 공유 링크로 들어온 경우 URL 쿼리를 초기 상태로 복원한다.
   const [filters, setFilters] = useState<Filters>(() =>
@@ -41,8 +46,6 @@ export default function SizeFinderApp() {
   const resultsRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
 
-  // 상태 -> URL 반영. 슬라이더 드래그마다 호출되면 사파리가 replaceState 를
-  // 스로틀링하므로 짧게 디바운스한다.
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const query = filtersToQueryString(filters);
@@ -68,25 +71,22 @@ export default function SizeFinderApp() {
   }, []);
 
   const visible = useMemo(
-    () => sortProducts(filterProducts(products, filters), filters.sort),
-    [filters],
+    () => sortProducts(filterProducts(catalog, filters), filters.sort),
+    [catalog, filters],
   );
 
-  /** 탭 뱃지 숫자: 카테고리를 제외한 나머지 조건만 적용한 개수 */
   const counts = useMemo(() => {
     const result: Record<string, number> = {};
     for (const category of CATEGORIES) {
-      result[category.id] = filterProducts(products, {
+      result[category.id] = filterProducts(catalog, {
         ...filters,
         category: category.id,
       }).length;
     }
     return result;
-  }, [filters]);
+  }, [catalog, filters]);
 
   const dirty = isFilterDirty(filters);
-
-  // 기본값 그대로면 "최소 100cm 여유" 같은 쓸모없는 문구를 띄우지 않는다
   const sizeFilterActive = isSizeFilterActive(filters, DEFAULT_FILTERS);
   const fitContext = sizeFilterActive
     ? {
@@ -96,12 +96,10 @@ export default function SizeFinderApp() {
       }
     : undefined;
 
-  /** 히어로 CTA — 페이지를 다시 불러오지 않고 결과로 내려보낸다 */
   const scrollToResults = useCallback(() => {
     resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  /** 사이드바의 "치수 수정" — 입력이 있는 히어로로 되돌려 보낸다 */
   const scrollToHero = useCallback(() => {
     heroRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
@@ -129,8 +127,6 @@ export default function SizeFinderApp() {
       </div>
 
       <div className="mt-4 lg:grid lg:grid-cols-[288px_minmax(0,1fr)] lg:gap-6">
-        {/* 데스크톱: 스티키 사이드 필터.
-            치수 입력은 히어로 한 곳에만 두고, 여기서는 요약 + 상세 조건만. */}
         <aside className="hidden lg:block">
           <div className="sticky top-20 space-y-3">
             <CurrentSpaceSummary filters={filters} onEdit={scrollToHero} />
@@ -164,8 +160,7 @@ export default function SizeFinderApp() {
               {sizeFilterActive ? '내 공간에 맞는 상품 ' : '검색 결과 '}
               <span className="text-brand-600">{visible.length}</span>개
               <span className="ml-2 block text-xs font-normal tabular-nums text-slate-400 sm:ml-2 sm:inline">
-                {filters.maxWidth} × {filters.maxDepth} × {filters.maxHeight}cm
-                이하
+                {filters.maxWidth} × {filters.maxDepth} × {filters.maxHeight}cm 이하
               </span>
             </p>
             <div className="flex items-center gap-2">
@@ -186,7 +181,6 @@ export default function SizeFinderApp() {
         </section>
       </div>
 
-      {/* 모바일: 하단 고정 버튼 + 드로어 필터 */}
       <MobileFilterDrawer
         open={drawerOpen}
         resultCount={visible.length}
