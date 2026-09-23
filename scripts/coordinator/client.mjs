@@ -79,8 +79,8 @@ function liveConfig(env) {
   const url = String(env.COUPANG_COORDINATOR_URL ?? '').trim();
   const token = String(env.COUPANG_COORDINATOR_TOKEN ?? '').trim();
   if (!url || !token) {
-    throw new CoordinatorUnavailableError(
-      'Coordinator live mode requires COUPANG_COORDINATOR_URL and COUPANG_COORDINATOR_TOKEN.',
+    throw new LiveModeBlockedError(
+      'Coordinator live mode is blocked until URL and site token are both configured.',
     );
   }
   let parsed;
@@ -125,7 +125,12 @@ async function httpCoordinatorTransport({ env, action, project, keyword, categor
     }
     return payload;
   } catch (error) {
-    if (error instanceof CoordinatorUnavailableError) throw error;
+    if (
+      error instanceof CoordinatorUnavailableError ||
+      error instanceof LiveModeBlockedError
+    ) {
+      throw error;
+    }
     if (error?.name === 'AbortError') {
       throw new CoordinatorUnavailableError('Coordinator request timed out.');
     }
@@ -156,16 +161,14 @@ export function createCoordinatorClient({
 } = {}) {
   const resolved = resolveMode(env);
 
-  const liveCall = async (request) => {
-    const call = transport ?? httpCoordinatorTransport;
+  const safeCall = async (call, request) => {
     try {
-      return assertSafeCoordinatorResult(
-        await call({ env, project, ...request }),
-      );
+      return assertSafeCoordinatorResult(await call({ env, project, ...request }));
     } catch (error) {
       if (
         error instanceof CoordinatorUnavailableError ||
-        error instanceof LiveModeBlockedError
+        error instanceof LiveModeBlockedError ||
+        error instanceof MockInProductionError
       ) {
         throw error;
       }
@@ -173,6 +176,11 @@ export function createCoordinatorClient({
         `Coordinator unavailable: ${error instanceof Error ? error.message : 'unknown error'}.`,
       );
     }
+  };
+
+  const liveCall = async (request) => {
+    const call = transport ?? httpCoordinatorTransport;
+    return await safeCall(call, request);
   };
 
   return {
@@ -190,12 +198,16 @@ export function createCoordinatorClient({
       if (typeof keyword !== 'string' || keyword.trim() === '') {
         throw new TypeError('keyword must be a non-empty string.');
       }
+
       if (!resolved.live) {
         assertNotProduction(env);
-        return assertSafeCoordinatorResult(
-          (transport ?? mockTransport)({ project, keyword, category, priority }),
-        );
+        return await safeCall(transport ?? mockTransport, {
+          keyword,
+          category,
+          priority,
+        });
       }
+
       return await liveCall({ action: 'enqueue', keyword, category, priority });
     },
 
