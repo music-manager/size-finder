@@ -30,7 +30,7 @@ export default function PendingQueue({ doneIds, onRegister, onSkip }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    void fetch('/api/admin/catalog', { cache: 'no-store' })
+    void fetch('/admin/api/catalog', { cache: 'no-store' })
       .then(async (response) => {
         if (!response.ok) throw new Error('대기열 처리 상태를 불러오지 못했습니다.');
         return (await response.json()) as { rows?: PendingStateRow[] };
@@ -85,7 +85,7 @@ export default function PendingQueue({ doneIds, onRegister, onSkip }: Props) {
 
     setBusyId(item.id);
     try {
-      const response = await fetch('/api/admin/catalog', {
+      const response = await fetch('/admin/api/catalog', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -109,7 +109,7 @@ export default function PendingQueue({ doneIds, onRegister, onSkip }: Props) {
     if (!window.confirm('이 상품을 수집 대기열에서 제외할까요?')) return;
     setBusyId(item.id);
     try {
-      const response = await fetch('/api/admin/catalog', {
+      const response = await fetch('/admin/api/catalog', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
