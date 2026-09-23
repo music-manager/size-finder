@@ -224,6 +224,7 @@ export function formatCheckedAt(iso?: string): string {
   return y && m ? `${y}.${m} 기준` : '';
 }
 
+/** 쿠팡 파트너스의 구형 단축 링크와 Search API의 AFFSDP 딥링크를 모두 인정한다. */
 export function hasDeepLink(p: Product): boolean {
-  return p.coupangUrl.includes('link.coupang.com/a/');
+  return /^https:\/\/link\.coupang\.com\/(?:a\/|re\/AFFSDP(?:\?|$))/i.test(p.coupangUrl);
 }
