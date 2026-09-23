@@ -11,12 +11,36 @@ interface Props {
 }
 
 const FAMILY_SITES = [
-  { label: '생활계산기', href: 'https://esedy.com' },
-  { label: '센치픽', href: 'https://cmpick.esedy.com' },
-  { label: '차종픽', href: 'https://car.esedy.com' },
-  { label: '테슬라픽', href: 'https://teslapick.esedy.com' },
-  { label: '꿀템픽', href: 'https://item.esedy.com' },
-  { label: '펫담다', href: 'https://petdamda.com' },
+  {
+    label: '생활계산기',
+    description: '일상 편의 계산기 모음',
+    href: 'https://esedy.com',
+  },
+  {
+    label: '센치픽',
+    description: '가구·가전 실측 치수 비교',
+    href: 'https://cmpick.esedy.com',
+  },
+  {
+    label: '차종픽',
+    description: '자동차 크기·스펙 비교',
+    href: 'https://car.esedy.com',
+  },
+  {
+    label: '테슬라픽',
+    description: '테슬라 실차 정보·스펙',
+    href: 'https://teslapick.esedy.com',
+  },
+  {
+    label: '꿀템픽',
+    description: '생활 꿀템·추천 아이템',
+    href: 'https://item.esedy.com',
+  },
+  {
+    label: '펫담다',
+    description: '반려동물 정보·케어 서비스',
+    href: 'https://petdamda.com',
+  },
 ] as const;
 
 const CURRENT_SITE = 'https://cmpick.esedy.com';
@@ -73,36 +97,62 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
               </Link>
             </nav>
 
-            {/* JS 없이 열리는 네이티브 드롭다운. 링크는 일반 a 태그로 남겨
-                검색엔진과 키보드 사용자 모두 접근할 수 있게 한다. */}
-            <details className="group relative w-full sm:w-56">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg border border-white/20 bg-white/10 px-3 text-sm font-bold text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 [&::-webkit-details-marker]:hidden">
+            {/* 펼치면 서비스명 + 한 줄 설명이 보이는 패밀리사이트 메뉴.
+                현재 사이트는 이동시키지 않고 상태만 표시한다. */}
+            <details className="group relative w-full sm:w-[22rem]">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg border border-white/20 bg-white/10 px-4 text-sm font-bold text-white transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 [&::-webkit-details-marker]:hidden">
                 <span>패밀리사이트 바로가기</span>
-                <span className="text-brand-200 transition group-open:rotate-180" aria-hidden="true">
-                  ▾
+                <span className="text-brand-200 group-open:hidden" aria-hidden="true">
+                  ▼
+                </span>
+                <span className="hidden text-brand-200 group-open:inline" aria-hidden="true">
+                  ▲
                 </span>
               </summary>
-              <div className="absolute bottom-full right-0 z-20 mb-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl">
-                {FAMILY_SITES.map((site) =>
-                  site.href === CURRENT_SITE ? (
-                    <span
-                      key={site.href}
-                      aria-current="page"
-                      className="flex min-h-11 items-center justify-between px-3 text-sm font-bold text-brand-700"
-                    >
-                      <span>{site.label}</span>
-                      <span className="text-[11px] font-semibold text-brand-500">현재</span>
-                    </span>
-                  ) : (
-                    <a
-                      key={site.href}
-                      href={site.href}
-                      className="flex min-h-11 items-center px-3 text-sm font-semibold text-slate-700 transition hover:bg-brand-50 hover:text-brand-700 focus:bg-brand-50 focus:text-brand-700 focus:outline-none"
-                    >
-                      {site.label}
-                    </a>
-                  ),
-                )}
+
+              <div className="absolute bottom-full right-0 z-20 mb-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
+                <div className="divide-y divide-slate-100">
+                  {FAMILY_SITES.map((site) => {
+                    const isCurrent = site.href === CURRENT_SITE;
+
+                    if (isCurrent) {
+                      return (
+                        <div
+                          key={site.href}
+                          aria-current="page"
+                          className="bg-brand-50/70 px-4 py-3"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-sm font-extrabold text-brand-800">
+                              {site.label}
+                            </span>
+                            <span className="rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-extrabold text-brand-700">
+                              현재
+                            </span>
+                          </div>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {site.description}
+                          </p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <a
+                        key={site.href}
+                        href={site.href}
+                        className="block px-4 py-3 transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-400"
+                      >
+                        <span className="block text-sm font-extrabold text-slate-900">
+                          {site.label}
+                        </span>
+                        <span className="mt-1 block text-xs leading-5 text-slate-500">
+                          {site.description}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             </details>
           </div>
