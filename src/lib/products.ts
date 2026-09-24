@@ -3,6 +3,7 @@ import rawPending from '@/data/pending.json';
 import rawPendingWashingMachine from '@/data/pending-washing-machine.json';
 import rawPendingDryer from '@/data/pending-dryer.json';
 import rawPendingMicrowave from '@/data/pending-microwave.json';
+import rawPendingDesk from '@/data/pending-desk.json';
 import { CATEGORY_MATCH } from './categories';
 import type {
   CategoryId,
@@ -15,12 +16,13 @@ import type {
 
 export const products = rawProducts as Product[];
 
-/** 치수 입력을 기다리는 자동 수집 상품. 냉장고·세탁기·건조기·전자레인지 배치를 합쳐 관리한다. */
+/** 치수 입력을 기다리는 자동 수집 상품. 카테고리별 실수집 배치를 합쳐 관리한다. */
 export const pendingProducts = [
   ...(rawPending as PendingProduct[]),
   ...(rawPendingWashingMachine as PendingProduct[]),
   ...(rawPendingDryer as PendingProduct[]),
   ...(rawPendingMicrowave as PendingProduct[]),
+  ...(rawPendingDesk as PendingProduct[]),
 ];
 
 /** 슬라이더 최대값: 실데이터 최대치를 10cm 단위로 올림 (여유 10cm) */
