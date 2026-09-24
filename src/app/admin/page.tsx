@@ -17,6 +17,47 @@ export const metadata: Metadata = {
 /** 쿠키와 실시간 상품 DB를 보므로 캐시하지 않는다 */
 export const dynamic = 'force-dynamic';
 
+type PendingStateRow = {
+  id?: string;
+  status?: 'registered' | 'skipped';
+};
+
+/**
+ * 관리자 배지 숫자도 실제 DB 대기열 처리 상태를 기준으로 맞춘다.
+ * 조회 실패 시 null을 반환해 브라우저의 기존 로컬 상태를 덮어쓰지 않는다.
+ */
+async function getPendingDoneIds(): Promise<string[] | null> {
+  const baseUrl = process.env.SUPABASE_URL;
+  const adminToken = process.env.CMPICK_ADMIN_API_TOKEN;
+  if (!baseUrl || !adminToken) return null;
+
+  try {
+    const response = await fetch(`${baseUrl}/functions/v1/cmpick-admin-api`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${adminToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ action: 'pending_state' }),
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as { rows?: PendingStateRow[] };
+    if (!Array.isArray(data.rows)) return [];
+
+    return data.rows
+      .filter(
+        (row): row is Required<Pick<PendingStateRow, 'id' | 'status'>> =>
+          typeof row.id === 'string' &&
+          (row.status === 'registered' || row.status === 'skipped'),
+      )
+      .map((row) => row.id);
+  } catch {
+    return null;
+  }
+}
+
 function ConfigError() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-10">
@@ -44,8 +85,11 @@ export default async function AdminPage() {
   const token = cookies().get(ADMIN_COOKIE)?.value;
   if (!verifySessionToken(token, secret)) return <AdminLoginForm />;
 
-  // 관리자는 검증 대기 상품까지 포함한 전체 목록을 본다.
-  const liveProducts = await getAllLiveProducts();
+  // 관리자는 검증 대기 상품까지 포함한 전체 목록과 대기열 처리 상태를 함께 본다.
+  const [liveProducts, pendingDoneIds] = await Promise.all([
+    getAllLiveProducts(),
+    getPendingDoneIds(),
+  ]);
 
   return (
     <>
@@ -60,7 +104,7 @@ export default async function AdminPage() {
           </button>
         </form>
       </div>
-      <AdminLiveBootstrap products={liveProducts} />
+      <AdminLiveBootstrap products={liveProducts} doneIds={pendingDoneIds} />
       <AdminTool />
     </>
   );
