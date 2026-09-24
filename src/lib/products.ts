@@ -14,7 +14,11 @@ import type {
   SortKey,
 } from './types';
 
-export const products = rawProducts as Product[];
+/**
+ * 기존 seed 중 verified=false 였던 57개 후보는 운영/관리 목록에서 제거한다.
+ * 앞으로 검증 대기는 자동 수집 pendingProducts 경로로만 관리한다.
+ */
+export const products = (rawProducts as Product[]).filter((product) => product.verified);
 
 /** 치수 입력을 기다리는 자동 수집 상품. 카테고리별 실수집 배치를 합쳐 관리한다. */
 export const pendingProducts = [
@@ -90,7 +94,7 @@ export function isFilterDirty(filters: Filters): boolean {
     filters.maxWidth !== DEFAULT_FILTERS.maxWidth ||
     filters.maxDepth !== DEFAULT_FILTERS.maxDepth ||
     filters.maxHeight !== DEFAULT_FILTERS.maxHeight ||
-    filters.sort !== DEFAULT_FILTERS.sort ||
+    filters.sort !== 'default' ||
     filters.rocketOnly ||
     filters.doorClearance ||
     filters.keyword.trim() !== ''
