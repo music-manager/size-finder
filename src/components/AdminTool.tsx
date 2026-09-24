@@ -96,7 +96,7 @@ export default function AdminTool() {
   const [list, setList] = useState<AdminRecord[]>(seedProducts);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [blob, setBlob] = useState('');
-  const [filter, setFilter] = useState<'all' | 'todo' | 'done'>('todo');
+  const [filter, setFilter] = useState<'pending' | 'published' | 'all'>('pending');
   const [keyword, setKeyword] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -264,8 +264,8 @@ export default function AdminTool() {
   const visible = useMemo(() => {
     const k = keyword.trim().toLowerCase();
     return list.filter((p) => {
-      if (filter === 'todo' && hasDeepLink(p)) return false;
-      if (filter === 'done' && !hasDeepLink(p)) return false;
+      if (filter === 'pending' && p.verified) return false;
+      if (filter === 'published' && !p.verified) return false;
       if (k && !`${p.id} ${p.name} ${p.brand}`.toLowerCase().includes(k)) return false;
       return true;
     });
@@ -587,9 +587,9 @@ export default function AdminTool() {
           <div className="flex gap-1">
             {(
               [
-                ['todo', '링크 필요'],
-                ['done', '링크 완료'],
-                ['all', '전체'],
+                ['pending', `검증 대기 ${stats.pending}`],
+                ['published', `공개 상품 ${stats.published}`],
+                ['all', `전체 ${stats.total}`],
               ] as const
             ).map(([k, label]) => (
               <button
