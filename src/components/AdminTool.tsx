@@ -7,6 +7,7 @@ import {
   Copy,
   Check,
   Download,
+  Loader2,
   Plus,
   RotateCcw,
   Save,
@@ -102,9 +103,11 @@ export default function AdminTool() {
   const [loaded, setLoaded] = useState(false);
   const [uploadNote, setUploadNote] = useState('');
   const [tab, setTab] = useState<'manual' | 'queue'>('manual');
+  const [saving, setSaving] = useState(false);
   // 대기열에서 처리(등록/제외)한 항목은 다시 보이지 않게 브라우저에 기록한다
   const [doneIds, setDoneIds] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLElement>(null);
 
   // 최초 1회 로컬 저장본 복원 (없으면 사이트 데이터로 시작)
   useEffect(() => {
@@ -179,7 +182,7 @@ export default function AdminTool() {
     }
   }, []);
 
-  const save = useCallback(() => {
+  const save = useCallback(async () => {
     const w = toCm(draft.width);
     const d = toCm(draft.depth);
     const h = toCm(draft.height);
@@ -211,18 +214,36 @@ export default function AdminTool() {
         : {}),
     };
 
-    setList((prev) => {
-      const i = prev.findIndex((p) => p.id === id);
-      if (i >= 0) {
-        const next = [...prev];
-        next[i] = item;
-        return next;
+    setSaving(true);
+    try {
+      const response = await fetch('/admin/api/catalog', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'save_product', product: item }),
+      });
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || 'DB 저장에 실패했습니다.');
       }
-      return [...prev, item];
-    });
-    setDraft(EMPTY);
-    setBlob('');
-    setUploadNote('');
+
+      setList((prev) => {
+        const i = prev.findIndex((p) => p.id === id);
+        if (i >= 0) {
+          const next = [...prev];
+          next[i] = item;
+          return next;
+        }
+        return [...prev, item];
+      });
+      setDraft(EMPTY);
+      setBlob('');
+      setUploadNote('');
+      window.alert('DB와 운영 데이터에 저장했습니다.');
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'DB 저장에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
   }, [draft, list]);
 
   const registerFromQueue = useCallback((product: AdminRecord) => {
@@ -295,7 +316,7 @@ export default function AdminTool() {
         </h1>
         <p className="mt-1 text-xs text-slate-500">
           쿠팡에서 복사한 내용을 붙여넣으면 제품명·브랜드·가격·카테고리·링크·이미지가
-          자동으로 채워집니다. 치수만 직접 입력하시면 됩니다. 입력값은 이 브라우저에만 저장됩니다.
+          자동으로 채워집니다. 치수만 직접 입력하시면 됩니다. 저장하면 DB와 운영 데이터에 반영됩니다.
         </p>
       </header>
 
@@ -391,7 +412,7 @@ export default function AdminTool() {
       </section>
 
       {/* 2단계: 제품 정보 */}
-      <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">
+      <section ref={formRef} className="mb-4 scroll-mt-4 rounded-2xl border border-slate-200 bg-white p-4">
         <h2 className="mb-3 text-sm font-bold text-slate-900">2. 제품 정보</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-600">
@@ -560,18 +581,24 @@ export default function AdminTool() {
                 setBlob('');
                 setUploadNote('');
               }}
-              className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-50"
+              disabled={saving}
+              className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-500 hover:bg-slate-50 disabled:cursor-wait disabled:opacity-50"
             >
               <X className="h-3.5 w-3.5" aria-hidden="true" />
               비우기
             </button>
             <button
               type="button"
-              onClick={save}
-              className="flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800"
+              onClick={() => void save()}
+              disabled={saving}
+              className="flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-60"
             >
-              <Save className="h-3.5 w-3.5" aria-hidden="true" />
-              목록에 저장
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Save className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
+              {saving ? 'DB 저장 중' : draft.id ? '수정 저장' : 'DB에 저장'}
             </button>
           </div>
         </div>
@@ -678,7 +705,15 @@ export default function AdminTool() {
                   <td className="py-2 text-right">
                     <button
                       type="button"
-                      onClick={() => setDraft(toDraft(p))}
+                      onClick={() => {
+                        setDraft(toDraft(p));
+                        setTab('manual');
+                        setBlob('');
+                        setUploadNote('');
+                        window.setTimeout(() => {
+                          formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 0);
+                      }}
                       className="rounded px-2 py-1 text-[11px] font-bold text-brand-600 hover:bg-brand-50"
                     >
                       편집
@@ -753,8 +788,7 @@ export default function AdminTool() {
 
       <p className="mt-6 flex items-center gap-1 text-[11px] text-slate-400">
         <Plus className="h-3 w-3" aria-hidden="true" />
-        데이터는 이 브라우저(localStorage)에만 저장됩니다. 다른 기기에서는 보이지 않으니,
-        작업 후 JSON 을 복사해 전달하세요.
+        저장 버튼은 DB와 운영 데이터에 반영하며, 브라우저에도 작업 상태를 임시 보관합니다.
       </p>
     </div>
   );
