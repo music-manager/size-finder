@@ -253,8 +253,12 @@ export default function AdminTool() {
   );
 
   const stats = useMemo(() => {
-    const linked = list.filter(hasDeepLink).length;
-    return { total: list.length, linked, verified: list.filter((p) => p.verified).length };
+    const published = list.filter((p) => p.verified).length;
+    return {
+      total: list.length,
+      published,
+      pending: list.length - published,
+    };
   }, [list]);
 
   const visible = useMemo(() => {
@@ -319,9 +323,9 @@ export default function AdminTool() {
 
       <div className="mb-5 grid grid-cols-3 gap-2">
         {[
-          { label: '전체 제품', value: stats.total, tone: 'text-slate-900' },
-          { label: '딥링크 완료', value: `${stats.linked} / ${stats.total}`, tone: 'text-brand-600' },
-          { label: '스펙 확인', value: `${stats.verified} / ${stats.total}`, tone: 'text-emerald-600' },
+          { label: '공개 상품', value: stats.published, tone: 'text-emerald-600' },
+          { label: '검증 대기', value: stats.pending, tone: 'text-amber-600' },
+          { label: '전체 관리', value: stats.total, tone: 'text-slate-900' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-slate-200 bg-white p-3 text-center">
             <p className="text-[11px] font-semibold text-slate-400">{s.label}</p>
