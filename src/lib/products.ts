@@ -14,7 +14,7 @@ import type {
 
 export const products = rawProducts as Product[];
 
-/** 치수 입력을 기다리는 자동 수집 상품. 카테고리별 배치를 합쳐 관리한다. */
+/** 치수 입력을 기다리는 자동 수집 상품. 냉장고·세탁기·건조기 배치를 합쳐 관리한다. */
 export const pendingProducts = [
   ...(rawPending as PendingProduct[]),
   ...(rawPendingWashingMachine as PendingProduct[]),
