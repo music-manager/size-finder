@@ -1,6 +1,7 @@
 import rawProducts from '@/data/products.json';
 import rawPending from '@/data/pending.json';
 import rawPendingWashingMachine from '@/data/pending-washing-machine.json';
+import rawPendingDryer from '@/data/pending-dryer.json';
 import { CATEGORY_MATCH } from './categories';
 import type {
   CategoryId,
@@ -17,6 +18,7 @@ export const products = rawProducts as Product[];
 export const pendingProducts = [
   ...(rawPending as PendingProduct[]),
   ...(rawPendingWashingMachine as PendingProduct[]),
+  ...(rawPendingDryer as PendingProduct[]),
 ];
 
 /** 슬라이더 최대값: 실데이터 최대치를 10cm 단위로 올림 (여유 10cm) */
