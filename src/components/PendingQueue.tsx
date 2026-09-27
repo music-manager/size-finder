@@ -5,6 +5,7 @@ import { ArrowRight, ExternalLink, Inbox, Loader2, Trash2 } from 'lucide-react';
 import { CATEGORY_LABEL } from '@/lib/categories';
 import { pendingProducts } from '@/lib/products';
 import { formatWon, toCm } from '@/lib/adminParse';
+import { toSafeCoupangProductUrl } from '@/lib/coupangUrl';
 import type { PendingProduct, Product } from '@/lib/types';
 
 interface Props {
@@ -187,7 +188,7 @@ export default function PendingQueue({ doneIds, onRegister, onSkip }: Props) {
                 </p>
               </div>
               <a
-                href={item.coupangUrl}
+                href={toSafeCoupangProductUrl(item.coupangUrl)}
                 target="_blank"
                 rel="noopener noreferrer sponsored"
                 className="flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-600 hover:bg-slate-50"
