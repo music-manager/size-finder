@@ -14,6 +14,7 @@ import {
 } from '@/lib/products';
 import { fitClearance, fitLabel, isTightFit, type DimensionTriple } from '@/lib/fit';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
+import { toSafeCoupangProductUrl } from '@/lib/coupangUrl';
 import type { Product } from '@/lib/types';
 
 interface Props {
@@ -63,6 +64,7 @@ export default function ProductCard({
     : null;
   const isRocket = product.tags.includes(ROCKET_TAG);
   const restTags = product.tags.filter((t) => t !== ROCKET_TAG);
+  const coupangHref = toSafeCoupangProductUrl(product.coupangUrl);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:border-slate-300 hover:shadow-lg">
@@ -192,7 +194,7 @@ export default function ProductCard({
 
           {/* 센치픽 밖(쿠팡)으로 나가는 유일한 버튼이라 브랜드 파랑과 색을 나눈다 */}
           <a
-            href={product.coupangUrl}
+            href={coupangHref}
             target="_blank"
             rel="noopener noreferrer sponsored"
             className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-orange-700 py-2.5 text-[13px] font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
