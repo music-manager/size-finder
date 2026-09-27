@@ -8,13 +8,16 @@ export function toSafeCoupangProductUrl(rawUrl: string): string {
     return rawUrl;
   }
 
-  // 쿠팡 Partners Search API가 반환하는 AFFSDP URL은 requestid/token 등
-  // 일시성 추적 파라미터를 포함할 수 있다. 장기 저장 후 직접 열면 쿠팡에서
-  // "사용권한 없음"으로 차단되는 사례가 있어, pageKey/itemId/vendorItemId가
-  // 모두 있으면 깨끗한 상품 URL로 되돌린다.
-  if (parsed.hostname !== 'link.coupang.com' || parsed.pathname !== '/re/AFFSDP') {
-    return rawUrl;
-  }
+  // 쿠팡 Partners Search API가 반환하는 AFFSDP URL 중 requestid/token을
+  // 포함한 저장 링크는 장기 보관 후 "사용권한 없음"으로 차단되는 사례가 있다.
+  // 이 일시성 Search API 링크만 깨끗한 상품 URL로 되돌리고, 공식 short/deeplink
+  // 등 다른 제휴 URL은 그대로 유지한다.
+  const isRawSearchAffiliateUrl =
+    parsed.hostname === 'link.coupang.com' &&
+    parsed.pathname === '/re/AFFSDP' &&
+    (parsed.searchParams.has('requestid') || parsed.searchParams.has('token'));
+
+  if (!isRawSearchAffiliateUrl) return rawUrl;
 
   const pageKey = parsed.searchParams.get('pageKey')?.trim();
   const itemId = parsed.searchParams.get('itemId')?.trim();
