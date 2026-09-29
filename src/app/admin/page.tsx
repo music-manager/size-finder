@@ -7,11 +7,20 @@ import AdminLoginForm from '@/components/AdminLoginForm';
 import { ADMIN_COOKIE, verifySessionToken } from '@/lib/adminSession';
 import { getAllLiveProducts } from '@/lib/liveCatalog';
 import { logout } from './actions';
+import { describeWorkerCredentialState } from '../../../scripts/coordinator/workerOnce.mjs';
 
 export const metadata: Metadata = {
   title: '상품 관리',
   // 운영용 페이지이므로 검색엔진에 노출하지 않는다
   robots: { index: false, follow: false },
+};
+
+/** Coordinator worker 전용 토큰 설정 상태 표시 (값·길이는 표시하지 않는다) */
+const WORKER_CREDENTIAL_LABEL: Record<string, string> = {
+  configured: '설정됨',
+  missing: '미설정',
+  'same-as-coordinator': '사용 불가 — Coordinator 토큰과 같은 값',
+  'public-name': '사용 불가 — NEXT_PUBLIC_ 이름으로 설정됨',
 };
 
 /** 쿠키와 실시간 상품 DB를 보므로 캐시하지 않는다 */
@@ -91,9 +100,17 @@ export default async function AdminPage() {
     getPendingDoneIds(),
   ]);
 
+  const workerCredential = describeWorkerCredentialState();
+
   return (
     <>
-      <div className="mx-auto flex max-w-5xl items-center justify-end px-4 pt-4">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 pt-4">
+        <p className="text-xs text-slate-500" data-testid="worker-credential-state">
+          Coordinator worker 전용 토큰:{' '}
+          <span className={workerCredential.state === 'configured' ? 'font-semibold text-emerald-700' : 'font-semibold text-rose-600'}>
+            {WORKER_CREDENTIAL_LABEL[workerCredential.state] ?? '확인 불가'}
+          </span>
+        </p>
         <form action={logout}>
           <button
             type="submit"
