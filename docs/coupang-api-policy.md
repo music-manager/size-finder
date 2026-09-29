@@ -194,7 +194,7 @@ worker HTTP 200 · actualApiCalled=true · cache 10건 저장까지 확인된 �
 | worker-once (`action=process_one`) | `COUPANG_WORKER_TOKEN` | **worker 전용** server-only 토큰 |
 
 중앙 인증 계약: `Bearer` 토큰 → SHA-256 → `coupang_auth_client(token_hash, 'process_one')`
-→ `active=true` · `allowed_actions` 에 `process_one` · `allowed_projects` 에 `size-finder`.
+→ `active=true` · `allowed_actions` 에 `process_one` · `allowed_projects` 에 `cmpick`.
 기존 Coordinator client 에 `process_one` 을 추가하지 않는다. worker 전용 client 를 따로 둔다.
 
 worker 토큰 규칙 (하나라도 어긋나면 요청 0회):
@@ -217,9 +217,10 @@ worker 호출 전 중앙 status 를 다시 읽는다. 아래가 모두 확인돼
 예외는 **다른 자격증명**으로 인증 거부(401, actualApiCalled≠true, job pending/없음)된 기록뿐이며,
 운영자가 다시 누를 때 1회만 허용한다. 같은 자격증명의 401 은 다시 부르지 않는다.
 
-주의: 기존 `client.mjs` 의 status/enqueue 는 `project: "cmpick"` 으로 보낸다. worker-once 는
-`project: "size-finder"` 로 보낸다. 중앙 queue 행의 `project` 값과 worker client 의
-`allowed_projects` 가 같은 식별자인지 첫 실행 전에 중앙에서 확인해야 한다.
+프로젝트 식별자: status / enqueue / worker-once 모두 `project: "cmpick"` 이다.
+production 중앙 DB 의 `coupang_api_queue.project` 와 기존 client `cmpick-netlify` 의
+`allowed_projects` 가 `cmpick` 이므로 worker 도 같은 값을 쓴다(`WORKER_PROJECT_ID = PROJECT`).
+`scripts/workerOnce.test.mjs` 가 두 값이 달라지면 실패한다.
 
 ## 앞으로 하면 안 되는 것
 

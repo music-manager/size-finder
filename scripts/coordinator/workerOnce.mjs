@@ -13,7 +13,7 @@
  * 인증:
  * - status 는 기존 `COUPANG_COORDINATOR_TOKEN`
  * - worker-once(action=process_one) 는 **worker 전용 `COUPANG_WORKER_TOKEN`**
- *   (중앙 client: allowedActions=['process_one'], allowedProjects=['size-finder'])
+ *   (중앙 client: allowedActions=['process_one'], allowedProjects=['cmpick'])
  *   Coordinator 토큰으로 대신하지 않는다. 차종픽 production 에서 그 조합은 HTTP 401 이었다.
  * - 토큰은 런타임 서버 환경변수에서만 읽고, 결과·로그·화면에 값·길이·hash 를 넣지 않는다.
  *
@@ -22,8 +22,12 @@
  */
 import { PROJECT as COORDINATOR_PROJECT, resolveMode } from './client.mjs';
 
-/** 중앙 worker client 의 allowedProjects 에 들어가는 센치픽 식별자 */
-export const WORKER_PROJECT_ID = 'size-finder';
+/**
+ * 중앙 worker client 의 allowedProjects 와 queue 행 project 에 쓰는 센치픽 식별자.
+ * production 중앙 DB(coupang_api_queue.project, 기존 client cmpick-netlify)는 `cmpick` 이다.
+ * 기존 Coordinator client(client.mjs PROJECT)와 **같은 값**이어야 worker 가 job 을 claim 한다.
+ */
+export const WORKER_PROJECT_ID = COORDINATOR_PROJECT;
 export const WORKER_ONCE_ACTION = 'process_one';
 export const WORKER_TOKEN_ENV = 'COUPANG_WORKER_TOKEN';
 const COORDINATOR_TOKEN_ENV = 'COUPANG_COORDINATOR_TOKEN';
@@ -313,7 +317,7 @@ export function effectiveLimits(snapshot) {
 }
 
 export const AUTHORIZATION_BASIS =
-  '중앙이 토큰의 client 와 allowedProjects 로 강제 (worker: process_one + size-finder)';
+  '중앙이 토큰의 client 와 allowedProjects 로 강제 (worker: process_one + cmpick)';
 
 /**
  * 신규 enqueue 사전 검사 (대기 0건 필수). 모든 조건이 pass 여야 한다. unknown 은 fail 과 같다.

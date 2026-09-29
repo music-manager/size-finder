@@ -28,6 +28,7 @@ import {
   runWorkerOnce,
   workerCallAllowed,
 } from './coordinator/workerOnce.mjs';
+import { PROJECT as COORDINATOR_PROJECT, createCoordinatorClient } from './coordinator/client.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 
@@ -49,6 +50,7 @@ const WORKER_TOKEN = token();
 const NO_PROCESS_ONE_TOKEN = token();
 const OTHER_PROJECT_TOKEN = token();
 const UNKNOWN_TOKEN = token();
+const WRONG_PROJECT_ID_TOKEN = token();
 const COORDINATOR_URL = 'https://central-test.invalid/functions/v1/coupang-coordinator';
 const WORKER_URL = 'https://central-test.invalid/functions/v1/coupang-worker-once';
 
@@ -63,11 +65,14 @@ const sha256 = (value) => createHash('sha256').update(value).digest('hex');
  *   → active=true + allowed_actions 에 process_one + allowed_projects 에 요청 project
  *   하나라도 어긋나면 HTTP 401 { error: 'UNAUTHORIZED' }
  */
+// production 중앙 DB 와 같은 project 식별자: coupang_api_queue.project · cmpick-netlify.allowed_projects = ['cmpick']
 const CENTRAL_CLIENTS = [
-  { tokenSha256: sha256(WORKER_TOKEN), active: true, allowedActions: ['process_one'], allowedProjects: ['size-finder'] },
-  { tokenSha256: sha256(COORDINATOR_TOKEN), active: true, allowedActions: ['status', 'search', 'enqueue', 'cache_lookup'], allowedProjects: ['cmpick', 'size-finder'] },
-  { tokenSha256: sha256(NO_PROCESS_ONE_TOKEN), active: true, allowedActions: ['status', 'search'], allowedProjects: ['size-finder'] },
+  { tokenSha256: sha256(WORKER_TOKEN), active: true, allowedActions: ['process_one'], allowedProjects: ['cmpick'] },
+  { tokenSha256: sha256(COORDINATOR_TOKEN), active: true, allowedActions: ['status', 'search', 'enqueue', 'cache_lookup'], allowedProjects: ['cmpick'] },
+  { tokenSha256: sha256(NO_PROCESS_ONE_TOKEN), active: true, allowedActions: ['status', 'search'], allowedProjects: ['cmpick'] },
   { tokenSha256: sha256(OTHER_PROJECT_TOKEN), active: true, allowedActions: ['process_one'], allowedProjects: ['kkultem-pick'] },
+  // 잘못된 식별자(size-finder)로 등록된 worker client — cmpick queue job 을 처리할 수 없어야 한다
+  { tokenSha256: sha256(WRONG_PROJECT_ID_TOKEN), active: true, allowedActions: ['process_one'], allowedProjects: ['size-finder'] },
 ];
 
 function statusPayload(overrides = {}) {
@@ -98,15 +103,18 @@ function jsonResponse(status, body) {
 
 /** 중앙 mock. 요청 기록을 남긴다. worker 응답은 workerMode 로 바꾼다. */
 function centralMock({ status = statusPayload(), statusHttp = 200, workerMode = 'auth' } = {}) {
-  const calls = { status: 0, worker: 0, other: 0, statusAuth: [], workerAuth: [], workerBodies: [] };
+  const calls = { status: 0, worker: 0, other: 0, statusAuth: [], statusBodies: [], workerAuth: [], workerBodies: [] };
   const fetchImpl = async (url, init = {}) => {
     const bearer = String(init.headers?.authorization ?? '').replace(/^Bearer /, '');
     const body = JSON.parse(String(init.body ?? '{}'));
     if (url === COORDINATOR_URL) {
       calls.status += 1;
       calls.statusAuth.push(sha256(bearer));
+      calls.statusBodies.push(body);
       const client = CENTRAL_CLIENTS.find((item) => item.tokenSha256 === sha256(bearer));
-      if (!client || !client.allowedActions.includes('status')) return jsonResponse(401, { error: 'UNAUTHORIZED' });
+      if (!client || !client.allowedActions.includes('status') || !client.allowedProjects.includes(String(body.project))) {
+        return jsonResponse(401, { error: 'UNAUTHORIZED' });
+      }
       return jsonResponse(statusHttp, status);
     }
     if (url === WORKER_URL) {
@@ -212,12 +220,14 @@ describe('A. worker 전용 토큰 인증', () => {
     assert.equal(result.audit.worker.credential, CURRENT_WORKER_CREDENTIAL);
     assert.deepEqual(calls.workerAuth, [sha256(WORKER_TOKEN)]);
     assert.deepEqual(calls.statusAuth, [sha256(COORDINATOR_TOKEN)]);
-    assert.deepEqual(calls.workerBodies, [{ action: 'process_one', project: 'size-finder', requestId: REQUEST_ID }]);
-    assert.equal(WORKER_PROJECT_ID, 'size-finder');
+    assert.deepEqual(calls.workerBodies, [{ action: 'process_one', project: 'cmpick', requestId: REQUEST_ID }]);
+    assert.deepEqual(calls.statusBodies, [{ action: 'status', project: 'cmpick' }]);
+    assert.equal(WORKER_PROJECT_ID, 'cmpick');
   });
 
   for (const [name, bad] of [
     ['process_one 권한 없음', NO_PROCESS_ONE_TOKEN],
+    ['size-finder 식별자로 등록된 worker client (cmpick 아님)', WRONG_PROJECT_ID_TOKEN],
     ['다른 프로젝트 권한', OTHER_PROJECT_TOKEN],
     ['미등록 토큰', UNKNOWN_TOKEN],
   ]) {
@@ -232,6 +242,30 @@ describe('A. worker 전용 토큰 인증', () => {
       assert.ok(isAuthRejected(result.audit.worker));
     });
   }
+});
+
+// ── project 식별자 회귀 ────────────────────────────────────────
+describe('project 식별자 — 기존 Coordinator 와 같은 cmpick', () => {
+  it('worker project 는 기존 Coordinator PROJECT 와 같고, 그 값은 production queue 의 cmpick 이다', () => {
+    assert.equal(COORDINATOR_PROJECT, 'cmpick');
+    assert.equal(WORKER_PROJECT_ID, COORDINATOR_PROJECT);
+    assert.equal(createCoordinatorClient({ env: {} }).buildQueueJob({ keyword: 'x' }).project, WORKER_PROJECT_ID);
+  });
+
+  it('worker adapter 소스는 project 를 하드코딩하지 않고 Coordinator PROJECT 를 그대로 쓴다', () => {
+    const code = readFileSync(join(ROOT, 'scripts/coordinator/workerOnce.mjs'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1');
+    assert.match(code, /export const WORKER_PROJECT_ID = COORDINATOR_PROJECT;/);
+    assert.match(code, /project: WORKER_PROJECT_ID, requestId/);
+    assert.doesNotMatch(code, /['"`]size-finder['"`]/, 'size-finder 는 중앙 project 식별자가 아니다');
+  });
+
+  it('status 와 worker-once 가 같은 project(cmpick)로 나간다', async () => {
+    const { calls } = await run();
+    assert.equal(calls.statusBodies[0].project, 'cmpick');
+    assert.equal(calls.workerBodies[0].project, 'cmpick');
+  });
 });
 
 // ── B. retry ─────────────────────────────────────────────────
@@ -325,7 +359,7 @@ describe('C. 큐 조건', () => {
   it('requestId 불일치 · UUID 아님 · 관측 상태 pending 아님 · 근거 없음은 차단', () => {
     const other = randomUUID();
     assert.equal(evaluateWorkerTarget(other, knownJob()).state, 'fail');
-    assert.equal(evaluateWorkerTarget('size-finder-1', knownJob({ requestId: 'size-finder-1' })).state, 'fail');
+    assert.equal(evaluateWorkerTarget('cmpick-1', knownJob({ requestId: 'cmpick-1' })).state, 'fail');
     assert.equal(evaluateWorkerTarget(REQUEST_ID, knownJob({ observed: { status: 'done' } })).state, 'fail');
     assert.equal(evaluateWorkerTarget(REQUEST_ID, knownJob({ observed: null })).state, 'unknown');
     assert.equal(
