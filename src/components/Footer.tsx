@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import LogoMark from './LogoMark';
-import { AFFILIATE_NOTICE } from '@/lib/siteInfo';
 
 interface Props {
   /**
@@ -158,12 +157,8 @@ export default function Footer({ hasMobileBottomBar = false }: Props) {
           </div>
         </div>
 
-        {/* 제휴 고지와 저작권을 한 줄에 묶어 푸터가 더 자라지 않게 한다.
-            고지는 쿠팡 파트너스 정책상 필수라 한 톤 밝은 바로 남겨 둔다. */}
+        {/* 쿠팡 파트너스 고지는 상품 목록 · 상세 위에서 한다. */}
         <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-          <p className="min-w-0 flex-1 rounded-lg border border-white/15 bg-white/10 px-3 py-2 text-[11px] leading-relaxed text-brand-100">
-            {AFFILIATE_NOTICE}
-          </p>
           {/* 위계를 가장 낮게 */}
           <p className="shrink-0 text-[11px] text-brand-300/70">
             © {new Date().getFullYear()} 센치픽 (CmPick). All rights reserved.

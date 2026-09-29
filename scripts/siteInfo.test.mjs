@@ -105,7 +105,8 @@ describe('운영자 정보', () => {
       footer.includes('/privacy#contact'),
       '푸터에 문의(보호책임자) 앵커 링크가 없다',
     );
-    assert.ok(footer.includes('AFFILIATE_NOTICE'));
+    // 쿠팡 파트너스 고지는 상품 목록 위에서 한다. 푸터에는 두지 않는다.
+    assert.ok(!footer.includes('AFFILIATE_NOTICE'), '푸터에 쿠팡 파트너스 고지가 다시 들어왔다');
   });
 
   it('방침의 문의처 섹션에 앵커가 있어 푸터 링크가 닿는다', () => {
