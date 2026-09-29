@@ -182,6 +182,45 @@ COMMIT
 - 위 항목들은 `scripts/sync.test.mjs` 가 매 테스트에서 검사한다.
   누가 직접 호출 코드를 되살리면 테스트가 깨진다.
 
+## 중앙 worker-once (process_one) 인증
+
+기준: 차종픽(`vehicle-fit-finder`) `src/lib/admin/worker-once.ts`. 차종픽 production 에서
+worker HTTP 200 · actualApiCalled=true · cache 10건 저장까지 확인된 구조를 그대로 따른다.
+구현: `scripts/coordinator/workerOnce.mjs` (서버 전용).
+
+| 요청 | 인증 | 비고 |
+| --- | --- | --- |
+| status / enqueue / cache_lookup | `COUPANG_COORDINATOR_TOKEN` | 기존 그대로 |
+| worker-once (`action=process_one`) | `COUPANG_WORKER_TOKEN` | **worker 전용** server-only 토큰 |
+
+중앙 인증 계약: `Bearer` 토큰 → SHA-256 → `coupang_auth_client(token_hash, 'process_one')`
+→ `active=true` · `allowed_actions` 에 `process_one` · `allowed_projects` 에 `size-finder`.
+기존 Coordinator client 에 `process_one` 을 추가하지 않는다. worker 전용 client 를 따로 둔다.
+
+worker 토큰 규칙 (하나라도 어긋나면 요청 0회):
+
+- 없거나 빈 값이면 부르지 않는다. Coordinator 토큰으로 대신하지 않는다.
+- Coordinator 토큰과 같은 값이면 부르지 않는다.
+- 이름 앞에 `NEXT_PUBLIC_` 을 붙인 변수가 있으면 부르지 않는다(브라우저 번들 노출 방지).
+- 런타임 서버 환경변수에서만 읽고, 값·길이·hash 를 결과·로그·화면에 남기지 않는다.
+
+worker 호출 전 중앙 status 를 다시 읽는다. 아래가 모두 확인돼야 1회 부른다(불명확하면 fail-closed).
+
+- `control.api_type = search`, 차단 아님
+- rolling 60분 · 24시간 사용량 < 적용 한도(정책값과 중앙값 중 더 엄격한 쪽)
+- 마지막 실제 호출 후 최소 21분
+- `queueProcessing = 0`
+- 알려진 대상 job 처리: `queuePending` 이 **정확히 1** 이고 그 1건이 대상 `requestId`(중앙 UUID)
+  - 신규 enqueue 사전 검사는 `queuePending = 0` 만 허용(변경 없음)
+
+재시도: 자동 재시도 0회. 같은 `requestId` 로 한 번 불렀으면 다시 부르지 않는다.
+예외는 **다른 자격증명**으로 인증 거부(401, actualApiCalled≠true, job pending/없음)된 기록뿐이며,
+운영자가 다시 누를 때 1회만 허용한다. 같은 자격증명의 401 은 다시 부르지 않는다.
+
+주의: 기존 `client.mjs` 의 status/enqueue 는 `project: "cmpick"` 으로 보낸다. worker-once 는
+`project: "size-finder"` 로 보낸다. 중앙 queue 행의 `project` 값과 worker client 의
+`allowed_projects` 가 같은 식별자인지 첫 실행 전에 중앙에서 확인해야 한다.
+
 ## 앞으로 하면 안 되는 것
 
 ```js
