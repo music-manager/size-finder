@@ -4,7 +4,7 @@
  * - 공식 문구 그대로, AFFILIATE_NOTICE 하나에서만 관리한다.
  * - 쿠팡 CTA 가 있는 공개 상품 화면(홈 결과 목록 · 상품 상세)에서 상품/CTA 보다 먼저 1회 표시한다.
  * - ProductCard 마다 반복하지 않는다.
- * - 푸터에만 있는 상태로 돌아가지 않는다(푸터 고지는 보조로 유지).
+ * - 푸터에는 고지를 두지 않는다. 고지는 상품 목록 · 상세 위에서만 한다.
  * - 쿠팡 CTA 의 href/target/rel 은 바꾸지 않는다.
  */
 import { describe, it } from 'node:test';
@@ -92,8 +92,8 @@ describe('노출 위치', () => {
     assert.match(app, /visible\.length > 0 && <AffiliateNotice/);
   });
 
-  it('푸터 고지는 보조로 유지된다(푸터만 있는 상태로 되돌아가지 않음은 위 테스트가 막는다)', () => {
-    assert.match(read('src/components/Footer.tsx'), /\{AFFILIATE_NOTICE\}/);
+  it('푸터에는 고지를 두지 않는다(상품 목록 위 고지는 위 테스트가 강제한다)', () => {
+    assert.doesNotMatch(read('src/components/Footer.tsx'), /AFFILIATE_NOTICE|AffiliateNotice/);
   });
 });
 
