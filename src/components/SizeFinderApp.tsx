@@ -8,6 +8,7 @@ import FilterPanel from './FilterPanel';
 import HeroSizeFinder from './HeroSizeFinder';
 import MobileFilterDrawer from './MobileFilterDrawer';
 import PresetChips from './PresetChips';
+import AffiliateNotice from './AffiliateNotice';
 import ProductGrid from './ProductGrid';
 import QuickSpaceFinder from './QuickSpaceFinder';
 import ShareButton from './ShareButton';
@@ -171,6 +172,9 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
               <ShareButton />
             </div>
           </div>
+
+          {/* 쿠팡 상품 카드가 나오는 목록 바로 위에 파트너스 고지를 1회 표시한다 */}
+          {visible.length > 0 && <AffiliateNotice className="mb-3" />}
 
           <ProductGrid
             products={visible}

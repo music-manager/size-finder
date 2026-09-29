@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AffiliateNotice from '@/components/AffiliateNotice';
 import ProductDetail from '@/components/ProductDetail';
 import ProductGrid from '@/components/ProductGrid';
 import { products } from '@/lib/products';
@@ -74,6 +75,9 @@ export default async function ProductPage({ params }: Params) {
             {CATEGORY_LABEL[product.category]}
           </Link>
         </nav>
+
+        {/* 쿠팡에서 보기 CTA 와 비슷한 크기 상품 목록보다 먼저 파트너스 고지를 1회 표시한다 */}
+        <AffiliateNotice className="mb-3" />
 
         <ProductDetail product={product} />
 
