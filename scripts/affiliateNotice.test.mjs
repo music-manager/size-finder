@@ -98,10 +98,10 @@ describe('노출 위치', () => {
 });
 
 describe('쿠팡 CTA 불변', () => {
-  it('카드 · 상세 CTA 의 href / target / rel 이 그대로다', () => {
+  it('카드 · 상세 CTA 의 target / rel 이 그대로다 (href 는 exact tracked canonical resolver 결과)', () => {
     for (const path of ['src/components/ProductCard.tsx', 'src/components/ProductDetail.tsx']) {
       const code = read(path);
-      assert.match(code, /href=\{product\.coupangUrl\}\s*target="_blank"\s*rel="noopener noreferrer sponsored"/, path);
+      assert.match(code, /href=\{coupangHref\}\s*target="_blank"\s*rel="noopener noreferrer sponsored"/, path);
     }
   });
 });

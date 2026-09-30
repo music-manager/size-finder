@@ -14,6 +14,7 @@ import {
 } from '@/lib/products';
 import { fitClearance, fitLabel, isTightFit, type DimensionTriple } from '@/lib/fit';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
+import { coupangCtaHref } from '@/lib/coupangCtaLinks';
 import type { Product } from '@/lib/types';
 
 interface Props {
@@ -49,6 +50,9 @@ export default function ProductCard({
   const showImage = Boolean(imageSrc);
 
   const showDoorNote = doorClearance && needsDoorClearance(product);
+
+  // exact identity 가 확인된 링크만 내보낸다. 없으면 버튼 대신 검증 중 표시
+  const coupangHref = coupangCtaHref(product);
 
   // 도어 여유를 켰다면 그만큼 더 깊은 자리가 필요하므로 같은 기준으로 비교한다
   const clearance = fitContext
@@ -191,15 +195,21 @@ export default function ProductCard({
           )}
 
           {/* 센치픽 밖(쿠팡)으로 나가는 유일한 버튼이라 브랜드 파랑과 색을 나눈다 */}
-          <a
-            href={product.coupangUrl}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-orange-700 py-2.5 text-[13px] font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
-          >
-            쿠팡에서 보기
-            <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-          </a>
+          {coupangHref ? (
+            <a
+              href={coupangHref}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="mt-2 flex items-center justify-center gap-0.5 rounded-lg bg-orange-700 py-2.5 text-[13px] font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
+            >
+              쿠팡에서 보기
+              <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </a>
+          ) : (
+            <p className="mt-2 rounded-lg bg-slate-50 py-2.5 text-center text-[13px] font-bold text-slate-500 ring-1 ring-inset ring-slate-200">
+              구매 링크 검증 중
+            </p>
+          )}
         </div>
       </div>
     </article>
