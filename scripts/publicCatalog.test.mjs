@@ -12,15 +12,18 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  MIN_PUBLIC_PER_CATEGORY,
   PUBLIC_CATALOG_TARGET,
   buildPublicCatalog,
+  categoryShortfalls,
+  uniqueProductIdsFor,
   publicCountFor,
   reviewForCategories,
   toReviewCandidate,
   verifiedProductKey,
 } from '../src/lib/publicCatalog.ts';
 import { resolveCoupangCta } from '../src/lib/coupangCta.ts';
-import { loadRepoCatalog } from './catalog-gate.mjs';
+import { PUBLIC_TABS, loadRepoCatalog } from './catalog-gate.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const read = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -377,5 +380,37 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
       );
       assert.equal(href, null, String(candidate.productId));
     }
+  });
+});
+
+describe('카테고리별 최소 공개 상품 수', () => {
+  it('MIN_PUBLIC_PER_CATEGORY 는 10 이다', () => {
+    assert.equal(MIN_PUBLIC_PER_CATEGORY, 10);
+  });
+
+  it('uniqueProductIdsFor 는 같은 productId 를 한 번만 세고 productKey 없는 verified 는 세지 않는다', () => {
+    const catalog = buildPublicCatalog(
+      [verifiedProduct({ id: 'x', category: 'bed' }), verifiedProduct({ id: 'y', category: 'bed', productId: 5 })],
+      [record({ productId: 5, category: 'bed' }), record({ id: 'b', productId: 6, category: 'bed' })],
+    );
+    assert.equal(uniqueProductIdsFor(catalog, ['bed']), 2);
+  });
+
+  it('categoryShortfalls 는 기준 미만 탭을 적은 순으로 돌려준다', () => {
+    const catalog = buildPublicCatalog([], [
+      record({ productId: 1, category: 'bed' }),
+      record({ id: 'a', productId: 2, category: 'sofa' }),
+      record({ id: 'b', productId: 3, category: 'sofa' }),
+    ]);
+    const tabs = [{ id: 'bed', allowed: ['bed'] }, { id: 'sofa', allowed: ['sofa'] }, { id: 'hanger', allowed: ['hanger'] }];
+    assert.deepEqual(categoryShortfalls(catalog, tabs, {}, 2), [{ id: 'hanger', count: 0 }, { id: 'bed', count: 1 }]);
+    assert.deepEqual(categoryShortfalls(catalog, tabs, {}, 0), []);
+  });
+
+  it('게이트는 홈 탭 12개(전체 제외)를 모두 검사한다', () => {
+    assert.equal(PUBLIC_TABS.length, 12);
+    assert.ok(PUBLIC_TABS.every((t) => Array.isArray(t.allowed) && t.allowed.length > 0));
+    const gate = read('scripts/catalog-gate.mjs');
+    assert.match(gate, /if \(!totalOk \|\| shortfalls\.length\)/);
   });
 });

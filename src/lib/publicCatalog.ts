@@ -183,3 +183,38 @@ export function publicCountFor(
     catalog.review.filter((candidate) => inCategory(candidate.category)).length
   );
 }
+
+/** 1,000개 전에 모든 공개 카테고리 탭이 갖춰야 할 최소 고유 productId 수 */
+export const MIN_PUBLIC_PER_CATEGORY = 10;
+
+/** 카테고리(탭) 하나의 고유 쿠팡 productId 수. verified 는 productKey 를 아는 것만 센다 */
+export function uniqueProductIdsFor(
+  catalog: Pick<PublicCatalog, 'verified' | 'review'>,
+  allowed: readonly CategoryId[] | null | undefined,
+  seedPageKeys: Record<string, string> = {},
+): number {
+  const inCategory = (category: CategoryId) => !allowed || allowed.includes(category);
+  const ids = new Set<number>();
+  for (const product of catalog.verified) {
+    if (!inCategory(product.category)) continue;
+    const key = verifiedProductKey(product, seedPageKeys);
+    if (key !== null) ids.add(key);
+  }
+  for (const candidate of catalog.review) {
+    if (inCategory(candidate.category)) ids.add(candidate.productId);
+  }
+  return ids.size;
+}
+
+/** 최소 기준(MIN_PUBLIC_PER_CATEGORY)에 못 미치는 탭 목록. 적은 순 */
+export function categoryShortfalls(
+  catalog: Pick<PublicCatalog, 'verified' | 'review'>,
+  tabs: ReadonlyArray<{ id: string; allowed: readonly CategoryId[] | null }>,
+  seedPageKeys: Record<string, string> = {},
+  min: number = MIN_PUBLIC_PER_CATEGORY,
+): Array<{ id: string; count: number }> {
+  return tabs
+    .map((tab) => ({ id: tab.id, count: uniqueProductIdsFor(catalog, tab.allowed, seedPageKeys) }))
+    .filter((row) => row.count < min)
+    .sort((a, b) => a.count - b.count || a.id.localeCompare(b.id));
+}
