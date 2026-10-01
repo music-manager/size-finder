@@ -1,4 +1,6 @@
 import { products as seedProducts } from './products';
+import { dedupeVerifiedByProductKey, type VerifiedDuplicate } from './publicCatalog';
+import { SEED_PAGE_KEYS } from './publicCatalogData';
 import type { Product } from './types';
 
 interface DbProductRow {
@@ -79,14 +81,19 @@ export async function getAllLiveProducts(): Promise<Product[]> {
 }
 
 /**
- * 공개 카탈로그는 제조사/상세페이지에서 치수를 확인한 상품만 노출한다.
- * verified=false 상품은 관리자에서 '검증 대기'로 관리하며 검색·추천·SEO에는 사용하지 않는다.
+ * 공개 verified 카탈로그와, 같은 쿠팡 productId 라서 빠진 카드 목록.
+ * seed 와 DB 에 같은 productId 가 있으면 seed provenance 카드 한 장만 남긴다.
  */
-export async function getLiveProducts(): Promise<Product[]> {
-  return verifiedOnly(await getAllLiveProducts());
+export async function getLiveCatalog(): Promise<{ products: Product[]; duplicates: VerifiedDuplicate[] }> {
+  const { kept, duplicates } = dedupeVerifiedByProductKey(verifiedOnly(await getAllLiveProducts()), SEED_PAGE_KEYS);
+  return { products: kept, duplicates };
 }
 
-export async function getLiveProductById(id: string): Promise<Product | undefined> {
-  const products = await getLiveProducts();
-  return products.find((product) => product.id === id);
+/**
+ * 공개 카탈로그는 제조사/상세페이지에서 치수를 확인한 상품만 노출한다.
+ * verified=false 상품은 관리자에서 '검증 대기'로 관리하며 검색·추천·SEO에는 사용하지 않는다.
+ * 같은 쿠팡 productId 는 한 장만 남긴다.
+ */
+export async function getLiveProducts(): Promise<Product[]> {
+  return (await getLiveCatalog()).products;
 }

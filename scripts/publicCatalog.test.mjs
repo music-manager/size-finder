@@ -13,6 +13,9 @@ import { join } from 'node:path';
 
 import {
   CATEGORY_IDENTITY_RULES,
+  dedupeVerifiedByProductKey,
+  hasPublicImage,
+  publicCatalogStats,
   MIN_PUBLIC_PER_CATEGORY,
   PUBLIC_CATALOG_TARGET,
   REVIEW_IDENTITY_ALLOWLIST,
@@ -316,9 +319,10 @@ describe('카테고리 탭 숫자 = 공개 총상품 수', () => {
     assert.equal(publicCountFor(catalog, null), 3);
   });
 
-  it('SizeFinderApp 탭 숫자는 publicCountFor, 결과 수는 verified 를 거른 visible 그대로', () => {
+  it('SizeFinderApp 탭 숫자는 uniqueProductIdsFor(공개 고유상품), 결과 수는 verified 를 거른 visible 그대로', () => {
     const app = stripComments(read('src/components/SizeFinderApp.tsx'));
-    assert.match(app, /result\[category\.id\] = publicCountFor\(publicCatalog, CATEGORY_MATCH\[category\.id\]\)/);
+    assert.match(app, /result\[category\.id\] = uniqueProductIdsFor\(publicCatalog, CATEGORY_MATCH\[category\.id\], SEED_PAGE_KEYS\)/);
+    assert.doesNotMatch(app, /result\[category\.id\] = publicCountFor/);
     assert.match(app, /<span className="text-brand-600">\{visible\.length\}<\/span>개/);
     assert.match(app, /sortProducts\(filterProducts\(catalog, filters\), filters\.sort\)/);
   });
@@ -374,13 +378,14 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     }
   });
 
-  it('web_index 5건은 외부 CTA 0 (resolver 를 거치지 않는다)', () => {
-    const web = catalog.review.filter((c) => c.source === 'coupang_web_index');
+  it('web_index 5건은 이미지가 없어 공개 REVIEW 에서 빠지고, 저장 기록은 provenance 로 남는다', () => {
+    const web = REVIEW_FILE.filter((r) => r.source === 'coupang_web_index');
     assert.equal(web.length, 5);
-    for (const candidate of web) {
-      assert.equal(candidate.coupangUrl, '');
-      assert.match(candidate.sourceUrl, new RegExp(`^https://www\\.coupang\\.com/vp/products/${candidate.productId}\\?itemId=\\d+$`));
+    for (const row of web) {
+      assert.equal(row.imageUrl ?? '', '', String(row.productId));
+      assert.match(row.sourceUrl, new RegExp(`^https://www\\.coupang\\.com/vp/products/${row.productId}\\?itemId=\\d+$`));
     }
+    assert.equal(catalog.review.filter((c) => c.source === 'coupang_web_index').length, 0);
   });
 
   it('식기세척기 · 접이식테이블 · 신발장 raw Search(V0-153) 후보는 Deep Link provenance 가 없으므로 CTA 0', () => {
@@ -641,5 +646,157 @@ describe('카테고리 본체 확인 (category identity guard)', () => {
     const tab = PUBLIC_TABS.find((t) => t.id === 'microwave');
     assert.equal(tab.label, '전자레인지');
     assert.doesNotMatch(read('src/lib/categories.ts'), /label: '전자레인지장'/);
+  });
+});
+
+describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => {
+  const SEEDS = PRODUCTS.filter((p) => p.verified);
+  const seed = (id) => SEEDS.find((p) => p.id === id);
+  // 운영 DB 에 같은 쿠팡 productId 로 등록된 verified 행(시뮬레이션)
+  const dbRow = (productId, overrides = {}) =>
+    verifiedProduct({ id: `cp-${productId}`, name: `DB ${productId}`, category: 'dryer', productId, dimensions: { width: 1, depth: 1, height: 1 }, ...overrides });
+  const DB_DUPES = [dbRow(8321193275), dbRow(8090724268)];
+  const WEB_INDEX_IDS = [9653658222, 9555031749, 9727500754, 9728813384, 9730565996];
+
+  it('1. 공개 REVIEW 카드는 모두 https 이미지가 있다 (빈 imageUrl 0건)', () => {
+    const repo = loadRepoCatalog();
+    assert.ok(repo.review.length > 0);
+    for (const candidate of repo.review) assert.ok(hasPublicImage(candidate.imageUrl), String(candidate.productId));
+    assert.equal(repo.review.filter((c) => c.imageUrl.trim() === '').length, 0);
+  });
+
+  it('2. 이미지 없는 web_index 5건은 공개되지 않고, 빈 · http · 공백 이미지는 REVIEW 가 되지 않는다', () => {
+    const shown = new Set(loadRepoCatalog().review.map((c) => c.productId));
+    for (const id of WEB_INDEX_IDS) assert.equal(shown.has(id), false, String(id));
+    assert.equal(toReviewCandidate(record({ imageUrl: '' })), null);
+    assert.equal(toReviewCandidate(record({ imageUrl: '   ' })), null);
+    assert.equal(toReviewCandidate(record({ imageUrl: undefined })), null);
+    assert.equal(toReviewCandidate(record({ imageUrl: 'http://example.com/a.jpg' })), null);
+    assert.equal(toReviewCandidate(record({ imageUrl: 'https://ads-partners.coupang.com/image1/x' })).imageUrl, 'https://ads-partners.coupang.com/image1/x');
+  });
+
+  it('3 · 4. seed dry-006/8321193275 · dry-007/8090724268 중복은 seed 카드 한 장만 남는다 (DB 순서와 무관)', () => {
+    for (const verified of [[...SEEDS, ...DB_DUPES], [...DB_DUPES, ...SEEDS]]) {
+      const catalog = buildPublicCatalog(verified, [], SEED_PAGE_KEYS);
+      const ids = catalog.verified.map((p) => p.id);
+      assert.ok(ids.includes('dry-006') && ids.includes('dry-007'));
+      assert.equal(ids.includes('cp-8321193275'), false);
+      assert.equal(ids.includes('cp-8090724268'), false);
+      assert.deepEqual(
+        catalog.duplicateVerified.map((d) => [d.id, d.productId, d.keptId]).sort(),
+        [['cp-8090724268', 8090724268, 'dry-007'], ['cp-8321193275', 8321193275, 'dry-006']],
+      );
+      const keys = catalog.verified.map((p) => verifiedProductKey(p, SEED_PAGE_KEYS)).filter((k) => k !== null);
+      assert.equal(new Set(keys).size, keys.length, '같은 productId 카드 2장 동시 노출 금지');
+    }
+  });
+
+  it('3 · 4. 남은 seed 카드는 치수 출처와 CTA seed provenance 를 그대로 가진다', () => {
+    const catalog = buildPublicCatalog([...DB_DUPES, ...SEEDS], [], SEED_PAGE_KEYS);
+    for (const id of ['dry-006', 'dry-007']) {
+      const kept = catalog.verified.find((p) => p.id === id);
+      assert.deepEqual(kept.dimensions, seed(id).dimensions);
+      const cta = resolveCoupangCta(kept, REGISTRY);
+      assert.equal(cta.source, 'seed', id);
+      assert.ok(cta.href, id);
+    }
+  });
+
+  it('seed 가 없을 때 DB 끼리 겹치면 먼저 온 카드만 남는다', () => {
+    const { kept, duplicates } = dedupeVerifiedByProductKey([dbRow(5), dbRow(5, { id: 'cp-5-b' }), dbRow(6)]);
+    assert.deepEqual(kept.map((p) => p.id), ['cp-5', 'cp-6']);
+    assert.deepEqual(duplicates, [{ id: 'cp-5-b', productId: 5, keptId: 'cp-5' }]);
+  });
+
+  it('5. 홈 전체 · 카테고리 숫자는 unique productId 기준 (중복 · productId 없는 카드 제외)', () => {
+    const catalog = buildPublicCatalog([...SEEDS, ...DB_DUPES], [...PENDING, ...REVIEW_FILE], SEED_PAGE_KEYS);
+    assert.equal(uniqueProductIdsFor(catalog, null, SEED_PAGE_KEYS), catalog.uniqueProductIds);
+    // 카드 수(publicCountFor)는 dry-008 을 포함하므로 고유상품 수보다 1 크다
+    assert.equal(publicCountFor(catalog, null), catalog.uniqueProductIds + 1);
+    const dryerCards = publicCountFor(catalog, ['dryer']);
+    assert.equal(uniqueProductIdsFor(catalog, ['dryer'], SEED_PAGE_KEYS), dryerCards - 1);
+    // 중복 DB 행이 들어와도 고유상품 수는 늘지 않는다
+    const withoutDupes = buildPublicCatalog(SEEDS, [...PENDING, ...REVIEW_FILE], SEED_PAGE_KEYS);
+    assert.equal(catalog.uniqueProductIds, withoutDupes.uniqueProductIds);
+    for (const tab of PUBLIC_TABS) {
+      assert.equal(
+        uniqueProductIdsFor(catalog, tab.allowed, SEED_PAGE_KEYS),
+        uniqueProductIdsFor(withoutDupes, tab.allowed, SEED_PAGE_KEYS),
+        tab.id,
+      );
+    }
+  });
+
+  it('6. productId 없는 dry-008 은 실측 카드로 남지만 1,000 unique count 에는 들어가지 않는다', () => {
+    const catalog = buildPublicCatalog(SEEDS, [], SEED_PAGE_KEYS);
+    assert.ok(catalog.verified.some((p) => p.id === 'dry-008'));
+    assert.equal(verifiedProductKey(seed('dry-008'), SEED_PAGE_KEYS), null);
+    assert.equal(catalog.uniqueProductIds, 2);
+    assert.equal(uniqueProductIdsFor(catalog, ['dryer'], SEED_PAGE_KEYS), 2);
+    const gate = loadRepoCatalog();
+    assert.ok(gate.verified.some((p) => p.id === 'dry-008'));
+    assert.equal(gate.uniqueProductIds, new Set([...gate.review.map((c) => c.productId), 8321193275, 8090724268]).size);
+  });
+
+  it('7. REVIEW 는 fit 대상(verified)에 들어가지 않는다', () => {
+    const catalog = buildPublicCatalog([...SEEDS, ...DB_DUPES], [...PENDING, ...REVIEW_FILE], SEED_PAGE_KEYS);
+    const reviewIds = new Set(catalog.review.map((c) => c.productId));
+    for (const product of catalog.verified) {
+      assert.equal(product.verified, true);
+      assert.ok(product.dimensions);
+      assert.equal(reviewIds.has(verifiedProductKey(product, SEED_PAGE_KEYS)), false);
+    }
+    for (const candidate of catalog.review) assert.equal('dimensions' in candidate, false);
+    const app = stripComments(read('src/components/SizeFinderApp.tsx'));
+    assert.match(app, /const catalog = publicCatalog\.verified;/);
+    assert.match(app, /filterProducts\(catalog, filters\)/);
+    assert.doesNotMatch(app, /filterProducts\([^)]*review/i);
+  });
+
+  it('8. CTA provenance 정책은 그대로 (seed 2 · landing 16 · V0-183 · V0-153 fallback 0)', () => {
+    assert.deepEqual(Object.keys(REGISTRY.seedById).sort(), ['dry-006', 'dry-007']);
+    assert.equal(Object.keys(REGISTRY.landingByProductId).length, 16);
+    for (const identity of Object.values(REGISTRY.seedById)) assert.match(identity.traceid, /^V0-183-[0-9a-f]+$/);
+    const repo = loadRepoCatalog();
+    for (const candidate of repo.review) {
+      const { href, source } = resolveCoupangCta(
+        { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
+        REGISTRY,
+      );
+      if (href) {
+        assert.equal(source, 'landing', String(candidate.productId));
+        assert.doesNotMatch(href, /V0-153/);
+      }
+    }
+    const card = read('src/components/ReviewCard.tsx');
+    assert.match(card, /candidate\.source === 'coupang_search'/);
+    assert.match(card, /rel="noopener noreferrer sponsored"/);
+  });
+
+  it('9. 관리자 통계 3종: 실측/공간맞춤 = fit 대상, 치수검증중 = REVIEW, 공개 고유상품 = unique productId', () => {
+    const catalog = buildPublicCatalog([...SEEDS, ...DB_DUPES], [...PENDING, ...REVIEW_FILE], SEED_PAGE_KEYS);
+    const stats = publicCatalogStats(catalog);
+    assert.deepEqual(stats, {
+      fitTargets: catalog.verified.length,
+      review: catalog.review.length,
+      uniqueProductIds: catalog.uniqueProductIds,
+    });
+    assert.equal(stats.fitTargets, 3, 'seed 3 + DB 중복 2 → 중복 제거 후 3');
+    const admin = stripComments(read('src/components/AdminTool.tsx'));
+    assert.match(admin, /publicCatalogStats\(getPublicCatalog\(list\.filter\(\(p\) => p\.verified\)\)\)/);
+    assert.match(admin, /label: '실측\/공간맞춤', value: publicStats\.fitTargets/);
+    assert.match(admin, /label: '치수검증중', value: publicStats\.review/);
+    assert.match(admin, /label: '공개 고유상품', value: publicStats\.uniqueProductIds/);
+    // DB 관리 목록 숫자는 공개 카탈로그처럼 보이는 이름을 쓰지 않는다
+    assert.doesNotMatch(admin, /label: '공개 상품'|`공개 상품 \$\{stats|'전체 관리'/);
+    assert.match(admin, /관리 목록 \(DB \+ seed\)/);
+  });
+
+  it('공개 목록(홈 · SEO · 상세)은 dedupe 된 getLiveProducts 를 쓰고, 정리된 카드의 예전 링크는 남은 카드로 보낸다', () => {
+    const live = stripComments(read('src/lib/liveCatalog.ts'));
+    assert.match(live, /dedupeVerifiedByProductKey\(verifiedOnly\(await getAllLiveProducts\(\)\), SEED_PAGE_KEYS\)/);
+    assert.match(live, /return \(await getLiveCatalog\(\)\)\.products;/);
+    const page = stripComments(read('src/app/p/[id]/page.tsx'));
+    assert.match(page, /permanentRedirect\(`\/p\/\$\{duplicate\.keptId\}`\)/);
   });
 });

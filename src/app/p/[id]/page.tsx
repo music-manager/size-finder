@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import { ChevronLeft } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -8,7 +8,7 @@ import AffiliateNotice from '@/components/AffiliateNotice';
 import ProductDetail from '@/components/ProductDetail';
 import ProductGrid from '@/components/ProductGrid';
 import { products } from '@/lib/products';
-import { getLiveProducts } from '@/lib/liveCatalog';
+import { getLiveCatalog, getLiveProducts } from '@/lib/liveCatalog';
 import {
   SITE_URL,
   findProduct,
@@ -53,9 +53,14 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 }
 
 export default async function ProductPage({ params }: Params) {
-  const catalog = await getLiveProducts();
+  const { products: catalog, duplicates } = await getLiveCatalog();
   const product = findProduct(params.id, catalog);
-  if (!product) notFound();
+  if (!product) {
+    // 같은 쿠팡 productId 라서 정리된 카드의 예전 링크는 남은 카드로 보낸다
+    const duplicate = duplicates.find((row) => row.id === params.id);
+    if (duplicate) permanentRedirect(`/p/${duplicate.keptId}`);
+    notFound();
+  }
 
   const similar = similarProducts(product, 4, catalog);
 

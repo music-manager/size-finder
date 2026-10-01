@@ -67,10 +67,20 @@ export interface ReviewCandidate {
 }
 
 export interface PublicCatalog {
+  /** fit 대상. 같은 쿠팡 productId 는 한 장만 남긴다(productId 없는 seed 는 그대로 둔다) */
   verified: Product[];
   review: ReviewCandidate[];
   /** 서로 다른 쿠팡 productId 수 (verified 는 productKey 를 알 수 있는 것만 센다) */
   uniqueProductIds: number;
+  /** 같은 productId 라서 공개 verified 에서 뺀 카드 */
+  duplicateVerified: VerifiedDuplicate[];
+}
+
+/** productId 중복으로 공개 verified 에서 빠진 카드와 대신 남은 카드 */
+export interface VerifiedDuplicate {
+  id: string;
+  productId: number;
+  keptId: string;
 }
 
 /** 공개 목표 — unique productId 1,000개가 센치픽 1차 완료 기준 (100 은 중간 이정표) */
@@ -187,6 +197,11 @@ export function categoryIdentityRejection(productId: number, name: string, categ
   return null;
 }
 
+/** 공개 REVIEW 카드에 쓸 수 있는 이미지(https URL)가 있는지 */
+export function hasPublicImage(imageUrl: unknown): imageUrl is string {
+  return nonEmpty(imageUrl) && /^https:\/\/[^\s]+$/.test(imageUrl.trim());
+}
+
 /**
  * 수집 기록 1건 → REVIEW 후보. 필수 값이 없거나 카테고리 본체 확인을 통과하지 못하면 null.
  * 허용 목록에 있는 필드만 복사한다(dimensions · dimensionCandidate 등은 따라오지 않는다).
@@ -199,6 +214,8 @@ export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): 
   const category = record.category as CategoryId;
   if (!CATEGORY_IDS.includes(category)) return null;
   if (categoryIdentityRejection(productId, record.name.trim(), category) !== null) return null;
+  // 이미지 없는 카드는 공개하지 않는다. 다른 상품 · 다른 옵션 이미지로 채우지 않는다
+  if (!hasPublicImage(record.imageUrl)) return null;
 
   const raw = record as ReviewSourceRecord;
   const source: ReviewSource = raw.source === 'coupang_web_index' ? 'coupang_web_index' : 'coupang_search';
@@ -208,7 +225,7 @@ export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): 
     name: record.name.trim(),
     category,
     brand: typeof record.brand === 'string' ? record.brand.trim() : '',
-    imageUrl: typeof record.imageUrl === 'string' ? record.imageUrl : '',
+    imageUrl: record.imageUrl.trim(),
     // web_index 는 추적 링크가 없다. 저장 URL 이 있어도 넘기지 않는다
     coupangUrl: source === 'coupang_search' && typeof record.coupangUrl === 'string' ? record.coupangUrl : '',
     source,
@@ -237,8 +254,41 @@ export function verifiedProductKey(
 }
 
 /**
+ * verified 카드를 쿠팡 productId(pageKey) 기준으로 한 장씩만 남긴다. 내부 id 는 기준이 아니다.
+ * - 같은 productId 가 여럿이면 seed provenance(seedPageKeys 에 id 가 있는 카드)를 남긴다.
+ *   seed 카드는 저장소에 제조사 치수와 CTA seed identity 가 고정돼 있어 출처를 잃지 않는다.
+ * - seed 끼리 · DB 끼리 겹치면 먼저 온 카드를 남긴다.
+ * - productId 를 알 수 없는 카드(dry-008 등)는 중복 판단 없이 그대로 둔다.
+ * 남은 카드의 순서는 입력 순서를 따른다.
+ */
+export function dedupeVerifiedByProductKey(
+  products: Product[],
+  seedPageKeys: Record<string, string> = {},
+): { kept: Product[]; duplicates: VerifiedDuplicate[] } {
+  const isSeed = (product: Product) => Object.prototype.hasOwnProperty.call(seedPageKeys, product.id);
+  const owner = new Map<number, Product>();
+  for (const pass of [true, false]) {
+    for (const product of products) {
+      if (isSeed(product) !== pass) continue;
+      const key = verifiedProductKey(product, seedPageKeys);
+      if (key !== null && !owner.has(key)) owner.set(key, product);
+    }
+  }
+
+  const kept: Product[] = [];
+  const duplicates: VerifiedDuplicate[] = [];
+  for (const product of products) {
+    const key = verifiedProductKey(product, seedPageKeys);
+    const winner = key === null ? product : owner.get(key);
+    if (winner === product) kept.push(product);
+    else if (key !== null && winner) duplicates.push({ id: product.id, productId: key, keptId: winner.id });
+  }
+  return { kept, duplicates };
+}
+
+/**
  * VERIFIED 와 REVIEW 를 나눠 공개 카탈로그를 만든다.
- * - verified 에는 verified=true 인 Product 만 남는다(REVIEW 는 절대 섞이지 않는다).
+ * - verified 에는 verified=true 인 Product 만, productId 기준 한 장씩 남는다(REVIEW 는 절대 섞이지 않는다).
  * - REVIEW 는 productId 기준으로 한 번만, verified 에 이미 있는 productId 는 뺀다.
  */
 export function buildPublicCatalog(
@@ -246,7 +296,10 @@ export function buildPublicCatalog(
   records: ReadonlyArray<ReviewSourceRecord | PendingProduct>,
   seedPageKeys: Record<string, string> = {},
 ): PublicCatalog {
-  const verified = verifiedProducts.filter((product) => product.verified === true);
+  const { kept: verified, duplicates: duplicateVerified } = dedupeVerifiedByProductKey(
+    verifiedProducts.filter((product) => product.verified === true),
+    seedPageKeys,
+  );
   const seen = new Set<number>();
   for (const product of verified) {
     const key = verifiedProductKey(product, seedPageKeys);
@@ -261,7 +314,7 @@ export function buildPublicCatalog(
     review.push(candidate);
   }
 
-  return { verified, review, uniqueProductIds: seen.size };
+  return { verified, review, uniqueProductIds: seen.size, duplicateVerified };
 }
 
 /** 카테고리 탭 하나에 해당하는 REVIEW 후보 (치수 조건은 쓰지 않는다) */
@@ -274,8 +327,8 @@ export function reviewForCategories(
 }
 
 /**
- * 카테고리 탭 숫자 = 그 카테고리의 공개 상품 총수(verified + review).
- * 공간 맞춤 결과 수(verified 를 치수로 거른 수)와는 의미가 다르다.
+ * 카테고리에 보이는 공개 카드 수(verified + review). productId 없는 실측 카드도 센다.
+ * 화면 분기(이 카테고리에 verified 가 있는지 등)에만 쓴다. 탭 숫자는 uniqueProductIdsFor 를 쓴다.
  */
 export function publicCountFor(
   catalog: Pick<PublicCatalog, 'verified' | 'review'>,
@@ -291,7 +344,10 @@ export function publicCountFor(
 /** 1,000개 전에 모든 공개 카테고리 탭이 갖춰야 할 최소 고유 productId 수 */
 export const MIN_PUBLIC_PER_CATEGORY = 10;
 
-/** 카테고리(탭) 하나의 고유 쿠팡 productId 수. verified 는 productKey 를 아는 것만 센다 */
+/**
+ * 카테고리(탭) 하나의 공개 고유상품 수 = 서로 다른 쿠팡 productId 수.
+ * 홈 탭 숫자 · catalog:gate 가 쓰는 기준. verified 는 productKey 를 아는 것만 센다.
+ */
 export function uniqueProductIdsFor(
   catalog: Pick<PublicCatalog, 'verified' | 'review'>,
   allowed: readonly CategoryId[] | null | undefined,
@@ -308,6 +364,26 @@ export function uniqueProductIdsFor(
     if (inCategory(candidate.category)) ids.add(candidate.productId);
   }
   return ids.size;
+}
+
+/**
+ * 관리자 상단 통계. 세 숫자는 의미가 서로 다르다.
+ * - fitTargets: 공간 맞춤(fit)에 들어가는 공개 verified 카드 수 (productId 중복 제거 후, productId 없는 실측 seed 포함)
+ * - review: 치수 확인 전 공개 REVIEW 후보 수
+ * - uniqueProductIds: 공개 고유상품 = verified + review 의 서로 다른 쿠팡 productId 수 (1,000 목표 기준)
+ */
+export interface PublicCatalogStats {
+  fitTargets: number;
+  review: number;
+  uniqueProductIds: number;
+}
+
+export function publicCatalogStats(catalog: PublicCatalog): PublicCatalogStats {
+  return {
+    fitTargets: catalog.verified.length,
+    review: catalog.review.length,
+    uniqueProductIds: catalog.uniqueProductIds,
+  };
 }
 
 /** 최소 기준(MIN_PUBLIC_PER_CATEGORY)에 못 미치는 탭 목록. 적은 순 */
