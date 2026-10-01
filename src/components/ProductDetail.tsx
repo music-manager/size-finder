@@ -12,6 +12,7 @@ import {
   needsDoorClearance,
 } from '@/lib/products';
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
+import { coupangCtaHref } from '@/lib/coupangCtaLinks';
 import { SITE_URL, dimensionText, pageDescription } from '@/lib/productPage';
 import type { Product } from '@/lib/types';
 
@@ -34,6 +35,8 @@ export default function ProductDetail({ product }: Props) {
   const imageSrc = sources[sourceIndex];
   const hasDoor = needsDoorClearance(product);
   const isRocket = product.tags.includes(ROCKET_TAG);
+  // exact identity 가 확인된 링크만 내보낸다. 없으면 버튼 대신 검증 중 표시
+  const coupangHref = coupangCtaHref(product);
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -195,15 +198,21 @@ export default function ProductDetail({ product }: Props) {
               </p>
             )}
 
-            <a
-              href={product.coupangUrl}
-              target="_blank"
-              rel="noopener noreferrer sponsored"
-              className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-700 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
-            >
-              쿠팡에서 보기
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-            </a>
+            {coupangHref ? (
+              <a
+                href={coupangHref}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="mt-2.5 flex w-full items-center justify-center gap-1.5 rounded-xl bg-orange-700 py-3.5 text-sm font-bold text-white transition hover:bg-orange-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-700 focus-visible:ring-offset-2 active:scale-[0.99]"
+              >
+                쿠팡에서 보기
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              </a>
+            ) : (
+              <p className="mt-2.5 w-full rounded-xl bg-slate-50 py-3.5 text-center text-sm font-bold text-slate-500 ring-1 ring-inset ring-slate-200">
+                구매 링크 검증 중
+              </p>
+            )}
             <p className="mt-2 text-[11px] leading-relaxed text-slate-400">
               가격과 재고는 쿠팡에서 수시로 바뀝니다. 구매 전 실제 페이지에서
               확인하세요.

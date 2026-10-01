@@ -531,8 +531,8 @@ describe('E. 공개 CTA 불변', () => {
   it('공개 CTA 속성은 그대로다 (target=_blank · rel=noopener noreferrer sponsored · 클릭 가로채기 없음)', () => {
     for (const file of ['src/components/ProductCard.tsx', 'src/components/ProductDetail.tsx']) {
       const code = readFileSync(join(ROOT, file), 'utf8');
-      assert.match(code, /href=\{product\.coupangUrl\}\s*target="_blank"\s*rel="noopener noreferrer sponsored"/, file);
-      assert.doesNotMatch(code, /window\.location|window\.open|intent:\/\/|router\.push\(\s*product\.coupangUrl/, file);
+      assert.match(code, /href=\{coupangHref\}\s*target="_blank"\s*rel="noopener noreferrer sponsored"/, file);
+      assert.doesNotMatch(code, /window\.location|window\.open|intent:\/\/|router\.push\(\s*(product\.coupangUrl|coupangHref)/, file);
     }
   });
 });
