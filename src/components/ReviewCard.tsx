@@ -19,11 +19,15 @@ interface Props {
 export default function ReviewCard({ candidate }: Props) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = Boolean(candidate.imageUrl) && !imageFailed;
-  const coupangHref = coupangCtaHref({
-    id: `cp-${candidate.productId}`,
-    coupangUrl: candidate.coupangUrl,
-    productId: candidate.productId,
-  });
+  // web_index 처럼 추적값이 없는 출처는 resolver 를 거치지 않고 링크를 만들지 않는다
+  const coupangHref =
+    candidate.source === 'coupang_search'
+      ? coupangCtaHref({
+          id: `cp-${candidate.productId}`,
+          coupangUrl: candidate.coupangUrl,
+          productId: candidate.productId,
+        })
+      : null;
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">

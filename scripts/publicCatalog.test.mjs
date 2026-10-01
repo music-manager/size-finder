@@ -34,6 +34,7 @@ const PENDING = readdirSync(join(ROOT, 'src/data'))
   .filter((f) => /^pending.*\.json$/.test(f))
   .sort()
   .flatMap((f) => readJson(`src/data/${f}`));
+const REVIEW_FILE = readJson('src/data/review-candidates.json');
 const SEED_PAGE_KEYS = Object.fromEntries(
   Object.entries(REGISTRY.seedById).map(([id, identity]) => [id, identity.pageKey]),
 );
@@ -94,10 +95,28 @@ describe('REVIEW 후보 — 저장된 실수집 필드만', () => {
     assert.doesNotMatch(code, /itemId|vendorItemId|pageKey\s*=|searchParams/);
   });
 
-  it('이름 · 카테고리 · coupangUrl 이 없으면 후보가 아니다', () => {
-    for (const key of ['name', 'category', 'coupangUrl']) {
+  it('이름 · 카테고리가 없거나 모르는 카테고리면 후보가 아니다', () => {
+    for (const key of ['name', 'category']) {
       assert.equal(toReviewCandidate(record({ [key]: '' })), null, key);
     }
+    assert.equal(toReviewCandidate(record({ category: 'unknown' })), null);
+  });
+
+  it('coupangUrl 이 없어도 후보는 되지만 링크 재료가 없다', () => {
+    const candidate = toReviewCandidate(record({ coupangUrl: '' }));
+    assert.equal(candidate.coupangUrl, '');
+  });
+
+  it('web_index 출처는 저장 URL 이 있어도 coupangUrl 을 비우고 sourceUrl 만 남긴다', () => {
+    const candidate = toReviewCandidate(record({ source: 'coupang_web_index', sourceUrl: 'https://www.coupang.com/vp/products/1234567890?itemId=1' }));
+    assert.equal(candidate.source, 'coupang_web_index');
+    assert.equal(candidate.coupangUrl, '');
+    assert.equal(candidate.sourceUrl, 'https://www.coupang.com/vp/products/1234567890?itemId=1');
+  });
+
+  it('itemId · vendorItemId · note 는 후보로 복사하지 않는다', () => {
+    const candidate = toReviewCandidate(record({ itemId: '1', vendorItemId: '2', note: 'x' }));
+    for (const key of ['itemId', 'vendorItemId', 'note']) assert.equal(key in candidate, false, key);
   });
 });
 
@@ -193,7 +212,7 @@ describe('REVIEW CTA — tracked canonical 만 외부 링크', () => {
 
   it('ReviewCard 는 coupangUrl 을 href 로 쓰지 않고 resolver 결과만 쓴다', () => {
     assert.doesNotMatch(card, /href=\{candidate\.coupangUrl\}|href=\{[^}]*coupangUrl/);
-    assert.match(card, /const coupangHref = coupangCtaHref\(/);
+    assert.match(card, /const coupangHref =\s*candidate\.source === 'coupang_search'\s*\?\s*coupangCtaHref\(\{[\s\S]*?\}\)\s*:\s*null;/);
     // coupangUrl 은 resolver 입력으로만 쓰인다 (fallback 링크 금지)
     const callStart = card.indexOf('coupangCtaHref(');
     const callArgs = card.slice(callStart, card.indexOf('});', callStart));
@@ -238,8 +257,8 @@ describe('실데이터 공개 카탈로그', () => {
     assert.equal(new Set(ids).size, ids.length);
   });
 
-  it('review 후보는 모두 실수집 기록에서 왔고 dimensions 가 없다', () => {
-    const pendingIds = new Set(PENDING.map((p) => p.productId));
+  it('review 후보는 모두 저장된 기록(pending · review-candidates)에서 왔고 dimensions 가 없다', () => {
+    const pendingIds = new Set([...PENDING, ...REVIEW_FILE].map((p) => p.productId));
     for (const candidate of catalog.review) {
       assert.ok(pendingIds.has(candidate.productId), String(candidate.productId));
       for (const key of FORBIDDEN_REVIEW_KEYS) assert.equal(key in candidate, false, `${candidate.productId} ${key}`);
@@ -286,5 +305,58 @@ describe('카테고리 탭 숫자 = 공개 총상품 수', () => {
     assert.match(app, /\{onlyReviewInCategory \? \(/);
     assert.match(app, /verifiedInCategory = publicCountFor\(\{ verified: catalog, review: \[\] \}/);
     assert.doesNotMatch(app, /준비 중/);
+  });
+});
+
+describe('빈 카테고리 0 — review-candidates.json', () => {
+  const catalog = loadRepoCatalog();
+  const EMPTY_BEFORE = ['dishwasher', 'folding_table', 'niche', 'bed', 'sofa', 'hanger', 'shoe_rack'];
+
+  it('7개 카테고리 모두 공개 상품 1개 이상', () => {
+    for (const category of EMPTY_BEFORE) {
+      assert.ok(publicCountFor(catalog, [category]) >= 1, category);
+    }
+  });
+
+  it('탭에 있는 모든 카테고리가 공개 상품 1개 이상 (빈 탭 0)', () => {
+    const match = { refrigerator: ['refrigerator'], washing_machine: ['washing_machine'], dryer: ['dryer'], dishwasher: ['dishwasher'], microwave: ['microwave'], desk: ['desk', 'shelf'], folding_table: ['folding_table'], niche: ['niche'], bed: ['bed'], sofa: ['sofa'], hanger: ['hanger'], shoe_rack: ['shoe_rack'] };
+    const tabs = [...read('src/lib/categories.ts').matchAll(/\{ id: '([a-z_]+)', label:/g)].map((m) => m[1]).filter((id) => id !== 'all');
+    assert.deepEqual(tabs.sort(), Object.keys(match).sort());
+    for (const tab of tabs) assert.ok(publicCountFor(catalog, match[tab]) >= 1, tab);
+  });
+
+  it('파일에 치수 관련 키가 없고 productId 는 양의 정수, 중복 없음', () => {
+    const ids = REVIEW_FILE.map((r) => r.productId);
+    assert.equal(new Set(ids).size, ids.length);
+    for (const row of REVIEW_FILE) {
+      assert.ok(Number.isSafeInteger(row.productId) && row.productId > 0, String(row.productId));
+      for (const key of ['dimensions', 'width', 'depth', 'height', 'dimensionCandidate', 'verified']) {
+        assert.equal(key in row, false, `${row.productId} ${key}`);
+      }
+      assert.ok(['coupang_search', 'coupang_web_index'].includes(row.source), String(row.productId));
+    }
+  });
+
+  it('web_index 5건은 외부 CTA 0 (resolver 를 거치지 않는다)', () => {
+    const web = catalog.review.filter((c) => c.source === 'coupang_web_index');
+    assert.equal(web.length, 5);
+    for (const candidate of web) {
+      assert.equal(candidate.coupangUrl, '');
+      assert.match(candidate.sourceUrl, new RegExp(`^https://www\\.coupang\\.com/vp/products/${candidate.productId}\\?itemId=\\d+$`));
+    }
+  });
+
+  it('식기세척기 · 신발장 raw Search 후보는 저장된 Deep Link provenance 가 없으므로 CTA 0', () => {
+    const landing = REGISTRY.landingByProductId;
+    const targets = catalog.review.filter((c) => ['dishwasher', 'shoe_rack'].includes(c.category));
+    assert.equal(targets.length, 3);
+    for (const candidate of targets) {
+      assert.equal(Object.prototype.hasOwnProperty.call(landing, String(candidate.productId)), false);
+      const { href } = resolveCoupangCta(
+        { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
+        REGISTRY,
+      );
+      assert.equal(href, null, String(candidate.productId));
+    }
   });
 });

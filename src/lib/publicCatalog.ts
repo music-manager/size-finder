@@ -12,6 +12,41 @@
  */
 import type { CategoryId, PendingProduct, Product } from './types';
 
+/** REVIEW 후보의 출처. web_index 는 공개 상품 페이지에서 pageKey 만 확인한 것(추적값 없음) */
+export type ReviewSource = 'coupang_search' | 'coupang_web_index';
+
+/** REVIEW 후보를 만드는 저장 기록(pending-*.json · review-candidates.json) */
+export interface ReviewSourceRecord {
+  productId?: number | string | null;
+  name?: string;
+  category?: string;
+  brand?: string;
+  imageUrl?: string;
+  coupangUrl?: string;
+  price?: number;
+  priceCheckedAt?: string;
+  keyword?: string;
+  collectedAt?: string;
+  source?: string;
+  sourceUrl?: string;
+}
+
+const CATEGORY_IDS: readonly CategoryId[] = [
+  'refrigerator',
+  'washing_machine',
+  'dryer',
+  'microwave',
+  'desk',
+  'shelf',
+  'bed',
+  'hanger',
+  'niche',
+  'sofa',
+  'dishwasher',
+  'folding_table',
+  'shoe_rack',
+];
+
 export interface ReviewCandidate {
   status: 'review';
   /** 쿠팡 상품 번호(= pageKey). 저장된 값 그대로 */
@@ -20,11 +55,13 @@ export interface ReviewCandidate {
   category: CategoryId;
   brand: string;
   imageUrl: string;
-  /** 저장된 원문 URL. 화면은 이 값을 링크로 쓰지 않고 CTA resolver 만 거친다 */
+  /** 저장된 원문 URL(없으면 빈 값). 화면은 이 값을 링크로 쓰지 않고 CTA resolver 만 거친다 */
   coupangUrl: string;
+  /** web_index 의 확인 출처 페이지. 링크로 쓰지 않는다 */
+  sourceUrl?: string;
   price?: number;
   priceCheckedAt?: string;
-  source: 'coupang_search';
+  source: ReviewSource;
   keyword?: string;
   collectedAt?: string;
 }
@@ -51,22 +88,28 @@ function nonEmpty(value: unknown): value is string {
  * 수집 기록 1건 → REVIEW 후보. 필수 값이 없으면 null.
  * 허용 목록에 있는 필드만 복사한다(dimensions · dimensionCandidate 등은 따라오지 않는다).
  */
-export function toReviewCandidate(record: PendingProduct): ReviewCandidate | null {
+export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): ReviewCandidate | null {
   if (!record || typeof record !== 'object') return null;
   const productId = Number(record.productId);
   if (!isPositiveInt(productId) || String(productId) !== String(record.productId)) return null;
-  if (!nonEmpty(record.name) || !nonEmpty(record.category) || !nonEmpty(record.coupangUrl)) return null;
+  if (!nonEmpty(record.name) || !nonEmpty(record.category)) return null;
+  const category = record.category as CategoryId;
+  if (!CATEGORY_IDS.includes(category)) return null;
 
+  const raw = record as ReviewSourceRecord;
+  const source: ReviewSource = raw.source === 'coupang_web_index' ? 'coupang_web_index' : 'coupang_search';
   const candidate: ReviewCandidate = {
     status: 'review',
     productId,
     name: record.name.trim(),
-    category: record.category,
+    category,
     brand: typeof record.brand === 'string' ? record.brand.trim() : '',
     imageUrl: typeof record.imageUrl === 'string' ? record.imageUrl : '',
-    coupangUrl: record.coupangUrl,
-    source: 'coupang_search',
+    // web_index 는 추적 링크가 없다. 저장 URL 이 있어도 넘기지 않는다
+    coupangUrl: source === 'coupang_search' && typeof record.coupangUrl === 'string' ? record.coupangUrl : '',
+    source,
   };
+  if (source === 'coupang_web_index' && nonEmpty(raw.sourceUrl)) candidate.sourceUrl = raw.sourceUrl;
   if (isPositiveInt(record.price)) candidate.price = record.price;
   if (nonEmpty(record.priceCheckedAt)) candidate.priceCheckedAt = record.priceCheckedAt;
   if (nonEmpty(record.keyword)) candidate.keyword = record.keyword;
@@ -96,7 +139,7 @@ export function verifiedProductKey(
  */
 export function buildPublicCatalog(
   verifiedProducts: Product[],
-  records: PendingProduct[],
+  records: ReadonlyArray<ReviewSourceRecord | PendingProduct>,
   seedPageKeys: Record<string, string> = {},
 ): PublicCatalog {
   const verified = verifiedProducts.filter((product) => product.verified === true);
