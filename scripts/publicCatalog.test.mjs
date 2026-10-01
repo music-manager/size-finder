@@ -367,7 +367,7 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     const targets = catalog.review.filter(
       (c) => c.source === 'coupang_search' && ['dishwasher', 'folding_table', 'shoe_rack'].includes(c.category),
     );
-    assert.equal(targets.length, 18, '식기세척기 7 + 접이식테이블 8 + 신발장 3');
+    assert.equal(targets.length, 22, '식기세척기 7 + 접이식테이블 8 + 신발장 7');
     for (const candidate of targets) {
       const traceid = new URL(candidate.coupangUrl).searchParams.get('traceid');
       assert.match(traceid, /^V0-153-/, String(candidate.productId));
@@ -380,6 +380,30 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
       );
       assert.equal(href, null, String(candidate.productId));
     }
+  });
+
+  it('Search call 38~42(침대 · 행거 · 틈새수납 · 소파 · 신발장) 원문은 V0-153 provenance 전용이라 CTA 0', () => {
+    const landing = REGISTRY.landingByProductId;
+    const rows = REVIEW_FILE.filter((r) => /Search call (38|39|40|41|42) /.test(r.note ?? ''));
+    const byCategory = {};
+    for (const row of rows) byCategory[row.category] = (byCategory[row.category] ?? 0) + 1;
+    assert.deepEqual(byCategory, { bed: 8, hanger: 9, niche: 7, sofa: 9, shoe_rack: 4 });
+    for (const row of rows) {
+      assert.equal(row.source, 'coupang_search');
+      assert.match(new URL(row.coupangUrl).searchParams.get('traceid'), /^V0-153-/, String(row.productId));
+      assert.equal(Object.prototype.hasOwnProperty.call(landing, String(row.productId)), false);
+      const { href } = resolveCoupangCta(
+        { id: `cp-${row.productId}`, coupangUrl: row.coupangUrl, productId: row.productId },
+        REGISTRY,
+      );
+      assert.equal(href, null, String(row.productId));
+    }
+  });
+
+  it('신발장 중복(7646511942)은 기존 1건만 두고 거치 액세서리(9738898746)는 제외한다', () => {
+    assert.equal(REVIEW_FILE.filter((r) => r.productId === 7646511942).length, 1);
+    assert.equal(REVIEW_FILE.some((r) => r.productId === 9738898746), false);
+    assert.equal(catalog.review.filter((c) => c.productId === 7646511942).length, 1);
   });
 });
 
