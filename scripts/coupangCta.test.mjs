@@ -15,6 +15,8 @@ import { join } from 'node:path';
 import {
   CMPICK_SUBID,
   buildTrackedCanonical,
+  parseExplicitIdentity,
+  resolveCoupangCta,
   resolveCoupangTrackedHref,
 } from '../src/lib/coupangCta.ts';
 
@@ -36,14 +38,6 @@ const STORED_AFFSDP =
 const EXPECTED =
   'https://www.coupang.com/vp/products/8090724268?itemId=24880186317&vendorItemId=91886979841&lptag=AF3873783&subid=cmpick&traceid=V0-183-e7d7dbd94ea4b733';
 
-const IDENTITY = {
-  pageKey: '8090724268',
-  itemId: '24880186317',
-  vendorItemId: '91886979841',
-  lptag: 'AF3873783',
-  subid: 'cmpick',
-  traceid: 'V0-183-e7d7dbd94ea4b733',
-};
 
 const product = (coupangUrl, extra = {}) => ({ id: 'cp-test', coupangUrl, ...extra });
 const resolve = (coupangUrl, extra) => resolveCoupangTrackedHref(product(coupangUrl, extra), REGISTRY);
@@ -66,7 +60,13 @@ const allPending = () =>
 describe('resolver — 저장된 추적값만 쓴다', () => {
   it('subid 없는 raw Search AFFSDP → null (exact 3-tuple 이 있어도 subid 를 만들지 않는다)', () => {
     assert.equal(resolve(RAW_SEARCH_AFFSDP), null);
-    assert.equal(resolve(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), null);
+    // landing provenance 가 없으면 productId 가 맞아도 raw URL 자체는 source 가 될 수 없다
+    const noLanding = { seedById: REGISTRY.seedById };
+    assert.equal(resolveCoupangTrackedHref(product(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), noLanding), null);
+    // landing 이 있으면 href 는 raw URL 이 아니라 저장된 landing 에서 나온다
+    const viaRegistry = resolveCoupangCta(product(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), REGISTRY);
+    assert.equal(viaRegistry.source, 'landing');
+    assert.match(new URL(viaRegistry.href).searchParams.get('traceid'), /^V0-183-/);
   });
 
   it('V0-153 Search URL + subid 없음 → null', () => {
@@ -173,6 +173,12 @@ describe('resolver — 거부되는 입력 (null)', () => {
     assert.equal(resolve(EXPECTED, { productId: 1 }), null);
   });
 
+  it('subid=cmpick 이 있어도 traceid 가 Search 단계(V0-153)면 null', () => {
+    assert.equal(resolve(withParam(STORED_AFFSDP, 'traceid', 'V0-153-e7d7dbd94ea4b733')), null);
+    assert.equal(resolve(withParam(STORED_LANDING, 'traceid', 'V0-153-e7d7dbd94ea4b733')), null);
+    assert.equal(resolve(withParam(RAW_SEARCH_AFFSDP, 'subid', 'cmpick')), null);
+  });
+
   it('17. 다른 subid → null', () => {
     assert.equal(resolve(withParam(STORED_AFFSDP, 'subid', 'kkultem')), null);
     assert.equal(resolve(withParam(EXPECTED, 'subid', 'vehicle')), null);
@@ -182,34 +188,129 @@ describe('resolver — 거부되는 입력 (null)', () => {
 });
 
 describe('explicit provenance registry', () => {
+  const SEED = REGISTRY.seedById;
+  const LANDING = REGISTRY.landingByProductId;
+  const RAW_TEXT = read('src/data/coupang-cta-provenance.json');
+  const landingIdentity = (key) => parseExplicitIdentity(LANDING[key]);
+  // DB 행처럼: productId 만 있고 저장 URL 은 subid 없는 raw Search AFFSDP
+  const dbRow = (key) => ({
+    id: `db-${key}`,
+    productId: Number(key),
+    coupangUrl: `https://link.coupang.com/re/AFFSDP?lptag=AF3873783&pageKey=${key}&itemId=1&vendorItemId=1&traceid=V0-153-0000000000000000`,
+  });
+
   it('seedById 에는 검증된 2건(dry-006 · dry-007)만 있다', () => {
-    assert.deepEqual(Object.keys(REGISTRY.seedById).sort(), ['dry-006', 'dry-007']);
-    for (const id of Object.keys(REGISTRY.seedById)) {
+    assert.deepEqual(Object.keys(SEED).sort(), ['dry-006', 'dry-007']);
+    for (const id of Object.keys(SEED)) {
       const found = PRODUCTS.find((p) => p.id === id);
       assert.ok(found?.verified, `${id} 는 verified seed 여야 한다`);
     }
   });
 
-  it('registry 의 모든 항목은 저장값 6개가 다 있고 subid=cmpick 이며 canonical 을 만든다', () => {
-    const entries = [
-      ...Object.entries(REGISTRY.seedById ?? {}),
-      ...Object.entries(REGISTRY.landingByProductId ?? {}),
-    ];
-    for (const [key, identity] of entries) {
+  it('seed 항목은 저장값 6개가 다 있고 subid=cmpick · traceid=V0-183 이며 canonical 을 만든다', () => {
+    for (const [id, identity] of Object.entries(SEED)) {
       assert.deepEqual(
         Object.keys(identity).sort(),
         ['itemId', 'lptag', 'pageKey', 'subid', 'traceid', 'vendorItemId'],
-        key,
+        id,
       );
-      assert.equal(identity.subid, 'cmpick', key);
-      assert.ok(buildTrackedCanonical(identity), `${key}: canonical 을 만들지 못한다`);
+      assert.equal(identity.subid, 'cmpick', id);
+      assert.match(identity.traceid, /^V0-183-[0-9a-f]+$/, id);
+      assert.ok(buildTrackedCanonical(identity), `${id}: canonical 을 만들지 못한다`);
     }
   });
 
-  it('landingByProductId 의 키는 각 항목의 pageKey(= DB productId)와 정확히 같다', () => {
-    for (const [key, identity] of Object.entries(REGISTRY.landingByProductId ?? {})) {
+  it('landingByProductId 는 정확히 16건이다 (JSON 원문 기준으로도 16)', () => {
+    assert.equal(Object.keys(LANDING).length, 16);
+    const section = RAW_TEXT.slice(RAW_TEXT.indexOf('"landingByProductId"'));
+    assert.equal((section.match(/^\s*"\d+":\s*"/gm) ?? []).length, 16, 'JSON 원문의 키 수');
+  });
+
+  it('중복 없음: 원문 키 · URL · itemId · vendorItemId · traceid 가 모두 서로 다르다', () => {
+    const section = RAW_TEXT.slice(RAW_TEXT.indexOf('"landingByProductId"'));
+    const rawKeys = [...section.matchAll(/^\s*"(\d+)":\s*"/gm)].map((m) => m[1]);
+    assert.equal(new Set(rawKeys).size, rawKeys.length, 'JSON 원문에 같은 키가 두 번 있다');
+    const urls = Object.values(LANDING);
+    const ids = Object.keys(LANDING).map(landingIdentity);
+    for (const [label, values] of [
+      ['url', urls],
+      ['itemId', ids.map((i) => i.itemId)],
+      ['vendorItemId', ids.map((i) => i.vendorItemId)],
+      ['traceid', ids.map((i) => i.traceid)],
+    ]) {
+      assert.equal(new Set(values).size, values.length, `${label} 중복`);
+    }
+  });
+
+  it('각 landing: 키 === URL pageKey, subid=cmpick, traceid=V0-183-*, lptag=AF3873783', () => {
+    for (const [key, url] of Object.entries(LANDING)) {
+      const params = new URL(url).searchParams;
+      assert.equal(params.get('pageKey'), key, key);
+      assert.equal(params.get('subid'), 'cmpick', key);
+      assert.match(params.get('traceid'), /^V0-183-[0-9a-f]+$/, key);
+      assert.equal(params.get('lptag'), 'AF3873783', key);
+      const identity = landingIdentity(key);
+      assert.ok(identity, `${key}: resolver 가 원문을 읽지 못한다`);
       assert.equal(identity.pageKey, key);
     }
+  });
+
+  it('각 landing 의 itemId · vendorItemId 가 repo 에 저장된 같은 productId 수집 기록과 일치한다', () => {
+    const byProductId = new Map(allPending().map((p) => [String(p.productId), p]));
+    let compared = 0;
+    for (const key of Object.keys(LANDING)) {
+      const record = byProductId.get(key);
+      if (!record) continue;
+      const stored = new URL(record.coupangUrl).searchParams;
+      const identity = landingIdentity(key);
+      assert.equal(identity.itemId, stored.get('itemId'), key);
+      assert.equal(identity.vendorItemId, stored.get('vendorItemId'), key);
+      compared += 1;
+    }
+    assert.equal(compared, 16, 'repo 수집 기록과 대조한 건수');
+  });
+
+  it('14. landing 16건은 DB 행(productId + raw Search URL)에서 source=landing 으로 tracked canonical 이 된다', () => {
+    for (const [key, url] of Object.entries(LANDING)) {
+      const result = resolveCoupangCta(dbRow(key), REGISTRY);
+      assert.equal(result.source, 'landing', key);
+      const source = new URL(url).searchParams;
+      const out = new URL(result.href);
+      assert.equal(out.pathname, `/vp/products/${key}`);
+      assert.deepEqual(
+        [...out.searchParams.entries()],
+        [
+          ['itemId', source.get('itemId')],
+          ['vendorItemId', source.get('vendorItemId')],
+          ['lptag', source.get('lptag')],
+          ['subid', source.get('subid')],
+          ['traceid', source.get('traceid')],
+        ],
+        key,
+      );
+    }
+  });
+
+  it('15. seed 2건은 source=seed 로 canonical 이고, 같은 상품의 중앙 landing 과 identity 가 정확히 같다', () => {
+    for (const id of ['dry-006', 'dry-007']) {
+      const seedProduct = PRODUCTS.find((p) => p.id === id);
+      const viaSeed = resolveCoupangCta(seedProduct, REGISTRY);
+      assert.equal(viaSeed.source, 'seed', id);
+      const pageKey = SEED[id].pageKey;
+      assert.ok(Object.prototype.hasOwnProperty.call(LANDING, pageKey), `${id}: 중앙 landing 에 같은 상품이 없다`);
+      assert.deepEqual(landingIdentity(pageKey), SEED[id], `${id}: seed 와 landing identity 불일치`);
+      const viaLanding = resolveCoupangCta(dbRow(pageKey), REGISTRY);
+      assert.equal(viaLanding.source, 'landing', id);
+      assert.equal(viaSeed.href, viaLanding.href, `${id}: 경로별 href 가 다르다`);
+    }
+  });
+
+  it('provenance 경로 18개(seed 2 + landing 16)는 서로 다른 상품 16개다 (seed 2 는 landing 과 겹친다)', () => {
+    const seedKeys = Object.values(SEED).map((i) => i.pageKey);
+    const landingKeys = Object.keys(LANDING);
+    assert.equal(seedKeys.length + landingKeys.length, 18);
+    assert.equal(new Set([...seedKeys, ...landingKeys]).size, 16);
+    assert.ok(seedKeys.every((k) => landingKeys.includes(k)));
   });
 
   it('18. dry-006 → 정확한 tracked canonical', () => {
@@ -226,6 +327,7 @@ describe('explicit provenance registry', () => {
   it('20. dry-008 → null (/a/ 단축 URL 만 있고 exact provenance 없음)', () => {
     const dry008 = PRODUCTS.find((p) => p.id === 'dry-008');
     assert.match(dry008.coupangUrl, /^https:\/\/link\.coupang\.com\/a\//);
+    assert.equal(dry008.productId, undefined);
     assert.equal(resolveById('dry-008'), null);
   });
 
@@ -234,25 +336,20 @@ describe('explicit provenance registry', () => {
     assert.equal(resolveCoupangTrackedHref(seed, REGISTRY), null);
   });
 
-  it('landing provenance: productId 로 찾고, 원본이 raw Search URL 이어도 저장된 landing 값을 쓴다', () => {
-    const registry = { landingByProductId: { 8090724268: IDENTITY } };
-    const dbProduct = product(RAW_SEARCH_AFFSDP, { id: 'db-row', productId: 8090724268 });
-    assert.equal(resolveCoupangTrackedHref(dbProduct, registry), EXPECTED);
+  it('landing 원문의 pageKey 가 키와 다르면 null', () => {
+    const registry = { landingByProductId: { 8090724268: LANDING['8090724268'].replace('pageKey=8090724268', 'pageKey=8090724269') } };
+    assert.equal(resolveCoupangTrackedHref(dbRow('8090724268'), registry), null);
   });
 
-  it('landing provenance 키와 pageKey 가 다르면 null', () => {
-    const registry = { landingByProductId: { 8090724268: { ...IDENTITY, pageKey: '8090724269' } } };
-    const dbProduct = product(RAW_SEARCH_AFFSDP, { id: 'db-row', productId: 8090724268 });
-    assert.equal(resolveCoupangTrackedHref(dbProduct, registry), null);
-  });
-
-  it('landing provenance 에 subid 가 없거나 다르면 null (registry 도 subid 를 만들지 않는다)', () => {
-    const { subid, ...noSubid } = IDENTITY;
-    assert.equal(subid, 'cmpick');
-    for (const bad of [noSubid, { ...IDENTITY, subid: 'kkultem' }]) {
+  it('landing 원문에 subid 가 없거나 다르거나 traceid 가 V0-153 이면 null (registry 도 만들지 않는다)', () => {
+    const base = LANDING['8090724268'];
+    for (const bad of [
+      withParam(base, 'subid', null),
+      withParam(base, 'subid', 'kkultem'),
+      withParam(base, 'traceid', 'V0-153-e7d7dbd94ea4b733'),
+    ]) {
       const registry = { landingByProductId: { 8090724268: bad } };
-      const dbProduct = product(RAW_SEARCH_AFFSDP, { id: 'db-row', productId: 8090724268 });
-      assert.equal(resolveCoupangTrackedHref(dbProduct, registry), null);
+      assert.equal(resolveCoupangTrackedHref(dbRow('8090724268'), registry), null, bad);
     }
   });
 
@@ -270,14 +367,17 @@ describe('explicit provenance registry', () => {
     );
   });
 
-  it('provenance 없는 DB 형식 상품(raw Search AFFSDP, subid 없음)은 clickable CTA 0', () => {
-    const landing = REGISTRY.landingByProductId ?? {};
+  it('13. provenance 없는 DB 형식 상품(raw Search AFFSDP, subid 없음)은 clickable CTA 0', () => {
     const raw = allPending().filter((p) => p.coupangUrl.startsWith('https://link.coupang.com/re/AFFSDP'));
-    assert.ok(raw.length > 0);
-    const withoutProvenance = raw.filter((p) => !Object.prototype.hasOwnProperty.call(landing, String(p.productId)));
+    const withoutProvenance = raw.filter((p) => !Object.prototype.hasOwnProperty.call(LANDING, String(p.productId)));
     assert.ok(withoutProvenance.length > 0);
-    const clickable = withoutProvenance.filter((p) => resolveCoupangTrackedHref(p, REGISTRY) !== null);
-    assert.deepEqual(clickable.map((p) => p.id), []);
+    assert.deepEqual(
+      withoutProvenance.filter((p) => resolveCoupangTrackedHref(p, REGISTRY) !== null).map((p) => p.id),
+      [],
+    );
+    const withProvenance = raw.filter((p) => Object.prototype.hasOwnProperty.call(LANDING, String(p.productId)));
+    assert.equal(withProvenance.length, 16);
+    assert.ok(withProvenance.every((p) => resolveCoupangCta(p, REGISTRY).source === 'landing'));
   });
 });
 
