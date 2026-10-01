@@ -35,13 +35,15 @@
     "name": "에스파스 사각 신발정리장 8단 16족, 단일 색상",
     "category": "shoe_rack",
     "brand": "에스파스",
-    "imageUrl": "https://ads-partners.coupang.com/image1/steHcr_-9eVkjp5Kso2Z_mXAkllPlcmNWrw8OYNuLeL4_g1iyF11w7ujw1vvTxfpnY_i0jHRXf_RM8IPAmeslatUcHYOXsqkdOyOVZM4u3DlQ6DJQCyP5a63OYx48YYXoumt4mMsEp3QUqkgw1c7959HTbTOXTHhLQ9wwOB84UtF8bRZn7wdu8cQxJub8qkgoub0NWpLw-W8mGj31-Q3knjOsyTmTQO4qPFroLdxl3g5owOA2DCZH74V6ddwsP6DdyPZJ4-se8zu_Rfgg2wLhVHhuxOnPZ07UToYueL7U6cCH1rw9J6d7tk41yXzU4V0vDYCITKMp4gEWzd7Se2_8sKVTKq-gCbS2Ielx4aYNSx_N_1aTUoBhr_Hjud6_KFDUXG4W8gTvcan4573g35HAd48rPdAhX7daLK8ya1XJl5wTkT-JDE8yARZ64hTJKOUNFDy5PXjSpSTdjVGwdlPvKzwOXITG628xgs0n0l1CSSmC_pdL-7gKlJmrA-zx5Syz5-wjgGCCbbjq1v3UPN_OFbntSYX-I5HmA==",
-    "coupangUrl": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&pageKey=7646511942&itemId=20333184541&vendorItemId=76616985658&traceid=V0-153-d2979e6244f00370&clickBeacon=fc524cb0-ba2e-11f1-a3e1-e23b9693df0a%7E3&requestid=20260927135038853224497039&token=31850C%7CMIXED&pt=1&slot=5",
+    "imageUrl": "https://ads-partners.coupang.com/image1/THdtHiEOCWKU5CBoTI0bqZkhxUaXjAA0700XXZ77GtL72G7PHV9qKSXY9KyHpF2ogrbEUPcZIbm_CQ74y-ls0mRJJBLiGeBYSjCR_dUgeDTlrKigQIXmU2GYbQdFqOGuwFGYnI9SUbSqa4M-P-aRWmfY4_E48fLbe7WQ-d_IcHmivBIMI-S60ZNKa2kwVHR59lFHtlpSpW8vkCOikQv9g24Q8sMm3IfEa1WsFh_muzRnjWeXZoO__A0tJDgxevNZMhg-QJtTTWx9F-TZIr2lhhfssRbLSZbUQZ8U0fwEYx0UFcCI4cq1I8sCXkzq_MVt8czXn3evg8zhTM54EWRPiwZVIE9BmYd6laOicOWtsWZir0wHxbOWyG_HVs7hoZpI0jMHMW1IB7oE0AXp96djeWRRbcJnCh5DPbLDhDwImavUD-p_He9rgJhbsLu8d6z77mExlj8v7ACh8kueM3oMjgQCt4jP0SC2Oo-xerm-usBZy2nCjQWyO4_vUuNGeafKNnWQWs1mWnbM8BZrooTN7G5frr9YrW3Rzi1kg2mvUSUt7dc=",
+    "coupangUrl": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&pageKey=7646511942&itemId=20333184541&vendorItemId=76616985658&traceid=V0-153-d2979e6244f00370&requestid=20261001201200005028002015&token=31850C%7CMIXED&pt=0&slot=6",
     "price": 14830,
-    "priceCheckedAt": "2026-09-27",
+    "priceCheckedAt": "2026-10-01",
     "keyword": "원룸 슬림 신발장",
     "collectedAt": "2026-09-27T04:50:39.150845Z",
-    "note": "PR #23 실수집 기록 (원룸 슬림 신발장, rank 5)"
+    "note": "PR #23 실수집 기록 (원룸 슬림 신발장, rank 5). 이미지·URL·가격은 중앙 coupang_api_cache Search call 42 저장 원문으로 갱신 (QA 댓글 5930295508). V0-153 Search URL — 저장 provenance 전용",
+    "itemId": "20333184541",
+    "vendorItemId": "76616985658"
   },
   {
     "source": "coupang_web_index",

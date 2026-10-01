@@ -384,7 +384,8 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
 
   it('Search call 38~42(침대 · 행거 · 틈새수납 · 소파 · 신발장) 원문은 V0-153 provenance 전용이라 CTA 0', () => {
     const landing = REGISTRY.landingByProductId;
-    const rows = REVIEW_FILE.filter((r) => /Search call (38|39|40|41|42) /.test(r.note ?? ''));
+    const rows = REVIEW_FILE.filter((r) => /^중앙 coupang_api_cache Search call (38|39|40|41|42) /.test(r.note ?? ''));
+    assert.equal(rows.length, 37);
     const byCategory = {};
     for (const row of rows) byCategory[row.category] = (byCategory[row.category] ?? 0) + 1;
     assert.deepEqual(byCategory, { bed: 8, hanger: 9, niche: 7, sofa: 9, shoe_rack: 4 });
@@ -398,6 +399,40 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
       );
       assert.equal(href, null, String(row.productId));
     }
+  });
+
+  it('Search call 38~42 와 갱신된 7646511942 는 itemId · vendorItemId 를 갖고 저장 URL 의 pageKey · itemId · vendorItemId 와 정확히 같다', () => {
+    const rows = REVIEW_FILE.filter((r) => /Search call (38|39|40|41|42) /.test(r.note ?? ''));
+    assert.equal(rows.length, 38, '신규 37 + 기존 7646511942 원문 갱신 1');
+    for (const row of rows) {
+      assert.match(row.itemId ?? '', /^\d+$/, String(row.productId));
+      assert.match(row.vendorItemId ?? '', /^\d+$/, String(row.productId));
+      const url = new URL(row.coupangUrl);
+      assert.equal(url.origin + url.pathname, 'https://link.coupang.com/re/AFFSDP', String(row.productId));
+      assert.equal(url.searchParams.get('pageKey'), String(row.productId));
+      assert.equal(url.searchParams.get('itemId'), row.itemId, String(row.productId));
+      assert.equal(url.searchParams.get('vendorItemId'), row.vendorItemId, String(row.productId));
+    }
+    // QA 댓글 5930232387 식별자 표 일부 대조
+    const spot = { 5163831345: ['7111900766', '74403790032'], 205424106: ['605086165', '4586166287'], 9734856136: ['29132870492', '95805582314'], 9568773446: ['28558964711', '95851252936'], 7646511942: ['20333184541', '76616985658'] };
+    for (const [productId, [itemId, vendorItemId]] of Object.entries(spot)) {
+      const row = rows.find((r) => r.productId === Number(productId));
+      assert.ok(row, productId);
+      assert.deepEqual([row.itemId, row.vendorItemId], [itemId, vendorItemId], productId);
+    }
+  });
+
+  it('productId 중복 0 — review 파일은 pending · seed 와 겹치지 않고 카탈로그 unique 수와 일치한다', () => {
+    const pendingIds = new Set(PENDING.map((p) => Number(p.productId)).filter(Boolean));
+    const seedIds = new Set(Object.values(SEED_PAGE_KEYS).map(Number));
+    for (const row of REVIEW_FILE) {
+      assert.equal(pendingIds.has(row.productId), false, `pending 중복 ${row.productId}`);
+      assert.equal(seedIds.has(row.productId), false, `seed 중복 ${row.productId}`);
+    }
+    const reviewIds = catalog.review.map((c) => c.productId);
+    assert.equal(new Set(reviewIds).size, reviewIds.length);
+    const verifiedKeys = catalog.verified.map((p) => verifiedProductKey(p, SEED_PAGE_KEYS)).filter((k) => k !== null);
+    assert.equal(catalog.uniqueProductIds, new Set([...verifiedKeys, ...reviewIds]).size);
   });
 
   it('신발장 중복(7646511942)은 기존 1건만 두고 거치 액세서리(9738898746)는 제외한다', () => {
