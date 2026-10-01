@@ -800,3 +800,83 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
     assert.match(page, /permanentRedirect\(`\/p\/\$\{duplicate\.keptId\}`\)/);
   });
 });
+
+describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
+  // 이슈 #33 표(productId · itemId · vendorItemId · price)와 중앙 cache 원문(QA 댓글 5933671396 ~ 5933728658) 대조값
+  const EXPECTED = {
+    6382980894: ['desk', '13570126686', '80823558414', 107000],
+    8101686888: ['desk', '27045180914', '94013609656', 59800],
+    8936753970: ['desk', '26129920444', '94933242958', 89420],
+    9200245528: ['desk', '27163506319', '95271081607', 128700],
+    9425628558: ['desk', '28018169982', '94975762542', 45000],
+    8952948948: ['washing_machine', '26189827080', '93169229448', 179000],
+    9739138804: ['washing_machine', '29148373588', '96118625819', 26300],
+    9746324256: ['washing_machine', '29177882871', '96099149627', 38850],
+    9748766128: ['washing_machine', '29189168740', '96110150158', 149000],
+    4882898698: ['microwave', '8865360607', '76152061617', 48390],
+    6784715012: ['microwave', '15967393537', '5493101444', 59690],
+    7660428989: ['microwave', '20407125459', '87489288057', 47990],
+    7939925865: ['microwave', '21866009170', '91490322758', 199000],
+    8505623426: ['microwave', '24618602585', '91629750061', 130940],
+    8987450079: ['microwave', '26321612398', '93298993599', 60020],
+    9626332974: ['microwave', '28749019506', '95688024846', 59000],
+  };
+  const CALL = { desk: [43, '원룸 좁은 책상'], washing_machine: [44, '원룸 소형 세탁기'], microwave: [45, '소형 전자레인지'] };
+  const EXCLUDED = [9562701830, 9626345242, 9327614652, 8866141828, 9024025969, 9553004090];
+  const rows = REVIEW_FILE.filter((r) => /이슈 #33/.test(r.note ?? ''));
+
+  it('새 16개가 정확히 한 번씩 있고 그 밖의 행은 없다', () => {
+    assert.deepEqual(rows.map((r) => r.productId).sort(), Object.keys(EXPECTED).map(Number).sort());
+    for (const id of Object.keys(EXPECTED)) assert.equal(REVIEW_FILE.filter((r) => r.productId === Number(id)).length, 1, id);
+  });
+
+  it('제외 6개(운영 verified 중복 2 · 본체 아님 4)는 신규 데이터에 없다', () => {
+    for (const id of EXCLUDED) assert.equal(rows.some((r) => r.productId === id), false, String(id));
+    for (const id of [9327614652, 8866141828, 9024025969, 9553004090]) {
+      assert.equal(REVIEW_FILE.some((r) => r.productId === id), false, String(id));
+    }
+  });
+
+  it('itemId · vendorItemId · price · category · keyword 가 이슈 표 · cache 원문과 같고 URL 과도 일치한다', () => {
+    for (const row of rows) {
+      const [category, itemId, vendorItemId, price] = EXPECTED[row.productId];
+      assert.deepEqual([row.category, row.itemId, row.vendorItemId, row.price], [category, itemId, vendorItemId, price], String(row.productId));
+      assert.equal(row.source, 'coupang_search');
+      assert.equal(row.priceCheckedAt, '2026-10-01');
+      assert.equal(row.keyword, CALL[category][1]);
+      assert.match(row.note, new RegExp(`Search call ${CALL[category][0]} `));
+      assert.match(row.note, /V0-153 Search URL — 저장 provenance 전용, CTA 금지/);
+      const url = new URL(row.coupangUrl);
+      assert.equal(url.origin + url.pathname, 'https://link.coupang.com/re/AFFSDP');
+      assert.equal(url.searchParams.get('pageKey'), String(row.productId));
+      assert.equal(url.searchParams.get('itemId'), itemId);
+      assert.equal(url.searchParams.get('vendorItemId'), vendorItemId);
+      assert.match(url.searchParams.get('traceid'), /^V0-153-[0-9a-f]+$/);
+      assert.equal(url.searchParams.has('subid'), false);
+      for (const key of FORBIDDEN_REVIEW_KEYS) assert.equal(key in row, false, `${row.productId} ${key}`);
+    }
+  });
+
+  it('16개 모두 https 이미지 · identity guard 통과로 공개되고, CTA 는 비활성(구매 링크 검증 중)', () => {
+    const repo = loadRepoCatalog();
+    for (const row of rows) {
+      assert.ok(hasPublicImage(row.imageUrl), String(row.productId));
+      assert.equal(categoryIdentityRejection(row.productId, row.name, row.category), null, row.name);
+      const shown = repo.review.find((c) => c.productId === row.productId);
+      assert.ok(shown, String(row.productId));
+      assert.equal(Object.prototype.hasOwnProperty.call(REGISTRY.landingByProductId, String(row.productId)), false);
+      const { href } = resolveCoupangCta({ id: `cp-${row.productId}`, coupangUrl: row.coupangUrl, productId: row.productId }, REGISTRY);
+      assert.equal(href, null, String(row.productId));
+    }
+    assert.equal(repo.review.filter((c) => !hasPublicImage(c.imageUrl)).length, 0, '공개 이미지 공백 0');
+  });
+
+  it('반영 후 공개 unique 101 · desk 10 · washing_machine 9 · microwave 13, 나머지 카테고리는 그대로', () => {
+    const repo = loadRepoCatalog();
+    assert.equal(repo.uniqueProductIds, 101);
+    const expected = { refrigerator: 8, washing_machine: 9, dryer: 8, dishwasher: 7, microwave: 13, desk: 10, folding_table: 6, niche: 7, bed: 8, sofa: 9, hanger: 9, shoe_rack: 7 };
+    for (const tab of PUBLIC_TABS) assert.equal(uniqueProductIdsFor(repo, tab.allowed, SEED_PAGE_KEYS), expected[tab.id], tab.id);
+    const verifiedIds = new Set(repo.verified.map((p) => p.id));
+    for (const row of rows) assert.equal(verifiedIds.has(`cp-${row.productId}`), false, 'REVIEW 는 fit 대상(verified)에 없다');
+  });
+});
