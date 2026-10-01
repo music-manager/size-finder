@@ -85,7 +85,110 @@ function nonEmpty(value: unknown): value is string {
 }
 
 /**
- * 수집 기록 1건 → REVIEW 후보. 필수 값이 없으면 null.
+ * 카테고리 본체 확인 규칙. 저장된 category 값만 믿지 않고 상품명이 그 카테고리의
+ * 본체 상품인지 본다(fail-closed).
+ * - require: 상품명에 본체를 가리키는 말이 하나도 없으면 제외
+ * - reject:  액세서리 · 소모품 · 부품 · 다른 가전 · 혼합세트 · 차량용이면 제외
+ * 애매하면 통과시키지 않는다. 사람이 확인한 예외는 REVIEW_IDENTITY_ALLOWLIST 에만 둔다.
+ */
+interface CategoryIdentityRule {
+  require: RegExp;
+  reject: RegExp[];
+}
+
+// '랙' 은 색상 '블랙' 과 겹치므로 (?<!블) 로 거른다
+const COMMON_REJECT: RegExp[] = [/차량용|자동차|시거잭/, /액세서리|부속품|부품|교체용|리필/];
+
+export const CATEGORY_IDENTITY_RULES: Record<CategoryId, CategoryIdentityRule> = {
+  refrigerator: {
+    require: /냉장고/,
+    reject: [/캠핑|화장품/, /냉온장고/, /전자레인지|전자렌지|인덕션|올인원|세트/, /정리함|정리용기|수납함|탈취|커버|선반|매트|스티커|필터/],
+  },
+  washing_machine: {
+    require: /세탁기/,
+    reject: [/세제|세정제|클리너|세탁조/, /러그|매트|받침대|거치대|수평/, /호스|커버|필터/],
+  },
+  dryer: {
+    require: /건조기/,
+    // 신발 건조기는 의류 건조기를 함께 표기하지 않은 경우만 제외
+    reject: [/^(?!.*의류).*신발\s?건조기/, /식기|음식물|헤어|핸드|손\s?건조/, /건조대|시트|건조볼|배기|호스|필터|커버|받침|선반/, /세탁기/],
+  },
+  dishwasher: {
+    require: /식기세척기/,
+    reject: [/수저통|건조대|(?<!블)랙|바스켓/, /세제|린스|세정제|태블릿|필터|호스|커버|받침|선반/],
+  },
+  microwave: {
+    require: /전자레인지|전자렌지/,
+    reject: [/전자레인지\s?장|렌지대|선반|수납장|거치대|커버|(?<!블)랙|받침|정리대/, /냉장고|인덕션|올인원/, /용기|찜기/],
+  },
+  desk: {
+    require: /책상|데스크/,
+    reject: [/의자|가림막|칸막이|매트|커버|모니터\s?받침|스탠드/],
+  },
+  shelf: {
+    require: /선반|책장|(?<!블)랙|수납장|진열장/,
+    reject: [/브라켓|선반\s?받침|커버/],
+  },
+  bed: {
+    require: /침대|베드|평상/,
+    reject: [/침대\s?커버|매트리스\s?커버|커버\s?단품|토퍼|패드|이불|베개|가드|사다리|협탁/],
+  },
+  hanger: {
+    require: /행거/,
+    reject: [/커버|연결|브라켓|봉\s?단품|바퀴\s?단품|고정\s?핀/],
+  },
+  niche: {
+    require: /틈새|코너/,
+    reject: [/커버|스티커/],
+  },
+  sofa: {
+    require: /소파|쇼파/,
+    reject: [/커버|패드|방석|다리|테이블/],
+  },
+  folding_table: {
+    // 이름에 접이식 · 폴딩 표기가 없으면 접이식인지 알 수 없으므로 제외
+    require: /(?=.*(접이식|폴딩|접는))(?=.*(테이블|식탁|탁자))/,
+    reject: [/의자|커버|식탁보|매트/],
+  },
+  shoe_rack: {
+    require: /신발장|신발\s?정리|신발\s?수납|신발\s?랙/,
+    reject: [/거치대|신발\s?걸이|자석|탈취|건조기|깔창/],
+  },
+};
+
+/** QA 가 상품 페이지로 확인한 예외 통과 productId. 근거 없이 추가하지 않는다 */
+export const REVIEW_IDENTITY_ALLOWLIST: Readonly<Record<string, string>> = Object.freeze({});
+
+/** QA 가 본체 아님으로 확정한 productId. 이름이 바뀌어도 다시 들어오지 않는다 */
+export const REVIEW_IDENTITY_DENYLIST: Readonly<Record<string, string>> = Object.freeze({
+  '8763219111': 'refrigerator — 전자레인지 · 인덕션 혼합 세트',
+  '9725295650': 'refrigerator — 차량 · 캠핑 · 화장품용 4L 냉온장고',
+  '7867973739': 'washing_machine — 의류 건조기',
+  '9052797062': 'washing_machine — 미니 건조기',
+  '8700854258': 'washing_machine — 세제',
+  '8778410758': 'washing_machine — 러그',
+  '7219542646': 'dishwasher — 수저통 액세서리',
+  '9738898746': 'shoe_rack — 자석식 신발 거치대 액세서리',
+});
+
+/**
+ * 상품명이 저장 category 의 본체 상품인지. 아니면 제외 사유, 맞으면 null.
+ * 규칙이 없는 category 는 통과시키지 않는다.
+ */
+export function categoryIdentityRejection(productId: number, name: string, category: CategoryId): string | null {
+  const key = String(productId);
+  if (Object.prototype.hasOwnProperty.call(REVIEW_IDENTITY_DENYLIST, key)) return `QA 제외: ${REVIEW_IDENTITY_DENYLIST[key]}`;
+  if (Object.prototype.hasOwnProperty.call(REVIEW_IDENTITY_ALLOWLIST, key)) return null;
+  const rule = Object.prototype.hasOwnProperty.call(CATEGORY_IDENTITY_RULES, category) ? CATEGORY_IDENTITY_RULES[category] : undefined;
+  if (!rule) return `${category}: 본체 확인 규칙 없음`;
+  if (!rule.require.test(name)) return `${category}: 상품명에 본체 표기 없음`;
+  const hit = [...COMMON_REJECT, ...rule.reject].map((re) => name.match(re)).find(Boolean);
+  if (hit) return `${category}: 본체 아님 (${hit[0]})`;
+  return null;
+}
+
+/**
+ * 수집 기록 1건 → REVIEW 후보. 필수 값이 없거나 카테고리 본체 확인을 통과하지 못하면 null.
  * 허용 목록에 있는 필드만 복사한다(dimensions · dimensionCandidate 등은 따라오지 않는다).
  */
 export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): ReviewCandidate | null {
@@ -95,6 +198,7 @@ export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): 
   if (!nonEmpty(record.name) || !nonEmpty(record.category)) return null;
   const category = record.category as CategoryId;
   if (!CATEGORY_IDS.includes(category)) return null;
+  if (categoryIdentityRejection(productId, record.name.trim(), category) !== null) return null;
 
   const raw = record as ReviewSourceRecord;
   const source: ReviewSource = raw.source === 'coupang_web_index' ? 'coupang_web_index' : 'coupang_search';

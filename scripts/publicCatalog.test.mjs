@@ -12,9 +12,13 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
+  CATEGORY_IDENTITY_RULES,
   MIN_PUBLIC_PER_CATEGORY,
   PUBLIC_CATALOG_TARGET,
+  REVIEW_IDENTITY_ALLOWLIST,
+  REVIEW_IDENTITY_DENYLIST,
   buildPublicCatalog,
+  categoryIdentityRejection,
   categoryShortfalls,
   uniqueProductIdsFor,
   publicCountFor,
@@ -44,9 +48,26 @@ const SEED_PAGE_KEYS = Object.fromEntries(
 
 const FORBIDDEN_REVIEW_KEYS = ['dimensions', 'width', 'depth', 'height', 'dimensionCandidate', 'verified', 'tags'];
 
+// 카테고리 본체 확인 규칙을 통과하는 카테고리별 테스트 상품명
+const BODY_NAMES = {
+  refrigerator: '테스트 소형 냉장고 70×30×90',
+  washing_machine: '테스트 미니 세탁기 3kg',
+  dryer: '테스트 미니 의류건조기 4kg',
+  dishwasher: '테스트 미니 식기세척기 3인용',
+  microwave: '테스트 전자레인지 20L',
+  desk: '테스트 원룸 컴퓨터 책상',
+  shelf: '테스트 5단 철제 선반',
+  bed: '테스트 싱글 침대 프레임',
+  hanger: '테스트 이동식 2단 행거',
+  niche: '테스트 슬림 틈새수납장',
+  sofa: '테스트 1인용 패브릭 소파',
+  folding_table: '테스트 원룸 접이식 테이블',
+  shoe_rack: '테스트 슬림 신발장',
+};
+
 const record = (overrides = {}) => ({
   id: 'cp-1234567890',
-  name: '테스트 소형 냉장고 70×30×90',
+  name: BODY_NAMES[overrides.category ?? 'refrigerator'],
   category: 'refrigerator',
   brand: '테스트',
   capacity_or_spec: '',
@@ -367,7 +388,7 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     const targets = catalog.review.filter(
       (c) => c.source === 'coupang_search' && ['dishwasher', 'folding_table', 'shoe_rack'].includes(c.category),
     );
-    assert.equal(targets.length, 22, '식기세척기 7 + 접이식테이블 8 + 신발장 7');
+    assert.equal(targets.length, 20, '식기세척기 7 + 접이식테이블 6(본체 표기 없는 2건 제외) + 신발장 7');
     for (const candidate of targets) {
       const traceid = new URL(candidate.coupangUrl).searchParams.get('traceid');
       assert.match(traceid, /^V0-153-/, String(candidate.productId));
@@ -471,5 +492,154 @@ describe('카테고리별 최소 공개 상품 수', () => {
     assert.ok(PUBLIC_TABS.every((t) => Array.isArray(t.allowed) && t.allowed.length > 0));
     const gate = read('scripts/catalog-gate.mjs');
     assert.match(gate, /if \(!totalOk \|\| shortfalls\.length\)/);
+  });
+});
+
+describe('카테고리 본체 확인 (category identity guard)', () => {
+  const pass = (name, category, productId = 1111111111) => categoryIdentityRejection(productId, name, category) === null;
+
+  it('13개 category 모두 규칙이 있고, 정상 본체 상품명은 통과한다', () => {
+    assert.deepEqual(Object.keys(CATEGORY_IDENTITY_RULES).sort(), Object.keys(BODY_NAMES).sort());
+    const real = {
+      refrigerator: 'LG전자 121L 2도어 미니 일반 냉장고 방문설치',
+      washing_machine: '누아브 초강력 미니 세탁기 소형 원룸 기숙사, 아이보리, mini',
+      dryer: '보닉 스퀘어 AI 미니 의류건조기 4KG UV-C살균 소형의류건조기 벽걸이 미니건조기 원룸건조기 신발건조기 빨래건조기',
+      dishwasher: '쿠쿠 마시멜로 식기세척기 3인용',
+      microwave: '퀵미니 전자레인지 샤인 20L 사무실 원룸 편의점 화이트 블랙 택일 PMW-S20LW',
+      desk: '발작 1인용 이동식 컴퓨터책상 미니 작은책상, 모던화이트, 고객직접설치',
+      shelf: '철제 5단 선반 랙 블랙',
+      bed: '무소음 박스 I자형수납 고급커버 단면매트 / 1인 원룸가구 인테리어가구 침대프레임 매트리스 수납가능, 플레어그레이',
+      hanger: '가화홈시스 기본형 2단 옷걸이 행거 NLB2200',
+      niche: '다층 이동식 틈새장 200 좁은 공간 냉장고옆 세탁기옆 슬림 수납장, 크림색',
+      sofa: 'NOVALIVE 1인용 원목 코듀로이 패브릭 소파 쇼파의자 안락의자 원룸 거실 침실, 원목 그레이',
+      folding_table: 'Takata 접이식 식탁 원룸 소형 폴딩 테이블 간이 접이식 테이블 FT2',
+      shoe_rack: '메르하임 현관 벤치형 튼튼한 신발장 정리대, 2단, 화이트 x 60cm',
+    };
+    for (const [category, name] of Object.entries(real)) assert.ok(pass(name, category), `${category}: ${name}`);
+    for (const [category, name] of Object.entries(BODY_NAMES)) assert.ok(pass(name, category), `${category}: ${name}`);
+  });
+
+  it('다른 카테고리 상품이 저장 category 로 잘못 들어오면 제외한다 (cross-category)', () => {
+    const cases = [
+      ['매직쉐프 디지털 전자레인지 20L', 'refrigerator'],
+      ['LG전자 121L 2도어 미니 냉장고', 'washing_machine'],
+      ['한일 UV살균 미니 의류건조기 5kg', 'washing_machine'],
+      ['누아브 초강력 미니 세탁기', 'dryer'],
+      ['미니 세탁기 건조기 일체형', 'dryer'],
+      ['쿠쿠 식기세척기 3인용', 'microwave'],
+      ['전자렌지 냉장고 인덕션 올인원 세트', 'microwave'],
+      ['원룸 컴퓨터 책상', 'folding_table'],
+      ['코너 틈새 수납장', 'shoe_rack'],
+      ['1인용 패브릭 소파', 'bed'],
+      ['이동식 2단 행거', 'sofa'],
+      ['슬림 신발장', 'hanger'],
+      ['싱글 침대 프레임', 'niche'],
+      ['5단 철제 선반', 'desk'],
+    ];
+    for (const [name, category] of cases) assert.equal(pass(name, category), false, `${category} ← ${name}`);
+  });
+
+  it('refrigerator 8763219111 (전자레인지 · 인덕션 혼합 세트) · 9725295650 (차량 · 캠핑 4L 냉온장고) 제외 — id 와 이름 규칙 양쪽', () => {
+    const set = '전자렌지 냉장고 인덕션 올인원 자취방 혼자 자취 세트 소형 미니 전자레인지 원룸 공간절약';
+    const car = '원룸용 미니 냉온장고 4L 화장품 보관함 차량 캠핑용 냉장고 자동차 시거잭';
+    assert.equal(pass(set, 'refrigerator', 8763219111), false);
+    assert.equal(pass(car, 'refrigerator', 9725295650), false);
+    // denylist 가 없어도 이름 규칙만으로 제외된다
+    assert.equal(pass(set, 'refrigerator'), false);
+    assert.equal(pass(car, 'refrigerator'), false);
+    assert.equal(toReviewCandidate(record({ productId: 8763219111, name: set })), null);
+    assert.equal(toReviewCandidate(record({ productId: 9725295650, name: car })), null);
+  });
+
+  it('washing_machine 검색 원문 오염 예시 4건 제외 (QA 설명 기준 이름)', () => {
+    const rows = [
+      [7867973739, '신일 의류 건조기 4kg'],
+      [9052797062, '원룸 미니건조기 소형 빨래 건조기'],
+      [8700854258, '드럼 세탁기 전용 액체 세제 3L'],
+      [8778410758, '세탁기 앞 발매트 러그'],
+    ];
+    for (const [productId, name] of rows) {
+      assert.equal(pass(name, 'washing_machine', productId), false, String(productId));
+      assert.equal(pass(name, 'washing_machine'), false, `이름 규칙만: ${name}`);
+      assert.ok(Object.prototype.hasOwnProperty.call(REVIEW_IDENTITY_DENYLIST, String(productId)));
+    }
+  });
+
+  it('dishwasher 7219542646 수저통 · shoe_rack 9738898746 거치 액세서리 제외 유지', () => {
+    assert.equal(pass('식기세척기 전용 수저통 바스켓', 'dishwasher', 7219542646), false);
+    assert.equal(pass('식기세척기 전용 수저통 바스켓', 'dishwasher'), false);
+    assert.equal(pass('자석식 신발 거치대 현관 신발걸이', 'shoe_rack', 9738898746), false);
+    assert.equal(pass('자석식 신발 거치대 현관 신발걸이', 'shoe_rack'), false);
+    assert.equal(pass('미닉스 미니 식기세척기 PRO 3인용', 'dishwasher', 7219542646), false, 'id 로도 고정');
+  });
+
+  it('액세서리 · 소모품 · 부품 · 차량용은 어느 카테고리든 제외', () => {
+    assert.equal(pass('소형 냉장고 정리함 4개입', 'refrigerator'), false);
+    assert.equal(pass('세탁기 배수 호스 2m', 'washing_machine'), false);
+    assert.equal(pass('의류건조기 필터 교체용', 'dryer'), false);
+    assert.equal(pass('식기세척기 린스 500ml', 'dishwasher'), false);
+    assert.equal(pass('전자레인지 선반 2단 수납장', 'microwave'), false);
+    assert.equal(pass('전자레인지장 렌지대', 'microwave'), false);
+    assert.equal(pass('침대 매트리스 커버 슈퍼싱글', 'bed'), false);
+    assert.equal(pass('소파 커버 3인용', 'sofa'), false);
+    assert.equal(pass('행거 커버 투명', 'hanger'), false);
+    assert.equal(pass('차량용 미니 냉장고 12V', 'refrigerator'), false);
+    assert.equal(pass('행거 부품 연결 브라켓', 'hanger'), false);
+  });
+
+  it('신발 건조기는 의류건조기 표기가 없으면 dryer 에서 제외, "블랙" 의 랙 은 오탐하지 않는다', () => {
+    assert.equal(pass('UV 신발 건조기 원룸', 'dryer'), false);
+    assert.equal(pass('미니 의류건조기 4kg 신발건조기 겸용', 'dryer'), true);
+    assert.equal(pass('전자레인지 20L 블랙', 'microwave'), true);
+    assert.equal(pass('미니 식기세척기 3인용 블랙', 'dishwasher'), true);
+  });
+
+  it('fail-closed: 규칙 없는 category 는 제외, allowlist 는 비어 있다', () => {
+    assert.notEqual(categoryIdentityRejection(1, '냉장고', 'unknown_category'), null);
+    assert.deepEqual(Object.keys(REVIEW_IDENTITY_ALLOWLIST), []);
+    assert.ok(Object.isFrozen(REVIEW_IDENTITY_ALLOWLIST));
+    assert.ok(Object.isFrozen(REVIEW_IDENTITY_DENYLIST));
+  });
+
+  it('오염 상품은 publicCountFor · uniqueProductIdsFor · categoryShortfalls 어디에도 집계되지 않는다', () => {
+    const records = [
+      record({ productId: 1 }),
+      record({ id: 'set', productId: 8763219111, name: '전자렌지 냉장고 인덕션 올인원 자취방 혼자 자취 세트' }),
+      record({ id: 'car', productId: 9725295650, name: '원룸용 미니 냉온장고 4L 차량 캠핑용 냉장고' }),
+      record({ id: 'acc', productId: 2, name: '소형 냉장고 정리함 4개입' }),
+    ];
+    const catalog = buildPublicCatalog([], records);
+    assert.deepEqual(catalog.review.map((c) => c.productId), [1]);
+    assert.equal(catalog.uniqueProductIds, 1);
+    assert.equal(publicCountFor(catalog, ['refrigerator']), 1);
+    assert.equal(uniqueProductIdsFor(catalog, ['refrigerator']), 1);
+    assert.deepEqual(categoryShortfalls(catalog, [{ id: 'refrigerator', allowed: ['refrigerator'] }], {}, 2), [{ id: 'refrigerator', count: 1 }]);
+  });
+
+  it('저장소 전수 감사: guard 로 빠지는 기록은 정확히 4건이고 gate 카탈로그에 없다', () => {
+    const all = [...PENDING, ...REVIEW_FILE].filter((r) => r.productId);
+    const rejected = all
+      .map((r) => ({ productId: Number(r.productId), why: categoryIdentityRejection(Number(r.productId), String(r.name).trim(), r.category) }))
+      .filter((r) => r.why !== null);
+    assert.deepEqual(rejected.map((r) => r.productId).sort(), [2354065065, 5659094136, 8763219111, 9725295650]);
+    const repo = loadRepoCatalog();
+    const shown = new Set(repo.review.map((c) => c.productId));
+    for (const { productId } of rejected) assert.equal(shown.has(productId), false, String(productId));
+    for (const id of Object.keys(REVIEW_IDENTITY_DENYLIST)) assert.equal(shown.has(Number(id)), false, id);
+    for (const candidate of repo.review) assert.equal(categoryIdentityRejection(candidate.productId, candidate.name, candidate.category), null);
+    assert.equal(repo.uniqueProductIds, new Set([...shown, ...Object.values(SEED_PAGE_KEYS).map(Number)]).size);
+  });
+
+  it('제외된 오염 상품도 dimensions 없음 · V0-153 CTA 비활성 원칙은 그대로', () => {
+    const repo = loadRepoCatalog();
+    for (const candidate of repo.review) {
+      for (const key of FORBIDDEN_REVIEW_KEYS) assert.equal(key in candidate, false, `${candidate.productId} ${key}`);
+    }
+  });
+
+  it('microwave 탭 라벨은 전자레인지 본체 의도에 맞게 "전자레인지"', () => {
+    const tab = PUBLIC_TABS.find((t) => t.id === 'microwave');
+    assert.equal(tab.label, '전자레인지');
+    assert.doesNotMatch(read('src/lib/categories.ts'), /label: '전자레인지장'/);
   });
 });

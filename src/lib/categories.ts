@@ -12,7 +12,7 @@ export const CATEGORIES: CategoryMeta[] = [
   { id: 'washing_machine', label: '미니세탁기' },
   { id: 'dryer', label: '미니건조기' },
   { id: 'dishwasher', label: '미니식기세척기' },
-  { id: 'microwave', label: '전자레인지장' },
+  { id: 'microwave', label: '전자레인지' },
   { id: 'desk', label: '책상/선반' },
   { id: 'folding_table', label: '접이식테이블' },
   { id: 'niche', label: '틈새수납/트롤리' },
