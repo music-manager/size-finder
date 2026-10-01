@@ -89,7 +89,7 @@ describe('노출 위치', () => {
       assert.doesNotMatch(read(path), /AffiliateNotice|AFFILIATE_NOTICE/, path);
     }
     const app = stripComments(read('src/components/SizeFinderApp.tsx'));
-    assert.match(app, /visible\.length > 0 && <AffiliateNotice/);
+    assert.match(app, /\(visible\.length > 0 \|\| reviewCandidates\.length > 0\) && <AffiliateNotice/);
   });
 
   it('푸터에는 고지를 두지 않는다(상품 목록 위 고지는 위 테스트가 강제한다)', () => {

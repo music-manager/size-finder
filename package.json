@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "node --test scripts/*.test.mjs",
     "validate": "node scripts/validate-data.mjs",
+    "catalog:gate": "node scripts/catalog-gate.mjs",
     "lint": "next lint",
     "typecheck": "tsc --noEmit"
   },
