@@ -11,6 +11,7 @@ import PresetChips from './PresetChips';
 import AffiliateNotice from './AffiliateNotice';
 import ProductGrid from './ProductGrid';
 import QuickSpaceFinder from './QuickSpaceFinder';
+import ReviewCatalogSection from './ReviewCatalogSection';
 import ShareButton from './ShareButton';
 import SortSelect from './SortSelect';
 import { CATEGORIES } from '@/lib/categories';
@@ -28,6 +29,7 @@ import {
   type SpecPreset,
 } from '@/lib/presets';
 import { isSizeFilterActive } from '@/lib/fit';
+import { getPublicCatalog } from '@/lib/publicCatalogData';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
 import type { Filters, Product, SortKey, TabId } from '@/lib/types';
 
@@ -37,7 +39,10 @@ interface Props {
 
 export default function SizeFinderApp({ initialProducts = seedProducts }: Props) {
   const searchParams = useSearchParams();
-  const catalog = initialProducts;
+  // 공간 맞춤(필터 · fit)에는 verified 만 들어간다. REVIEW 는 아래 별도 영역에만 보인다.
+  const publicCatalog = useMemo(() => getPublicCatalog(initialProducts), [initialProducts]);
+  const catalog = publicCatalog.verified;
+  const reviewCandidates = publicCatalog.review;
 
   // 공유 링크로 들어온 경우 URL 쿼리를 초기 상태로 복원한다.
   const [filters, setFilters] = useState<Filters>(() =>
@@ -156,7 +161,9 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
             />
           </div>
 
-          <div className="mb-3 mt-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="mt-5 text-base font-extrabold text-slate-900">공간 맞춤 확인 완료</h2>
+
+          <div className="mb-3 mt-2 flex flex-wrap items-center justify-between gap-2">
             <p className="min-w-0 text-sm font-bold text-slate-900">
               {sizeFilterActive ? '내 공간에 맞는 상품 ' : '검색 결과 '}
               <span className="text-brand-600">{visible.length}</span>개
@@ -174,7 +181,7 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
           </div>
 
           {/* 쿠팡 상품 카드가 나오는 목록 바로 위에 파트너스 고지를 1회 표시한다 */}
-          {visible.length > 0 && <AffiliateNotice className="mb-3" />}
+          {(visible.length > 0 || reviewCandidates.length > 0) && <AffiliateNotice className="mb-3" />}
 
           <ProductGrid
             products={visible}
@@ -182,6 +189,8 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
             fitContext={fitContext}
             onReset={resetFilters}
           />
+
+          <ReviewCatalogSection candidates={reviewCandidates} category={filters.category} />
         </section>
       </div>
 
