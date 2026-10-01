@@ -13,7 +13,8 @@
  *
  * - subid 를 새로 만들지 않는다. 저장된 subid 가 없으면 null.
  *   (Search API 원본 AFFSDP 는 subid 가 없으므로 exact 3-tuple 이 있어도 null)
- * - traceid 가 Search 단계 값(V0-153-…)이면 null. 저장된 Deep Link landing 값만 쓴다.
+ * - traceid 는 저장된 Deep Link landing 형식(V0-183-{hex})만 허용한다.
+ *   Search 단계 값(V0-153-…)이나 그 밖의 형식은 null.
  * - 검색 URL(/np/search), 단축 URL(link.coupang.com/a/…), coupa.ng 은 해석하지 않는다.
  * - 반환 URL 에는 itemId · vendorItemId · lptag · subid · traceid 외 파라미터를 넣지 않는다.
  *   (requestid · token · clickBeacon · slot · pt · src · spec 등은 버린다)
@@ -60,8 +61,8 @@ export interface CoupangCtaProduct {
 
 const NUMERIC_ID = /^[1-9][0-9]{0,19}$/;
 const TRACKING_VALUE = /^[A-Za-z0-9._-]{1,128}$/;
-/** Search API 단계 traceid. Deep Link landing 추적값이 아니다 */
-const SEARCH_STAGE_TRACEID = /^V0-153-/;
+/** 저장된 Deep Link landing traceid 형식. Search 단계(V0-153-…)나 다른 형식은 거부한다 */
+const LANDING_TRACEID = /^V0-183-[0-9a-f]+$/;
 
 const AFFSDP_HOST = 'link.coupang.com';
 const AFFSDP_PATH = '/re/AFFSDP';
@@ -77,7 +78,7 @@ function isTrackingValue(value: unknown): value is string {
 }
 
 function isLandingTraceid(value: unknown): value is string {
-  return isTrackingValue(value) && !SEARCH_STAGE_TRACEID.test(value);
+  return typeof value === 'string' && LANDING_TRACEID.test(value);
 }
 
 /** 모든 필드가 저장돼 있고 형식이 맞을 때만 tracked canonical 을 만든다 */

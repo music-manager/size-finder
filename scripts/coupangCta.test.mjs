@@ -39,6 +39,8 @@ const EXPECTED =
   'https://www.coupang.com/vp/products/8090724268?itemId=24880186317&vendorItemId=91886979841&lptag=AF3873783&subid=cmpick&traceid=V0-183-e7d7dbd94ea4b733';
 
 
+const SEED_DRY007 = REGISTRY.seedById['dry-007'];
+
 const product = (coupangUrl, extra = {}) => ({ id: 'cp-test', coupangUrl, ...extra });
 const resolve = (coupangUrl, extra) => resolveCoupangTrackedHref(product(coupangUrl, extra), REGISTRY);
 const resolveById = (id) => {
@@ -177,6 +179,15 @@ describe('resolver — 거부되는 입력 (null)', () => {
     assert.equal(resolve(withParam(STORED_AFFSDP, 'traceid', 'V0-153-e7d7dbd94ea4b733')), null);
     assert.equal(resolve(withParam(STORED_LANDING, 'traceid', 'V0-153-e7d7dbd94ea4b733')), null);
     assert.equal(resolve(withParam(RAW_SEARCH_AFFSDP, 'subid', 'cmpick')), null);
+  });
+
+  it('traceid 는 저장된 Deep Link 형식(V0-183-{hex})만 허용: V0-999 · 임의 문자열 → null', () => {
+    for (const bad of ['V0-999-e7d7dbd94ea4b733', 'foo', 'V0-183-', 'V0-183-E7D7DBD94EA4B733', 'V0-183-e7d7dbd94ea4b733-x', 'v0-183-e7d7dbd94ea4b733', 'X-V0-183-e7d7dbd94ea4b733']) {
+      assert.equal(resolve(withParam(STORED_AFFSDP, 'traceid', bad)), null, `AFFSDP ${bad}`);
+      assert.equal(resolve(withParam(STORED_LANDING, 'traceid', bad)), null, `landing ${bad}`);
+      assert.equal(buildTrackedCanonical({ ...SEED_DRY007, traceid: bad }), null, `seed ${bad}`);
+    }
+    assert.equal(resolve(STORED_AFFSDP), EXPECTED, '정상 V0-183-hex 는 그대로 허용');
   });
 
   it('17. 다른 subid → null', () => {
