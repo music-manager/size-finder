@@ -27,6 +27,8 @@ import {
   type AdminRecord,
 } from '@/lib/adminParse';
 import { formatBytes, shrinkImageFile } from '@/lib/imageFile';
+import { publicCatalogStats } from '@/lib/publicCatalog';
+import { getPublicCatalog } from '@/lib/publicCatalogData';
 import PendingQueue from './PendingQueue';
 import type { CategoryId } from '@/lib/types';
 
@@ -273,6 +275,7 @@ export default function AdminTool() {
     [doneIds],
   );
 
+  // 관리 목록(DB + seed) 숫자. 공개 카탈로그 전체 숫자가 아니다.
   const stats = useMemo(() => {
     const published = list.filter((p) => p.verified).length;
     return {
@@ -281,6 +284,12 @@ export default function AdminTool() {
       pending: list.length - published,
     };
   }, [list]);
+
+  // 공개 카탈로그 숫자. 홈 화면과 같은 기준(getPublicCatalog)으로 센다.
+  const publicStats = useMemo(
+    () => publicCatalogStats(getPublicCatalog(list.filter((p) => p.verified))),
+    [list],
+  );
 
   const visible = useMemo(() => {
     const k = keyword.trim().toLowerCase();
@@ -342,15 +351,16 @@ export default function AdminTool() {
         ))}
       </div>
 
-      <div className="mb-5 grid grid-cols-3 gap-2">
+      <div className="mb-5 grid grid-cols-3 gap-2" data-testid="admin-public-stats">
         {[
-          { label: '공개 상품', value: stats.published, tone: 'text-emerald-600' },
-          { label: '검증 대기', value: stats.pending, tone: 'text-amber-600' },
-          { label: '전체 관리', value: stats.total, tone: 'text-slate-900' },
+          { label: '실측/공간맞춤', value: publicStats.fitTargets, note: 'fit 대상 · 중복 제거', tone: 'text-emerald-600' },
+          { label: '치수검증중', value: publicStats.review, note: '공개 REVIEW 후보', tone: 'text-amber-600' },
+          { label: '공개 고유상품', value: publicStats.uniqueProductIds, note: 'unique productId', tone: 'text-slate-900' },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-slate-200 bg-white p-3 text-center">
             <p className="text-[11px] font-semibold text-slate-400">{s.label}</p>
             <p className={`text-lg font-extrabold ${s.tone}`}>{s.value}</p>
+            <p className="text-[10px] text-slate-400">{s.note}</p>
           </div>
         ))}
       </div>
@@ -610,13 +620,13 @@ export default function AdminTool() {
       {/* 3단계: 목록 */}
       <section className="mb-4 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-bold text-slate-900">3. 목록</h2>
+          <h2 className="text-sm font-bold text-slate-900">3. 관리 목록 (DB + seed)</h2>
           <div className="flex gap-1">
             {(
               [
-                ['pending', `검증 대기 ${stats.pending}`],
-                ['published', `공개 상품 ${stats.published}`],
-                ['all', `전체 ${stats.total}`],
+                ['pending', `미공개 ${stats.pending}`],
+                ['published', `verified 등록 ${stats.published}`],
+                ['all', `관리 전체 ${stats.total}`],
               ] as const
             ).map(([k, label]) => (
               <button
