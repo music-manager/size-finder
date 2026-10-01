@@ -275,7 +275,7 @@ describe('실데이터 공개 카탈로그', () => {
   });
 
   it(`1차 완료 게이트 목표는 ${PUBLIC_CATALOG_TARGET} 이다 (npm run catalog:gate)`, () => {
-    assert.equal(PUBLIC_CATALOG_TARGET, 100);
+    assert.equal(PUBLIC_CATALOG_TARGET, 1000);
     assert.match(read('package.json'), /"catalog:gate": "node scripts\/catalog-gate\.mjs"/);
   });
 });

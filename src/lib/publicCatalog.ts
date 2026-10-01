@@ -73,8 +73,8 @@ export interface PublicCatalog {
   uniqueProductIds: number;
 }
 
-/** 공개 목표 — 1차 완료 기준 */
-export const PUBLIC_CATALOG_TARGET = 100;
+/** 공개 목표 — unique productId 1,000개가 센치픽 1차 완료 기준 (100 은 중간 이정표) */
+export const PUBLIC_CATALOG_TARGET = 1000;
 
 function isPositiveInt(value: unknown): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;

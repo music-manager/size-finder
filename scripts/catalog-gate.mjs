@@ -4,7 +4,7 @@
  *   npm run catalog:gate
  *
  * 저장소에 있는 실데이터(verified seed + pending 실수집 + review-candidates)만으로
- * 서로 다른 쿠팡 productId 수를 세고, PUBLIC_CATALOG_TARGET(100) 미만이면 실패한다.
+ * 서로 다른 쿠팡 productId 수를 세고, PUBLIC_CATALOG_TARGET(1000) 미만이면 실패한다.
  * 운영 DB 의 verified 는 여기서 조회하지 않는다(네트워크 0회).
  */
 import { readFileSync, readdirSync } from 'node:fs';
