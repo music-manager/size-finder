@@ -5,14 +5,17 @@
  *
  *   https://www.coupang.com/vp/products/{pageKey}
  *     ?itemId={itemId}&vendorItemId={vendorItemId}
- *     &lptag={lptag}&subid=cmpick&traceid={traceid}
+ *     &lptag={stored}&subid={stored}&traceid={stored}
  *
- * identity(pageKey · itemId · vendorItemId)는 명시적으로 저장된 값만 쓴다.
- * 추측·보완이 필요하면 null 을 돌려주고, 화면은 링크 대신 "구매 링크 검증 중"을 보인다.
+ * identity(pageKey · itemId · vendorItemId)와 추적값(lptag · subid · traceid)은
+ * 모두 저장된 값만 쓴다. 하나라도 없거나 추측·보완이 필요하면 null 을 돌려주고,
+ * 화면은 링크 대신 "구매 링크 검증 중"을 보인다.
  *
+ * - subid 를 새로 만들지 않는다. 저장된 subid 가 없으면 null.
+ *   (Search API 원본 AFFSDP 는 subid 가 없으므로 exact 3-tuple 이 있어도 null)
  * - 검색 URL(/np/search), 단축 URL(link.coupang.com/a/…), coupa.ng 은 해석하지 않는다.
  * - 반환 URL 에는 itemId · vendorItemId · lptag · subid · traceid 외 파라미터를 넣지 않는다.
- *   (requestid · token · clickBeacon · slot · pt 등은 버린다)
+ *   (requestid · token · clickBeacon · slot · pt · src · spec 등은 버린다)
  *
  * Node 테스트가 직접 import 하므로 경로 별칭·JSON import 를 쓰지 않는다.
  * registry 는 호출하는 쪽(coupangCtaLinks.ts)이 넘긴다.
@@ -25,13 +28,17 @@ export interface CoupangCtaIdentity {
   itemId: string;
   vendorItemId: string;
   lptag: string;
+  /** 저장된 값. 정확히 CMPICK_SUBID 여야 한다 */
+  subid: string;
   traceid: string;
-  /** 없으면 CMPICK_SUBID. 있으면 정확히 CMPICK_SUBID 여야 한다 */
-  subid?: string;
 }
 
-/** product.id → 확인된 identity. 검증된 seed 만 넣는다 */
-export type CoupangCtaRegistry = Record<string, CoupangCtaIdentity>;
+export interface CoupangCtaRegistry {
+  /** product.id → 검증된 seed 의 exact identity */
+  seedById?: Record<string, CoupangCtaIdentity>;
+  /** productId(= pageKey) → 중앙 affiliate registry 에 저장된 Deep Link landing provenance */
+  landingByProductId?: Record<string, CoupangCtaIdentity>;
+}
 
 export interface CoupangCtaProduct {
   id: string;
@@ -55,18 +62,19 @@ function isTrackingValue(value: unknown): value is string {
   return typeof value === 'string' && TRACKING_VALUE.test(value);
 }
 
-/** 모든 필드가 명시적이고 형식이 맞을 때만 tracked canonical 을 만든다 */
+/** 모든 필드가 저장돼 있고 형식이 맞을 때만 tracked canonical 을 만든다 */
 export function buildTrackedCanonical(identity: CoupangCtaIdentity): string | null {
-  const { pageKey, itemId, vendorItemId, lptag, traceid } = identity;
+  if (!identity || typeof identity !== 'object') return null;
+  const { pageKey, itemId, vendorItemId, lptag, subid, traceid } = identity;
   if (!isNumericId(pageKey) || !isNumericId(itemId) || !isNumericId(vendorItemId)) return null;
   if (!isTrackingValue(lptag) || !isTrackingValue(traceid)) return null;
-  if (identity.subid !== undefined && identity.subid !== CMPICK_SUBID) return null;
+  if (subid !== CMPICK_SUBID) return null;
 
   const query = new URLSearchParams([
     ['itemId', itemId],
     ['vendorItemId', vendorItemId],
     ['lptag', lptag],
-    ['subid', CMPICK_SUBID],
+    ['subid', subid],
     ['traceid', traceid],
   ]);
   return `https://${CANONICAL_HOST}/vp/products/${pageKey}?${query.toString()}`;
@@ -111,28 +119,37 @@ export function parseExplicitIdentity(rawUrl: string): CoupangCtaIdentity | null
   const itemId = single(params, 'itemId');
   const vendorItemId = single(params, 'vendorItemId');
   const lptag = single(params, 'lptag');
-  const traceid = single(params, 'traceid');
   const subid = single(params, 'subid');
+  const traceid = single(params, 'traceid');
 
   if (!isNumericId(pageKey) || !isNumericId(itemId) || !isNumericId(vendorItemId)) return null;
   if (!isTrackingValue(lptag) || !isTrackingValue(traceid)) return null;
-  if (subid === null) return null;
-  if (subid !== undefined && subid !== CMPICK_SUBID) return null;
+  // subid 는 저장된 값만 인정한다. 없으면 만들지 않는다.
+  if (subid !== CMPICK_SUBID) return null;
 
-  return { pageKey, itemId, vendorItemId, lptag, traceid, subid: CMPICK_SUBID };
+  return { pageKey, itemId, vendorItemId, lptag, subid, traceid };
 }
 
-/** product.productId 가 있으면 pageKey 와 정확히 같아야 한다 */
-function matchesProductId(product: CoupangCtaProduct, pageKey: string): boolean {
-  if (product.productId === undefined || product.productId === null) return true;
-  return String(product.productId) === pageKey;
+function own(
+  table: Record<string, CoupangCtaIdentity> | undefined,
+  key: string | undefined,
+): CoupangCtaIdentity | undefined {
+  if (!table || key === undefined) return undefined;
+  return Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
+}
+
+function productKey(product: CoupangCtaProduct): string | undefined {
+  if (product.productId === undefined || product.productId === null) return undefined;
+  return String(product.productId);
 }
 
 /**
- * 공개 CTA href. 안전한 exact identity 가 없으면 null.
+ * 공개 CTA href. 저장된 exact identity 와 추적값이 모두 있을 때만 값이 있다.
  *
- * A. registry 에 product.id 가 있으면 registry 값만 쓴다.
- * B. 없으면 저장된 coupangUrl 에 명시된 값만 쓴다.
+ * A. seedById 에 product.id 가 있으면 그 값.
+ * B. landingByProductId 에 product.productId 가 있으면 그 값(키와 pageKey 가 같아야 한다).
+ * C. 둘 다 없으면 저장된 coupangUrl 에 명시된 값(subid 포함)만.
+ * 어느 경우든 product.productId 가 있으면 pageKey 와 정확히 같아야 한다.
  */
 export function resolveCoupangTrackedHref(
   product: CoupangCtaProduct,
@@ -140,12 +157,12 @@ export function resolveCoupangTrackedHref(
 ): string | null {
   if (!product || typeof product.id !== 'string') return null;
 
-  const seeded = Object.prototype.hasOwnProperty.call(registry, product.id)
-    ? registry[product.id]
-    : undefined;
-  const identity = seeded ?? parseExplicitIdentity(product.coupangUrl);
+  const key = productKey(product);
+  const seed = own(registry.seedById, product.id);
+  const landing = seed ? undefined : own(registry.landingByProductId, key);
+  const identity = seed ?? landing ?? parseExplicitIdentity(product.coupangUrl);
   if (!identity) return null;
-  if (!matchesProductId(product, identity.pageKey)) return null;
+  if (key !== undefined && key !== identity.pageKey) return null;
 
   return buildTrackedCanonical(identity);
 }
