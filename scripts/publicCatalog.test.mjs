@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import {
   PUBLIC_CATALOG_TARGET,
   buildPublicCatalog,
+  publicCountFor,
   reviewForCategories,
   toReviewCandidate,
   verifiedProductKey,
@@ -257,5 +258,33 @@ describe('실데이터 공개 카탈로그', () => {
   it(`1차 완료 게이트 목표는 ${PUBLIC_CATALOG_TARGET} 이다 (npm run catalog:gate)`, () => {
     assert.equal(PUBLIC_CATALOG_TARGET, 100);
     assert.match(read('package.json'), /"catalog:gate": "node scripts\/catalog-gate\.mjs"/);
+  });
+});
+
+describe('카테고리 탭 숫자 = 공개 총상품 수', () => {
+  it('publicCountFor 는 verified + review 를 카테고리로만 센다(치수 조건 없음)', () => {
+    const catalog = buildPublicCatalog(
+      [verifiedProduct({ id: 'v-1', category: 'dryer', productId: 9 })],
+      [record({ productId: 1, category: 'dryer' }), record({ id: 'b', productId: 2, category: 'bed' })],
+    );
+    assert.equal(publicCountFor(catalog, ['dryer']), 2);
+    assert.equal(publicCountFor(catalog, ['bed']), 1);
+    assert.equal(publicCountFor(catalog, ['sofa']), 0);
+    assert.equal(publicCountFor(catalog, null), 3);
+  });
+
+  it('SizeFinderApp 탭 숫자는 publicCountFor, 결과 수는 verified 를 거른 visible 그대로', () => {
+    const app = stripComments(read('src/components/SizeFinderApp.tsx'));
+    assert.match(app, /result\[category\.id\] = publicCountFor\(publicCatalog, CATEGORY_MATCH\[category\.id\]\)/);
+    assert.match(app, /<span className="text-brand-600">\{visible\.length\}<\/span>개/);
+    assert.match(app, /sortProducts\(filterProducts\(catalog, filters\), filters\.sort\)/);
+  });
+
+  it('verified 가 없는 카테고리는 "치수에 맞는 제품이 없다" 대신 안내를 보이고 review 를 fit 에 넣지 않는다', () => {
+    const app = stripComments(read('src/components/SizeFinderApp.tsx'));
+    assert.match(app, /const onlyReviewInCategory = verifiedInCategory === 0 && reviewInCategory > 0;/);
+    assert.match(app, /\{onlyReviewInCategory \? \(/);
+    assert.match(app, /verifiedInCategory = publicCountFor\(\{ verified: catalog, review: \[\] \}/);
+    assert.doesNotMatch(app, /준비 중/);
   });
 });

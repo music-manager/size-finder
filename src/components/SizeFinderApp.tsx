@@ -14,7 +14,7 @@ import QuickSpaceFinder from './QuickSpaceFinder';
 import ReviewCatalogSection from './ReviewCatalogSection';
 import ShareButton from './ShareButton';
 import SortSelect from './SortSelect';
-import { CATEGORIES } from '@/lib/categories';
+import { CATEGORIES, CATEGORY_MATCH } from '@/lib/categories';
 import {
   DEFAULT_FILTERS,
   filterProducts,
@@ -29,6 +29,7 @@ import {
   type SpecPreset,
 } from '@/lib/presets';
 import { isSizeFilterActive } from '@/lib/fit';
+import { publicCountFor } from '@/lib/publicCatalog';
 import { getPublicCatalog } from '@/lib/publicCatalogData';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
 import type { Filters, Product, SortKey, TabId } from '@/lib/types';
@@ -81,16 +82,20 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
     [catalog, filters],
   );
 
+  // 탭 숫자는 카테고리별 공개 상품 총수(verified + review). 공간 맞춤 결과 수와 다르다.
   const counts = useMemo(() => {
     const result: Record<string, number> = {};
     for (const category of CATEGORIES) {
-      result[category.id] = filterProducts(catalog, {
-        ...filters,
-        category: category.id,
-      }).length;
+      result[category.id] = publicCountFor(publicCatalog, CATEGORY_MATCH[category.id]);
     }
     return result;
-  }, [catalog, filters]);
+  }, [publicCatalog]);
+
+  // 이 카테고리에 치수 확인을 마친 상품이 아예 없으면 "치수에 맞는 제품이 없다" 대신 안내만 한다
+  const allowedCategories = CATEGORY_MATCH[filters.category];
+  const verifiedInCategory = publicCountFor({ verified: catalog, review: [] }, allowedCategories);
+  const reviewInCategory = publicCountFor({ verified: [], review: reviewCandidates }, allowedCategories);
+  const onlyReviewInCategory = verifiedInCategory === 0 && reviewInCategory > 0;
 
   const dirty = isFilterDirty(filters);
   const sizeFilterActive = isSizeFilterActive(filters, DEFAULT_FILTERS);
@@ -183,12 +188,19 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
           {/* 쿠팡 상품 카드가 나오는 목록 바로 위에 파트너스 고지를 1회 표시한다 */}
           {(visible.length > 0 || reviewCandidates.length > 0) && <AffiliateNotice className="mb-3" />}
 
-          <ProductGrid
-            products={visible}
-            doorClearance={filters.doorClearance}
-            fitContext={fitContext}
-            onReset={resetFilters}
-          />
+          {onlyReviewInCategory ? (
+            <p className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-600">
+              이 카테고리는 아직 치수 확인을 마친 상품이 없어 공간 맞춤 결과가 없습니다. 아래 실제
+              상품은 치수를 확인하는 중입니다.
+            </p>
+          ) : (
+            <ProductGrid
+              products={visible}
+              doorClearance={filters.doorClearance}
+              fitContext={fitContext}
+              onReset={resetFilters}
+            />
+          )}
 
           <ReviewCatalogSection candidates={reviewCandidates} category={filters.category} />
         </section>

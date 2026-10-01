@@ -125,3 +125,18 @@ export function reviewForCategories(
   if (!allowed) return review;
   return review.filter((candidate) => allowed.includes(candidate.category));
 }
+
+/**
+ * 카테고리 탭 숫자 = 그 카테고리의 공개 상품 총수(verified + review).
+ * 공간 맞춤 결과 수(verified 를 치수로 거른 수)와는 의미가 다르다.
+ */
+export function publicCountFor(
+  catalog: Pick<PublicCatalog, 'verified' | 'review'>,
+  allowed: readonly CategoryId[] | null | undefined,
+): number {
+  const inCategory = (category: CategoryId) => !allowed || allowed.includes(category);
+  return (
+    catalog.verified.filter((product) => inCategory(product.category)).length +
+    catalog.review.filter((candidate) => inCategory(candidate.category)).length
+  );
+}
