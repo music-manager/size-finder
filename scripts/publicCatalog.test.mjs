@@ -325,6 +325,19 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     for (const tab of tabs) assert.ok(publicCountFor(catalog, match[tab]) >= 1, tab);
   });
 
+  it('식기세척기 수저통(7219542646, 액세서리)은 넣지 않는다', () => {
+    assert.equal(REVIEW_FILE.some((r) => r.productId === 7219542646), false);
+  });
+
+  it('coupang_search 행의 저장 URL 은 같은 productId · itemId · vendorItemId 를 가리킨다', () => {
+    for (const row of REVIEW_FILE.filter((r) => r.source === 'coupang_search' && r.coupangUrl)) {
+      const q = new URL(row.coupangUrl).searchParams;
+      assert.equal(q.get('pageKey'), String(row.productId), String(row.productId));
+      if (row.itemId) assert.equal(q.get('itemId'), row.itemId, String(row.productId));
+      if (row.vendorItemId) assert.equal(q.get('vendorItemId'), row.vendorItemId, String(row.productId));
+    }
+  });
+
   it('파일에 치수 관련 키가 없고 productId 는 양의 정수, 중복 없음', () => {
     const ids = REVIEW_FILE.map((r) => r.productId);
     assert.equal(new Set(ids).size, ids.length);
@@ -346,10 +359,16 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     }
   });
 
-  it('식기세척기 · 신발장 raw Search 후보는 저장된 Deep Link provenance 가 없으므로 CTA 0', () => {
+  it('식기세척기 · 접이식테이블 · 신발장 raw Search(V0-153) 후보는 Deep Link provenance 가 없으므로 CTA 0', () => {
     const landing = REGISTRY.landingByProductId;
-    const targets = catalog.review.filter((c) => ['dishwasher', 'shoe_rack'].includes(c.category));
-    assert.equal(targets.length, 3);
+    const targets = catalog.review.filter(
+      (c) => c.source === 'coupang_search' && ['dishwasher', 'folding_table', 'shoe_rack'].includes(c.category),
+    );
+    assert.equal(targets.length, 18, '식기세척기 7 + 접이식테이블 8 + 신발장 3');
+    for (const candidate of targets) {
+      const traceid = new URL(candidate.coupangUrl).searchParams.get('traceid');
+      assert.match(traceid, /^V0-153-/, String(candidate.productId));
+    }
     for (const candidate of targets) {
       assert.equal(Object.prototype.hasOwnProperty.call(landing, String(candidate.productId)), false);
       const { href } = resolveCoupangCta(
