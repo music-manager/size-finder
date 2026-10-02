@@ -393,7 +393,7 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     const targets = catalog.review.filter(
       (c) => c.source === 'coupang_search' && ['dishwasher', 'folding_table', 'shoe_rack'].includes(c.category),
     );
-    assert.equal(targets.length, 20, '식기세척기 7 + 접이식테이블 6(본체 표기 없는 2건 제외) + 신발장 7');
+    assert.equal(targets.length, 48, '기존 20 + issue #35 신규 28(식기세척기 3 + 접이식테이블 17 + 신발장 8)');
     for (const candidate of targets) {
       const traceid = new URL(candidate.coupangUrl).searchParams.get('traceid');
       assert.match(traceid, /^V0-153-/, String(candidate.productId));
