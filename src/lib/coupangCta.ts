@@ -46,7 +46,7 @@ export interface CoupangCtaRegistry {
 }
 
 /** CTA href 가 어느 저장값에서 왔는지 */
-export type CoupangCtaSource = 'seed' | 'landing' | 'stored-url';
+export type CoupangCtaSource = 'seed' | 'landing' | 'stored-url' | 'search-raw';
 
 export interface CoupangCtaResolution {
   href: string | null;
@@ -63,6 +63,9 @@ const NUMERIC_ID = /^[1-9][0-9]{0,19}$/;
 const TRACKING_VALUE = /^[A-Za-z0-9._-]{1,128}$/;
 /** 저장된 Deep Link landing traceid 형식. Search 단계(V0-153-…)나 다른 형식은 거부한다 */
 const LANDING_TRACEID = /^V0-183-[0-9a-f]+$/;
+/** 중앙 Search API 원문 traceid. exact 저장 URL fallback 에만 쓴다 */
+const SEARCH_TRACEID = /^V0-153-[0-9a-f]+$/;
+const CMPICK_LPTAG = 'AF3873783';
 
 const AFFSDP_HOST = 'link.coupang.com';
 const AFFSDP_PATH = '/re/AFFSDP';
@@ -97,6 +100,44 @@ export function buildTrackedCanonical(identity: CoupangCtaIdentity): string | nu
     ['traceid', traceid],
   ]);
   return `https://${CANONICAL_HOST}/vp/products/${pageKey}?${query.toString()}`;
+}
+
+/**
+ * 중앙 Search API가 저장한 exact AFFSDP 원문.
+ * productId가 없는 카드에는 쓰지 않고 pageKey가 expectedProductId와 정확히 같아야 한다.
+ * 링크를 재조립하거나 subid를 새로 붙이지 않는다.
+ */
+export function resolveStoredSearchAffiliateHref(
+  rawUrl: string,
+  expectedProductId: string | undefined,
+): string | null {
+  if (!expectedProductId || !isNumericId(expectedProductId)) return null;
+  if (typeof rawUrl !== 'string' || rawUrl.trim() === '') return null;
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+  if (url.hostname !== AFFSDP_HOST || url.pathname !== AFFSDP_PATH) return null;
+
+  const params = url.searchParams;
+  const pageKey = single(params, 'pageKey');
+  const itemId = single(params, 'itemId');
+  const vendorItemId = single(params, 'vendorItemId');
+  const lptag = single(params, 'lptag');
+  const traceid = single(params, 'traceid');
+  const subid = single(params, 'subid');
+
+  if (!isNumericId(pageKey) || !isNumericId(itemId) || !isNumericId(vendorItemId)) return null;
+  if (pageKey !== expectedProductId) return null;
+  if (lptag !== CMPICK_LPTAG || typeof traceid !== 'string' || !SEARCH_TRACEID.test(traceid)) return null;
+  if (subid === null) return null;
+  if (subid !== undefined && subid !== CMPICK_SUBID) return null;
+
+  return rawUrl.trim();
 }
 
 /** 같은 키가 두 번 이상이면 어느 값이 맞는지 모르므로 거부한다 */
@@ -190,7 +231,13 @@ export function resolveCoupangCta(
     source = 'landing';
   } else {
     identity = parseExplicitIdentity(product.coupangUrl);
-    source = 'stored-url';
+    if (identity) {
+      source = 'stored-url';
+    } else {
+      const searchHref = resolveStoredSearchAffiliateHref(product.coupangUrl, key);
+      if (searchHref) return { href: searchHref, source: 'search-raw' };
+      return NONE;
+    }
   }
 
   if (!identity) return NONE;

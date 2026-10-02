@@ -6,6 +6,8 @@ import type { SortKey } from '@/lib/types';
 interface Props {
   value: SortKey;
   onChange: (next: SortKey) => void;
+  /** 공간 치수를 좁힌 상태에서는 default 정렬이 실제로 맞춤 여유순이므로 라벨도 맞춘다 */
+  defaultLabel?: string;
 }
 
 const OPTIONS: { value: SortKey; label: string }[] = [
@@ -16,7 +18,7 @@ const OPTIONS: { value: SortKey; label: string }[] = [
   { value: 'price', label: '낮은 가격순' },
 ];
 
-export default function SortSelect({ value, onChange }: Props) {
+export default function SortSelect({ value, onChange, defaultLabel = '기본순' }: Props) {
   return (
     <div className="relative">
       <ArrowUpDown
@@ -31,7 +33,7 @@ export default function SortSelect({ value, onChange }: Props) {
       >
         {OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>
-            {o.label}
+            {o.value === 'default' ? defaultLabel : o.label}
           </option>
         ))}
       </select>

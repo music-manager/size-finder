@@ -1,11 +1,11 @@
 /**
  * 공개 쿠팡 CTA — exact tracked canonical.
  *
- * - 저장된 identity(pageKey · itemId · vendorItemId)와 추적값(lptag · subid · traceid)만 쓴다.
- *   subid 를 새로 만들지 않는다. 추측·보완 금지.
- * - 검색 URL · 단축 /a/ · coupa.ng 은 해석하지 않고 null.
- * - 반환 URL 파라미터는 itemId · vendorItemId · lptag · subid · traceid 뿐.
- * - null 이면 공개 화면은 외부 링크 대신 "구매 링크 검증 중" 을 보인다.
+ * - Deep Link provenance(V0-183)가 있으면 tracked canonical을 우선한다.
+ * - provenance가 없더라도 중앙 Search API가 실제 저장한 exact AFFSDP(V0-153)는
+ *   productId와 pageKey가 일치할 때 원문 그대로 fallback CTA로 허용한다.
+ * - 값을 새로 만들거나 subid를 합성하지 않는다.
+ * - /np/search · 단축 /a/ · coupa.ng 은 해석하지 않는다.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
@@ -18,6 +18,7 @@ import {
   parseExplicitIdentity,
   resolveCoupangCta,
   resolveCoupangTrackedHref,
+  resolveStoredSearchAffiliateHref,
 } from '../src/lib/coupangCta.ts';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -60,21 +61,26 @@ const allPending = () =>
     .flatMap((f) => readJson(`src/data/${f}`));
 
 describe('resolver — 저장된 추적값만 쓴다', () => {
-  it('subid 없는 raw Search AFFSDP → null (exact 3-tuple 이 있어도 subid 를 만들지 않는다)', () => {
+  it('subid 없는 raw Search AFFSDP는 productId가 exact 일 때 원문 fallback CTA가 된다', () => {
+    // productId가 없으면 pageKey를 대조할 수 없으므로 여전히 null
     assert.equal(resolve(RAW_SEARCH_AFFSDP), null);
-    // landing provenance 가 없으면 productId 가 맞아도 raw URL 자체는 source 가 될 수 없다
     const noLanding = { seedById: REGISTRY.seedById };
-    assert.equal(resolveCoupangTrackedHref(product(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), noLanding), null);
-    // landing 이 있으면 href 는 raw URL 이 아니라 저장된 landing 에서 나온다
+    const raw = resolveCoupangCta(product(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), noLanding);
+    assert.equal(raw.source, 'search-raw');
+    assert.equal(raw.href, RAW_SEARCH_AFFSDP);
+    // V0-183 landing provenance가 있으면 더 강한 provenance를 우선한다
     const viaRegistry = resolveCoupangCta(product(RAW_SEARCH_AFFSDP, { productId: 8090724268 }), REGISTRY);
     assert.equal(viaRegistry.source, 'landing');
     assert.match(new URL(viaRegistry.href).searchParams.get('traceid'), /^V0-183-/);
   });
 
-  it('V0-153 Search URL + subid 없음 → null', () => {
+  it('V0-153 fallback은 exact 저장 URL만 허용한다', () => {
     assert.match(new URL(RAW_SEARCH_AFFSDP).searchParams.get('traceid'), /^V0-153-/);
     assert.equal(new URL(RAW_SEARCH_AFFSDP).searchParams.has('subid'), false);
-    assert.equal(resolve(RAW_SEARCH_AFFSDP), null);
+    assert.equal(resolveStoredSearchAffiliateHref(RAW_SEARCH_AFFSDP, '8090724268'), RAW_SEARCH_AFFSDP);
+    assert.equal(resolveStoredSearchAffiliateHref(RAW_SEARCH_AFFSDP, '8090724269'), null, 'pageKey 불일치');
+    assert.equal(resolveStoredSearchAffiliateHref(RAW_SEARCH_AFFSDP.replace('AF3873783', 'AF0000000'), '8090724268'), null, '다른 lptag');
+    assert.equal(resolveStoredSearchAffiliateHref(RAW_SEARCH_AFFSDP.replace('V0-153-', 'V0-999-'), '8090724268'), null, '다른 trace 단계');
   });
 
   it('1. 저장된 landing(subid=cmpick, V0-183) → tracked canonical', () => {
@@ -378,14 +384,12 @@ describe('explicit provenance registry', () => {
     );
   });
 
-  it('13. provenance 없는 DB 형식 상품(raw Search AFFSDP, subid 없음)은 clickable CTA 0', () => {
+  it('13. provenance 없는 DB 형식 상품도 exact raw Search AFFSDP가 있으면 clickable CTA가 된다', () => {
     const raw = allPending().filter((p) => p.coupangUrl.startsWith('https://link.coupang.com/re/AFFSDP'));
     const withoutProvenance = raw.filter((p) => !Object.prototype.hasOwnProperty.call(LANDING, String(p.productId)));
     assert.ok(withoutProvenance.length > 0);
-    assert.deepEqual(
-      withoutProvenance.filter((p) => resolveCoupangTrackedHref(p, REGISTRY) !== null).map((p) => p.id),
-      [],
-    );
+    assert.ok(withoutProvenance.every((p) => resolveCoupangCta(p, REGISTRY).source === 'search-raw'));
+    assert.ok(withoutProvenance.every((p) => resolveCoupangTrackedHref(p, REGISTRY) === p.coupangUrl));
     const withProvenance = raw.filter((p) => Object.prototype.hasOwnProperty.call(LANDING, String(p.productId)));
     assert.equal(withProvenance.length, 16);
     assert.ok(withProvenance.every((p) => resolveCoupangCta(p, REGISTRY).source === 'landing'));
