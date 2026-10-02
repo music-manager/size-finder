@@ -17,6 +17,7 @@ import SortSelect from './SortSelect';
 import { CATEGORIES, CATEGORY_MATCH } from '@/lib/categories';
 import {
   DEFAULT_FILTERS,
+  effectiveDepth,
   filterProducts,
   isFilterDirty,
   products as seedProducts,
@@ -28,7 +29,7 @@ import {
   type RoomPreset,
   type SpecPreset,
 } from '@/lib/presets';
-import { isSizeFilterActive } from '@/lib/fit';
+import { fitClearance, isSizeFilterActive } from '@/lib/fit';
 import { publicCountFor, uniqueProductIdsFor } from '@/lib/publicCatalog';
 import { SEED_PAGE_KEYS, getPublicCatalog } from '@/lib/publicCatalogData';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
@@ -77,10 +78,36 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
     setFilters(applySpecPreset(preset));
   }, []);
 
-  const visible = useMemo(
-    () => sortProducts(filterProducts(catalog, filters), filters.sort),
-    [catalog, filters],
-  );
+  const visible = useMemo(() => {
+    const filtered = filterProducts(catalog, filters);
+    if (filters.sort !== 'default') return sortProducts(filtered, filters.sort);
+
+    if (!isSizeFilterActive(filters, DEFAULT_FILTERS)) return filtered;
+
+    return [...filtered].sort((a, b) => {
+      const clearanceA = fitClearance({
+        width: a.dimensions.width,
+        depth: effectiveDepth(a, filters.doorClearance),
+        height: a.dimensions.height,
+        maxWidth: filters.maxWidth,
+        maxDepth: filters.maxDepth,
+        maxHeight: filters.maxHeight,
+      });
+      const clearanceB = fitClearance({
+        width: b.dimensions.width,
+        depth: effectiveDepth(b, filters.doorClearance),
+        height: b.dimensions.height,
+        maxWidth: filters.maxWidth,
+        maxDepth: filters.maxDepth,
+        maxHeight: filters.maxHeight,
+      });
+      return (
+        (clearanceA ?? Number.POSITIVE_INFINITY) - (clearanceB ?? Number.POSITIVE_INFINITY) ||
+        a.dimensions.width - b.dimensions.width ||
+        a.dimensions.depth - b.dimensions.depth
+      );
+    });
+  }, [catalog, filters]);
 
   // 탭 숫자는 공개 고유상품 수(서로 다른 쿠팡 productId, verified + review).
   // productId 없는 실측 카드는 화면에는 보이지만 이 숫자에는 들어가지 않는다. 공간 맞춤 결과 수와도 다르다.
@@ -180,6 +207,7 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
             <div className="flex items-center gap-2">
               <SortSelect
                 value={filters.sort}
+                defaultLabel={sizeFilterActive ? '맞춤순' : '기본순'}
                 onChange={(sort: SortKey) => patchFilters({ sort })}
               />
               <ShareButton />
