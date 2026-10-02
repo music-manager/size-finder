@@ -234,7 +234,7 @@ describe('REVIEW 공개 UI', () => {
   });
 });
 
-describe('REVIEW CTA — tracked canonical 만 외부 링크', () => {
+describe('REVIEW CTA — 저장된 exact affiliate 링크만 외부 링크', () => {
   const card = stripComments(read('src/components/ReviewCard.tsx'));
 
   it('ReviewCard 는 coupangUrl 을 href 로 쓰지 않고 resolver 결과만 쓴다', () => {
@@ -254,7 +254,7 @@ describe('REVIEW CTA — tracked canonical 만 외부 링크', () => {
     assert.doesNotMatch(unsafe.slice(0, 400), /<a[\s>]|href=/);
   });
 
-  it('실데이터 REVIEW 의 외부 CTA 는 전부 tracked canonical 이고, raw AFFSDP · /a/ clickable 0', () => {
+  it('실데이터 REVIEW 의 외부 CTA 는 landing 또는 exact raw Search 저장값만 쓴다', () => {
     const { review } = loadRepoCatalog();
     let active = 0;
     for (const candidate of review) {
@@ -262,17 +262,20 @@ describe('REVIEW CTA — tracked canonical 만 외부 링크', () => {
         { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
         REGISTRY,
       );
-      if (href === null) {
-        assert.equal(source, null);
-        continue;
-      }
+      assert.ok(href, String(candidate.productId));
       active += 1;
-      assert.match(href, /^https:\/\/www\.coupang\.com\/vp\/products\/\d+\?itemId=\d+&vendorItemId=\d+&lptag=[^&]+&subid=cmpick&traceid=V0-183-[0-9a-f]+$/);
-      assert.notEqual(href, candidate.coupangUrl);
-      assert.equal(source, 'landing');
+      if (source === 'landing') {
+        assert.match(href, /^https:\/\/www\.coupang\.com\/vp\/products\/\d+\?itemId=\d+&vendorItemId=\d+&lptag=[^&]+&subid=cmpick&traceid=V0-183-[0-9a-f]+$/);
+      } else {
+        assert.equal(source, 'search-raw', String(candidate.productId));
+        assert.equal(href, candidate.coupangUrl, String(candidate.productId));
+        const url = new URL(href);
+        assert.equal(url.origin + url.pathname, 'https://link.coupang.com/re/AFFSDP');
+        assert.equal(url.searchParams.get('pageKey'), String(candidate.productId));
+        assert.match(url.searchParams.get('traceid'), /^V0-153-[0-9a-f]+$/);
+      }
     }
-    const landingKeys = new Set(Object.keys(REGISTRY.landingByProductId));
-    assert.equal(active, review.filter((c) => landingKeys.has(String(c.productId))).length);
+    assert.equal(active, review.length);
   });
 });
 
@@ -324,7 +327,10 @@ describe('카테고리 탭 숫자 = 공개 총상품 수', () => {
     assert.match(app, /result\[category\.id\] = uniqueProductIdsFor\(publicCatalog, CATEGORY_MATCH\[category\.id\], SEED_PAGE_KEYS\)/);
     assert.doesNotMatch(app, /result\[category\.id\] = publicCountFor/);
     assert.match(app, /<span className="text-brand-600">\{visible\.length\}<\/span>개/);
-    assert.match(app, /sortProducts\(filterProducts\(catalog, filters\), filters\.sort\)/);
+    assert.match(app, /const filtered = filterProducts\(catalog, filters\)/);
+    assert.match(app, /if \(filters\.sort !== 'default'\) return sortProducts\(filtered, filters\.sort\)/);
+    assert.match(app, /fitClearance\(/);
+    assert.match(app, /defaultLabel=\{sizeFilterActive \? '맞춤순' : '기본순'\}/);
   });
 
   it('verified 가 없는 카테고리는 "치수에 맞는 제품이 없다" 대신 안내를 보이고 review 를 fit 에 넣지 않는다', () => {
@@ -388,7 +394,7 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     assert.equal(catalog.review.filter((c) => c.source === 'coupang_web_index').length, 0);
   });
 
-  it('식기세척기 · 접이식테이블 · 신발장 raw Search(V0-153) 후보는 Deep Link provenance 가 없으므로 CTA 0', () => {
+  it('식기세척기 · 접이식테이블 · 신발장 raw Search(V0-153) 후보는 exact 저장 CTA로 노출', () => {
     const landing = REGISTRY.landingByProductId;
     const targets = catalog.review.filter(
       (c) => c.source === 'coupang_search' && ['dishwasher', 'folding_table', 'shoe_rack'].includes(c.category),
@@ -400,15 +406,16 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     }
     for (const candidate of targets) {
       assert.equal(Object.prototype.hasOwnProperty.call(landing, String(candidate.productId)), false);
-      const { href } = resolveCoupangCta(
+      const { href, source } = resolveCoupangCta(
         { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
         REGISTRY,
       );
-      assert.equal(href, null, String(candidate.productId));
+      assert.equal(source, 'search-raw', String(candidate.productId));
+      assert.equal(href, candidate.coupangUrl, String(candidate.productId));
     }
   });
 
-  it('Search call 38~42(침대 · 행거 · 틈새수납 · 소파 · 신발장) 원문은 V0-153 provenance 전용이라 CTA 0', () => {
+  it('Search call 38~42(침대 · 행거 · 틈새수납 · 소파 · 신발장) 원문도 exact 저장 CTA로 노출', () => {
     const landing = REGISTRY.landingByProductId;
     const rows = REVIEW_FILE.filter((r) => /^중앙 coupang_api_cache Search call (38|39|40|41|42) /.test(r.note ?? ''));
     assert.equal(rows.length, 37);
@@ -419,11 +426,12 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
       assert.equal(row.source, 'coupang_search');
       assert.match(new URL(row.coupangUrl).searchParams.get('traceid'), /^V0-153-/, String(row.productId));
       assert.equal(Object.prototype.hasOwnProperty.call(landing, String(row.productId)), false);
-      const { href } = resolveCoupangCta(
+      const { href, source } = resolveCoupangCta(
         { id: `cp-${row.productId}`, coupangUrl: row.coupangUrl, productId: row.productId },
         REGISTRY,
       );
-      assert.equal(href, null, String(row.productId));
+      assert.equal(source, 'search-raw', String(row.productId));
+      assert.equal(href, row.coupangUrl, String(row.productId));
     }
   });
 
@@ -753,7 +761,7 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
     assert.doesNotMatch(app, /filterProducts\([^)]*review/i);
   });
 
-  it('8. CTA provenance 정책은 그대로 (seed 2 · landing 16 · V0-183 · V0-153 fallback 0)', () => {
+  it('8. CTA 정책: seed/landing 우선 + exact V0-153 Search 원문 fallback', () => {
     assert.deepEqual(Object.keys(REGISTRY.seedById).sort(), ['dry-006', 'dry-007']);
     assert.equal(Object.keys(REGISTRY.landingByProductId).length, 16);
     for (const identity of Object.values(REGISTRY.seedById)) assert.match(identity.traceid, /^V0-183-[0-9a-f]+$/);
@@ -763,9 +771,13 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
         { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
         REGISTRY,
       );
-      if (href) {
-        assert.equal(source, 'landing', String(candidate.productId));
+      assert.ok(href, String(candidate.productId));
+      if (source === 'landing') {
         assert.doesNotMatch(href, /V0-153/);
+      } else {
+        assert.equal(source, 'search-raw', String(candidate.productId));
+        assert.equal(href, candidate.coupangUrl, String(candidate.productId));
+        assert.match(href, /traceid=V0-153-/);
       }
     }
     const card = read('src/components/ReviewCard.tsx');
@@ -857,7 +869,7 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
     }
   });
 
-  it('16개 모두 https 이미지 · identity guard 통과로 공개되고, CTA 는 비활성(구매 링크 검증 중)', () => {
+  it('16개 모두 https 이미지 · identity guard 통과로 공개되고, 저장 Search CTA가 활성', () => {
     const repo = loadRepoCatalog();
     for (const row of rows) {
       assert.ok(hasPublicImage(row.imageUrl), String(row.productId));
@@ -865,8 +877,9 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
       const shown = repo.review.find((c) => c.productId === row.productId);
       assert.ok(shown, String(row.productId));
       assert.equal(Object.prototype.hasOwnProperty.call(REGISTRY.landingByProductId, String(row.productId)), false);
-      const { href } = resolveCoupangCta({ id: `cp-${row.productId}`, coupangUrl: row.coupangUrl, productId: row.productId }, REGISTRY);
-      assert.equal(href, null, String(row.productId));
+      const { href, source } = resolveCoupangCta({ id: `cp-${row.productId}`, coupangUrl: row.coupangUrl, productId: row.productId }, REGISTRY);
+      assert.equal(source, 'search-raw', String(row.productId));
+      assert.equal(href, row.coupangUrl, String(row.productId));
     }
     assert.equal(repo.review.filter((c) => !hasPublicImage(c.imageUrl)).length, 0, '공개 이미지 공백 0');
   });
