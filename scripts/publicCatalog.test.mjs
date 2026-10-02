@@ -811,7 +811,7 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
     9425628558: ['desk', '28018169982', '94975762542', 45000],
     8952948948: ['washing_machine', '26189827080', '93169229448', 179000],
     9739138804: ['washing_machine', '29148373588', '96118625819', 26300],
-    9746324256: ['washing_machine', '29177882871', '96099149627', 38850],
+    9746324256: ['washing_machine', '29177882873', '96099149625', 38850],
     9748766128: ['washing_machine', '29189168740', '96110150158', 149000],
     4882898698: ['microwave', '8865360607', '76152061617', 48390],
     6784715012: ['microwave', '15967393537', '5493101444', 59690],
@@ -871,10 +871,10 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
     assert.equal(repo.review.filter((c) => !hasPublicImage(c.imageUrl)).length, 0, '공개 이미지 공백 0');
   });
 
-  it('이슈 #33의 16개는 유지되고, 후속 이슈 #35 반영 후 공개 unique 144 · 카테고리 수가 최신 스냅샷과 일치한다', () => {
+  it('이슈 #33의 16개는 유지되고, 최종 수집 call61 반영 후 공개 unique 195 · 모든 카테고리 10+ 스냅샷과 일치한다', () => {
     const repo = loadRepoCatalog();
-    assert.equal(repo.uniqueProductIds, 144);
-    const expected = { refrigerator: 16, washing_machine: 9, dryer: 8, dishwasher: 10, microwave: 13, desk: 10, folding_table: 23, niche: 14, bed: 8, sofa: 9, hanger: 9, shoe_rack: 15 };
+    assert.equal(repo.uniqueProductIds, 195);
+    const expected = { refrigerator: 16, washing_machine: 16, dryer: 22, dishwasher: 10, microwave: 13, desk: 10, folding_table: 23, niche: 14, bed: 22, sofa: 16, hanger: 18, shoe_rack: 15 };
     for (const tab of PUBLIC_TABS) assert.equal(uniqueProductIdsFor(repo, tab.allowed, SEED_PAGE_KEYS), expected[tab.id], tab.id);
     const verifiedIds = new Set(repo.verified.map((p) => p.id));
     for (const row of rows) assert.equal(verifiedIds.has(`cp-${row.productId}`), false, 'REVIEW 는 fit 대상(verified)에 없다');
