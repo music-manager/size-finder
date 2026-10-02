@@ -871,10 +871,10 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
     assert.equal(repo.review.filter((c) => !hasPublicImage(c.imageUrl)).length, 0, '공개 이미지 공백 0');
   });
 
-  it('반영 후 공개 unique 101 · desk 10 · washing_machine 9 · microwave 13, 나머지 카테고리는 그대로', () => {
+  it('이슈 #33의 16개는 유지되고, 후속 이슈 #35 반영 후 공개 unique 144 · 카테고리 수가 최신 스냅샷과 일치한다', () => {
     const repo = loadRepoCatalog();
-    assert.equal(repo.uniqueProductIds, 101);
-    const expected = { refrigerator: 8, washing_machine: 9, dryer: 8, dishwasher: 7, microwave: 13, desk: 10, folding_table: 6, niche: 7, bed: 8, sofa: 9, hanger: 9, shoe_rack: 7 };
+    assert.equal(repo.uniqueProductIds, 144);
+    const expected = { refrigerator: 16, washing_machine: 9, dryer: 8, dishwasher: 10, microwave: 13, desk: 10, folding_table: 23, niche: 14, bed: 8, sofa: 9, hanger: 9, shoe_rack: 15 };
     for (const tab of PUBLIC_TABS) assert.equal(uniqueProductIdsFor(repo, tab.allowed, SEED_PAGE_KEYS), expected[tab.id], tab.id);
     const verifiedIds = new Set(repo.verified.map((p) => p.id));
     for (const row of rows) assert.equal(verifiedIds.has(`cp-${row.productId}`), false, 'REVIEW 는 fit 대상(verified)에 없다');
