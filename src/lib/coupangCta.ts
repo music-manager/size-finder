@@ -43,10 +43,15 @@ export interface CoupangCtaRegistry {
    * 원문 그대로 두고 parseExplicitIdentity 로 읽는다(값 변형 금지).
    */
   landingByProductId?: Record<string, string>;
+  /**
+   * product.id → 사람이 실제 도착 상품까지 확인한 기존 /a/ 제휴 단축링크.
+   * resolver는 이 allowlist 값과 product.coupangUrl이 정확히 같을 때만 원문을 사용한다.
+   */
+  verifiedShortById?: Record<string, string>;
 }
 
 /** CTA href 가 어느 저장값에서 왔는지 */
-export type CoupangCtaSource = 'seed' | 'landing' | 'stored-url' | 'search-raw';
+export type CoupangCtaSource = 'seed' | 'landing' | 'stored-url' | 'search-raw' | 'verified-short';
 
 export interface CoupangCtaResolution {
   href: string | null;
@@ -69,6 +74,7 @@ const CMPICK_LPTAG = 'AF3873783';
 
 const AFFSDP_HOST = 'link.coupang.com';
 const AFFSDP_PATH = '/re/AFFSDP';
+const VERIFIED_SHORT_PATH = /^\/a\/[A-Za-z0-9_-]+$/;
 const CANONICAL_HOST = 'www.coupang.com';
 const CANONICAL_PATH = /^\/vp\/products\/([0-9]+)$/;
 
@@ -136,6 +142,26 @@ export function resolveStoredSearchAffiliateHref(
   if (lptag !== CMPICK_LPTAG || typeof traceid !== 'string' || !SEARCH_TRACEID.test(traceid)) return null;
   if (subid === null) return null;
   if (subid !== undefined && subid !== CMPICK_SUBID) return null;
+
+  return rawUrl.trim();
+}
+
+/**
+ * 사람이 도착 상품까지 확인해 registry 에 명시한 기존 /a/ 제휴 단축링크.
+ * 일반 /a/ 링크를 해석하거나 추측하지 않고 형식만 검증해 원문 그대로 반환한다.
+ */
+export function resolveVerifiedShortAffiliateHref(rawUrl: string): string | null {
+  if (typeof rawUrl !== 'string' || rawUrl.trim() === '') return null;
+
+  let url: URL;
+  try {
+    url = new URL(rawUrl.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
+  if (url.hostname !== AFFSDP_HOST || !VERIFIED_SHORT_PATH.test(url.pathname)) return null;
+  if (url.search || url.hash) return null;
 
   return rawUrl.trim();
 }
@@ -222,6 +248,8 @@ export function resolveCoupangCta(
 
   const seed = own(registry.seedById, product.id);
   const landingUrl = seed ? undefined : own(registry.landingByProductId, key);
+  const verifiedShort =
+    seed || landingUrl !== undefined ? undefined : own(registry.verifiedShortById, product.id);
   if (seed) {
     identity = seed;
     source = 'seed';
@@ -229,6 +257,10 @@ export function resolveCoupangCta(
     identity = parseExplicitIdentity(landingUrl);
     if (identity && identity.pageKey !== key) return NONE;
     source = 'landing';
+  } else if (verifiedShort !== undefined) {
+    const href = resolveVerifiedShortAffiliateHref(verifiedShort);
+    if (!href || href !== product.coupangUrl.trim()) return NONE;
+    return { href, source: 'verified-short' };
   } else {
     identity = parseExplicitIdentity(product.coupangUrl);
     if (identity) {
