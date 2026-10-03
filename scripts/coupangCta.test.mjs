@@ -19,6 +19,7 @@ import {
   resolveCoupangCta,
   resolveCoupangTrackedHref,
   resolveStoredSearchAffiliateHref,
+  resolveVerifiedShortAffiliateHref,
 } from '../src/lib/coupangCta.ts';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -129,9 +130,12 @@ describe('resolver — 거부되는 입력 (null)', () => {
     assert.equal(resolve('https://www.coupang.com/np/search?q=%EB%AF%B8%EB%8B%88%EA%B1%B4%EC%A1%B0%EA%B8%B0'), null);
   });
 
-  it('11. link.coupang.com/a/… → null', () => {
+  it('11. 일반 link.coupang.com/a/… → null (명시 allowlist 없이는 해석 금지)', () => {
     assert.equal(resolve('https://link.coupang.com/a/hccXPGgZbg'), null);
     assert.equal(resolve('https://link.coupang.com/a/haKLrWKw0q?pageKey=1&itemId=2&vendorItemId=3&lptag=x&subid=cmpick&traceid=y'), null);
+    assert.equal(resolveVerifiedShortAffiliateHref('https://link.coupang.com/a/haKLrWKw0q?x=1'), null);
+    assert.equal(resolveVerifiedShortAffiliateHref('http://link.coupang.com/a/haKLrWKw0q'), null);
+    assert.equal(resolveVerifiedShortAffiliateHref('https://evil.example/a/haKLrWKw0q'), null);
   });
 
   it('12. coupa.ng/… → null', () => {
@@ -207,6 +211,7 @@ describe('resolver — 거부되는 입력 (null)', () => {
 describe('explicit provenance registry', () => {
   const SEED = REGISTRY.seedById;
   const LANDING = REGISTRY.landingByProductId;
+  const VERIFIED_SHORT = REGISTRY.verifiedShortById;
   const RAW_TEXT = read('src/data/coupang-cta-provenance.json');
   const landingIdentity = (key) => parseExplicitIdentity(LANDING[key]);
   // DB 행처럼: productId 만 있고 저장 URL 은 subid 없는 raw Search AFFSDP
@@ -341,11 +346,14 @@ describe('explicit provenance registry', () => {
     assert.equal(resolveById('dry-007'), EXPECTED);
   });
 
-  it('20. dry-008 → null (/a/ 단축 URL 만 있고 exact provenance 없음)', () => {
+  it('20. dry-008 → 사람이 도착 상품을 확인한 exact /a/ allowlist 링크', () => {
     const dry008 = PRODUCTS.find((p) => p.id === 'dry-008');
-    assert.match(dry008.coupangUrl, /^https:\/\/link\.coupang\.com\/a\//);
     assert.equal(dry008.productId, undefined);
-    assert.equal(resolveById('dry-008'), null);
+    assert.equal(VERIFIED_SHORT['dry-008'], 'https://link.coupang.com/a/hccXPGgZbg');
+    assert.equal(resolveVerifiedShortAffiliateHref(VERIFIED_SHORT['dry-008']), VERIFIED_SHORT['dry-008']);
+    const resolved = resolveCoupangCta(dry008, REGISTRY);
+    assert.equal(resolved.source, 'verified-short');
+    assert.equal(resolved.href, dry008.coupangUrl);
   });
 
   it('seed 가 있어도 productId 가 pageKey 와 다르면 null', () => {
@@ -370,17 +378,17 @@ describe('explicit provenance registry', () => {
     }
   });
 
-  it('repo 60건 inventory: search-only 57 · exact seed 2 · unresolved /a 1', () => {
+  it('repo 60건 inventory: search-only 57 · exact seed 2 · verified short 1 · unresolved /a 0', () => {
     assert.equal(PRODUCTS.length, 60);
     const resolved = PRODUCTS.filter((p) => resolveCoupangTrackedHref(p, REGISTRY));
     const search = PRODUCTS.filter((p) => p.coupangUrl.startsWith('https://www.coupang.com/np/search'));
     const shortA = PRODUCTS.filter((p) => p.coupangUrl.startsWith('https://link.coupang.com/a/'));
     assert.equal(search.length, 57);
     assert.ok(search.every((p) => resolveCoupangTrackedHref(p, REGISTRY) === null));
-    assert.deepEqual(resolved.map((p) => p.id).sort(), ['dry-006', 'dry-007']);
+    assert.deepEqual(resolved.map((p) => p.id).sort(), ['dry-006', 'dry-007', 'dry-008']);
     assert.deepEqual(
       shortA.filter((p) => !resolveCoupangTrackedHref(p, REGISTRY)).map((p) => p.id),
-      ['dry-008'],
+      [],
     );
   });
 
