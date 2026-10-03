@@ -12,6 +12,8 @@
 
 배포 주소: **https://cmpick.esedy.com**
 
+운영 배포는 GitHub `main` 병합 후 Netlify Production에서 수행합니다.
+
 ---
 
 ## 1. 실행 방법
