@@ -18,8 +18,8 @@
     }
   },
   "landingByProductId": {
-    "1477648197": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=1477648197&itemId=17553146315&vendorItemId=91605659671&traceid=V0-183-e61572a94093ee1a",
     "207899870": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=207899870&itemId=616146879&vendorItemId=95598757788&traceid=V0-183-ba6f1c22c08b79e1",
+    "1477648197": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=1477648197&itemId=17553146315&vendorItemId=91605659671&traceid=V0-183-e61572a94093ee1a",
     "5579078911": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=5579078911&itemId=8911565538&vendorItemId=76198193766&traceid=V0-183-47357fc89d979833",
     "6263718247": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=6263718247&itemId=24608557083&vendorItemId=91629291574&traceid=V0-183-886e47399bb53b32",
     "6666660691": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=6666660691&itemId=15324077809&vendorItemId=82544402835&traceid=V0-183-927d985a79596520",
@@ -34,5 +34,8 @@
     "8411434662": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=8411434662&itemId=24320892025&vendorItemId=95850388265&traceid=V0-183-ebd81a89627740a2",
     "8462835107": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=8462835107&itemId=24483431192&vendorItemId=91496810289&traceid=V0-183-a88ea60d33e0f3b7",
     "8869037621": "https://link.coupang.com/re/AFFSDP?lptag=AF3873783&subid=cmpick&pageKey=8869037621&itemId=25871940135&vendorItemId=94121842070&traceid=V0-183-5b3ac5606c4a6388"
+  },
+  "verifiedShortById": {
+    "dry-008": "https://link.coupang.com/a/hccXPGgZbg"
   }
 }
