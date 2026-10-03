@@ -5,6 +5,7 @@ import rawPendingDryer from '@/data/pending-dryer.json';
 import rawPendingMicrowave from '@/data/pending-microwave.json';
 import rawPendingDesk from '@/data/pending-desk.json';
 import { CATEGORY_MATCH } from './categories';
+import { exceedsDimensionLimit, resolveDimensionBounds } from './fit';
 import type {
   CategoryId,
   PendingProduct,
@@ -34,11 +35,13 @@ function ceilTo10(value: number): number {
   return Math.ceil(value / 10) * 10;
 }
 
-export const DIMENSION_BOUNDS: DimensionBounds = {
+// seed 실측 카드는 일부(건조기 3개)뿐이고 공개 verified 대부분은 DB 에서 온다.
+// seed 최대치만 쓰면 큰 DB 상품이 기본 상태에서 잘리므로 하한(MIN_DIMENSION_BOUNDS)을 둔다.
+export const DIMENSION_BOUNDS: DimensionBounds = resolveDimensionBounds({
   width: ceilTo10(Math.max(...products.map((p) => p.dimensions.width)) + 10),
   depth: ceilTo10(Math.max(...products.map((p) => p.dimensions.depth)) + 10),
   height: ceilTo10(Math.max(...products.map((p) => p.dimensions.height)) + 10),
-};
+});
 
 export const DIMENSION_MIN = 10;
 
@@ -67,9 +70,10 @@ export function filterProducts(list: Product[], filters: Filters): Product[] {
 
     const { width, height } = product.dimensions;
     const depth = effectiveDepth(product, filters.doorClearance);
-    if (width > filters.maxWidth + EPSILON) return false;
-    if (depth > filters.maxDepth + EPSILON) return false;
-    if (height > filters.maxHeight + EPSILON) return false;
+    // 한도가 최대값이면 그 축은 제한 없음 (최대값보다 큰 DB 상품도 기본 상태에서 보인다)
+    if (exceedsDimensionLimit(width, filters.maxWidth, DIMENSION_BOUNDS.width, EPSILON)) return false;
+    if (exceedsDimensionLimit(depth, filters.maxDepth, DIMENSION_BOUNDS.depth, EPSILON)) return false;
+    if (exceedsDimensionLimit(height, filters.maxHeight, DIMENSION_BOUNDS.height, EPSILON)) return false;
 
     if (keyword) {
       const haystack = [

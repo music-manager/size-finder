@@ -104,3 +104,33 @@ export function clampDimension(value: number, min: number, max: number): number 
   if (!Number.isFinite(value)) return min;
   return Math.min(max, Math.max(min, Math.round(value)));
 }
+
+/**
+ * 치수 슬라이더 · 입력칸 최대값의 하한(cm).
+ * 정적 seed 실측 카드만으로 최대값을 정하면(현재 건조기 3개 → 70×70×80)
+ * DB 의 냉장고 · 행거 · 책상처럼 큰 verified 상품이 기본 상태에서 걸러지고,
+ * 130×70×190 같은 원룸 공간 입력도 70×70×80 으로 잘린다.
+ */
+export const MIN_DIMENSION_BOUNDS = { width: 200, depth: 230, height: 230 } as const;
+
+/** seed 에서 계산한 최대값과 하한 중 큰 쪽 */
+export function resolveDimensionBounds(derived: { width: number; depth: number; height: number }): {
+  width: number;
+  depth: number;
+  height: number;
+} {
+  return {
+    width: Math.max(derived.width, MIN_DIMENSION_BOUNDS.width),
+    depth: Math.max(derived.depth, MIN_DIMENSION_BOUNDS.depth),
+    height: Math.max(derived.height, MIN_DIMENSION_BOUNDS.height),
+  };
+}
+
+/**
+ * 한 축의 치수가 사용자가 정한 한도를 넘는지.
+ * 한도가 슬라이더 최대값(bound) 이상이면 "제한 없음"이라 어떤 상품도 거르지 않는다.
+ */
+export function exceedsDimensionLimit(value: number, limit: number, bound: number, epsilon = 0.05): boolean {
+  if (limit >= bound) return false;
+  return value > limit + epsilon;
+}

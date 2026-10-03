@@ -7,9 +7,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { readFileSync } from 'node:fs';
+
 import {
+  MIN_DIMENSION_BOUNDS,
   TIGHT_FIT_CM,
   clampDimension,
+  exceedsDimensionLimit,
+  resolveDimensionBounds,
   fitClearance,
   fitLabel,
   isSizeFilterActive,
@@ -228,5 +233,49 @@ describe('공간별 빠른 찾기', () => {
     assert.equal(isSpaceActive(byId.kitchen, 'microwave'), true);
     assert.equal(isSpaceActive(byId.kitchen, 'dishwasher'), true);
     assert.equal(isSpaceActive(byId.kitchen, 'all'), false);
+  });
+});
+
+describe('치수 최대값 — seed 3개(70×70×80)에 묶이지 않는다', () => {
+  // 현재 seed 실측 카드(건조기 3개)로 계산되는 값
+  const SEED_ONLY = { width: 70, depth: 70, height: 80 };
+  const BOUNDS = resolveDimensionBounds(SEED_ONLY);
+
+  it('최대값은 하한 200×230×230 이상이고, seed 최대치가 더 크면 그 값을 쓴다', () => {
+    assert.deepEqual(BOUNDS, { width: 200, depth: 230, height: 230 });
+    assert.deepEqual(resolveDimensionBounds({ width: 260, depth: 90, height: 240 }), { width: 260, depth: 230, height: 240 });
+    assert.deepEqual(MIN_DIMENSION_BOUNDS, { width: 200, depth: 230, height: 230 });
+  });
+
+  it('130×70×190 입력이 잘리지 않고 그대로 확정되며, 기본값과 달라 공간 맞춤이 켜진다', () => {
+    const typed = [
+      normalizeDimensionInput('130', DIM_MIN, BOUNDS.width),
+      normalizeDimensionInput('70', DIM_MIN, BOUNDS.depth),
+      normalizeDimensionInput('190', DIM_MIN, BOUNDS.height),
+    ];
+    assert.deepEqual(typed, [130, 70, 190]);
+    const defaults = { maxWidth: BOUNDS.width, maxDepth: BOUNDS.depth, maxHeight: BOUNDS.height };
+    assert.equal(isSizeFilterActive({ maxWidth: 130, maxDepth: 70, maxHeight: 190 }, defaults), true);
+    // 예전 버그: 최대값이 70×70×80 이면 130·190 이 잘려 기본값과 같아지고 맞춤이 꺼졌다
+    const seedDefaults = { maxWidth: 70, maxDepth: 70, maxHeight: 80 };
+    const clipped = { maxWidth: clampDimension(130, DIM_MIN, 70), maxDepth: clampDimension(70, DIM_MIN, 70), maxHeight: clampDimension(190, DIM_MIN, 80) };
+    assert.equal(isSizeFilterActive(clipped, seedDefaults), false);
+  });
+
+  it('한도가 최대값이면 그 축은 제한 없음 — 기본 상태에서 큰 DB 상품도 보인다', () => {
+    assert.equal(exceedsDimensionLimit(250, BOUNDS.height, BOUNDS.height), false);
+    assert.equal(exceedsDimensionLimit(123, 190, BOUNDS.height), false);
+    assert.equal(exceedsDimensionLimit(190.04, 190, BOUNDS.height), false, '0.05cm 허용');
+    assert.equal(exceedsDimensionLimit(191, 190, BOUNDS.height), true);
+    assert.equal(exceedsDimensionLimit(71, 70, BOUNDS.depth), true);
+  });
+
+  it('products.ts 는 하한이 적용된 최대값과 제한 없음 판정으로 거른다', () => {
+    const src = readFileSync(new URL('../src/lib/products.ts', import.meta.url), 'utf8');
+    assert.match(src, /export const DIMENSION_BOUNDS: DimensionBounds = resolveDimensionBounds\(/);
+    for (const axis of ['width', 'depth', 'height']) {
+      assert.match(src, new RegExp(`exceedsDimensionLimit\\(${axis}, filters\\.max\\w+, DIMENSION_BOUNDS\\.${axis}, EPSILON\\)`));
+    }
+    assert.doesNotMatch(src, /width > filters\.maxWidth/);
   });
 });
