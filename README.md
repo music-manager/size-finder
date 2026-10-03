@@ -173,3 +173,4 @@ Google Search Console 에 `cmpick.esedy.com` 을 **별도 속성으로 등록**
 - [ ] `imageUrl` 을 실제 제품 이미지(또는 자체 호스팅 이미지)로 교체
 - [ ] 제품 치수를 제조사 공식 상세페이지와 재확인
 - [ ] 블로그 글·쇼츠 고정댓글에 규격별 랜딩 링크(위 2-1) 삽입
+<!-- production deploy retrigger after Netlify credits restored: 2026-10-03 -->
