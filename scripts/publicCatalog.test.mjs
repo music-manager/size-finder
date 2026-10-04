@@ -806,7 +806,7 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
 
   it('공개 목록(홈 · SEO · 상세)은 dedupe 된 getLiveProducts 를 쓰고, 정리된 카드의 예전 링크는 남은 카드로 보낸다', () => {
     const live = stripComments(read('src/lib/liveCatalog.ts'));
-    assert.match(live, /dedupeVerifiedByProductKey\(verifiedOnly\(await getAllLiveProducts\(\)\), SEED_PAGE_KEYS\)/);
+    assert.match(live, /dedupeVerifiedByProductKey\(\s*withVerifiedBatch\(verifiedOnly\(await getAllLiveProducts\(\)\)\),\s*SEED_PAGE_KEYS,?\s*\)/);
     assert.match(live, /return \(await getLiveCatalog\(\)\)\.products;/);
     const page = stripComments(read('src/app/p/[id]/page.tsx'));
     assert.match(page, /permanentRedirect\(`\/p\/\$\{duplicate\.keptId\}`\)/);

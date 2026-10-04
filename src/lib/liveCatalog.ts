@@ -1,6 +1,6 @@
 import { products as seedProducts } from './products';
 import { dedupeVerifiedByProductKey, type VerifiedDuplicate } from './publicCatalog';
-import { SEED_PAGE_KEYS } from './publicCatalogData';
+import { SEED_PAGE_KEYS, withVerifiedBatch } from './publicCatalogData';
 import type { Product } from './types';
 
 interface DbProductRow {
@@ -85,7 +85,11 @@ export async function getAllLiveProducts(): Promise<Product[]> {
  * seed 와 DB 에 같은 productId 가 있으면 seed provenance 카드 한 장만 남긴다.
  */
 export async function getLiveCatalog(): Promise<{ products: Product[]; duplicates: VerifiedDuplicate[] }> {
-  const { kept, duplicates } = dedupeVerifiedByProductKey(verifiedOnly(await getAllLiveProducts()), SEED_PAGE_KEYS);
+  // 운영 DB · seed verified 가 먼저, Issue #44 배치는 같은 productId 가 없을 때만 뒤에 붙는다
+  const { kept, duplicates } = dedupeVerifiedByProductKey(
+    withVerifiedBatch(verifiedOnly(await getAllLiveProducts())),
+    SEED_PAGE_KEYS,
+  );
   return { products: kept, duplicates };
 }
 
