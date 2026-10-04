@@ -1,5 +1,5 @@
 /**
- * Issue #44 수동 치수검증 배치 — 신규 VERIFIED 51건 노출.
+ * Issue #44 수동 치수검증 배치 — 신규 VERIFIED 57건 노출.
  *
  * - 치수는 manifest 의 검증값만, 이름 · 이미지 · 가격 · 저장 URL 은 같은 productId 의 REVIEW 기록 그대로
  * - HOLD · REVIEW · 이미 운영 반영된 #1 은 들어오지 않는다
@@ -51,6 +51,9 @@ const SESSION_23 = [
   8452579582, 9040838700, 9669290538, 8273486865, 7539323611, 8253845369, 7646511942, 7169481764, 6252334388,
   5659094136, 2354065065, 9542185086, 9531568040, 8728923322,
 ];
+const SESSION_VERIFIED_6 = [
+  8376462953, 39056215, 9307244879, 8769039809, 6975652863, 9015838125,
+];
 const ALREADY_IN_PRODUCTION = [7216908117];
 const HOLD = [8750671365, 9522527501, 7660428989, 28896030, 9748766128, 6784715012, 9642239361];
 const REVIEW = [
@@ -59,11 +62,11 @@ const REVIEW = [
 ];
 
 describe('Issue #44 배치 manifest', () => {
-  it('정확히 51행 = Issue READY 28 + 이번 수동검증 23, productId 중복 0', () => {
+  it('정확히 57행 = Issue READY 28 + 수동검증 23 + 침대·소파 후속검증 6, productId 중복 0', () => {
     const ids = ROWS.map((r) => r.productId);
-    assert.equal(ids.length, 51);
-    assert.equal(new Set(ids).size, 51);
-    assert.deepEqual([...ids].sort(), [...ISSUE_READY_28, ...SESSION_23].sort());
+    assert.equal(ids.length, 57);
+    assert.equal(new Set(ids).size, 57);
+    assert.deepEqual([...ids].sort(), [...ISSUE_READY_28, ...SESSION_23, ...SESSION_VERIFIED_6].sort());
   });
 
   it('HOLD 7 · REVIEW 12 · 이미 운영 반영 #1 은 들어오지 않는다', () => {
@@ -77,7 +80,7 @@ describe('Issue #44 배치 manifest', () => {
       for (const axis of ['width', 'depth', 'height']) assert.ok(row.dimensions[axis] > 0, `${row.productId} ${axis}`);
       assert.equal(row.provenance.source, 'manual_verified_user_screenshot', String(row.productId));
       assert.equal(row.provenance.issue, 44);
-      assert.ok(Number.isInteger(row.provenance.entry) && row.provenance.entry >= 3 && row.provenance.entry <= 58);
+      assert.ok(Number.isInteger(row.provenance.entry) && row.provenance.entry >= 3 && row.provenance.entry <= 64);
       assert.ok(row.provenance.commentId, String(row.productId));
       assert.ok(typeof row.sourceDimensions === 'string' && row.sourceDimensions.length > 0, String(row.productId));
     }
@@ -109,8 +112,8 @@ describe('Issue #44 배치 manifest', () => {
 });
 
 describe('배치 → 공개 VERIFIED Product', () => {
-  it('51건 모두 Product 로 만들어지고 이름 · 이미지 · 가격은 저장 기록 그대로, https 이미지', () => {
-    assert.equal(BATCH.length, 51);
+  it('57건 모두 Product 로 만들어지고 이름 · 이미지 · 가격은 저장 기록 그대로, https 이미지', () => {
+    assert.equal(BATCH.length, 57);
     for (const product of BATCH) {
       const rec = recordOf(product.productId);
       assert.equal(product.id, `cp-${product.productId}`);
@@ -151,7 +154,7 @@ describe('배치 → 공개 VERIFIED Product', () => {
         keep++;
       } else none++;
     }
-    assert.deepEqual({ keep, none }, { keep: 49, none: 2 });
+    assert.deepEqual({ keep, none }, { keep: 55, none: 2 });
     assert.deepEqual(ROWS.filter((r) => r.cta === 'none').map((r) => r.productId).sort(), [2354065065, 5659094136]);
   });
 
@@ -172,12 +175,12 @@ describe('공개 카탈로그 반영', () => {
   const records = [...RECORDS];
   const withBatch = (verified) => buildPublicCatalog(appendVerifiedBatch(verified, BATCH, keyOf), records, SEED_PAGE_KEYS);
 
-  it('배치 51건 중 오픈 품질 미완성 2건을 제외한 49건이 verified(fit 대상)로 들어가고 공개 중복 0', () => {
+  it('배치 57건 중 오픈 품질 미완성 2건을 제외한 55건이 verified(fit 대상)로 들어가고 공개 중복 0', () => {
     const before = buildPublicCatalog(SEEDS, records, SEED_PAGE_KEYS);
     const after = withBatch(SEEDS);
-    assert.equal(after.verified.length, SEEDS.length + 49);
+    assert.equal(after.verified.length, SEEDS.length + 55);
     const reviewIds = new Set(after.review.map((c) => c.productId));
-    for (const pid of [...ISSUE_READY_28, ...SESSION_23]) assert.equal(reviewIds.has(pid), false, String(pid));
+    for (const pid of [...ISSUE_READY_28, ...SESSION_23, ...SESSION_VERIFIED_6]) assert.equal(reviewIds.has(pid), false, String(pid));
     const keys = after.verified.map(keyOf).filter((k) => k !== null);
     assert.equal(new Set(keys).size, keys.length, 'verified productId 중복 0');
     for (const k of keys) assert.equal(reviewIds.has(k), false, 'verified/REVIEW 교차 0');
@@ -200,7 +203,7 @@ describe('공개 카탈로그 반영', () => {
     const merged = appendVerifiedBatch([...SEEDS, dbRow], BATCH, keyOf);
     const same = merged.filter((p) => p.productId === BATCH[0].productId);
     assert.deepEqual(same.map((p) => p.id), ['db-row-1']);
-    assert.equal(merged.length, SEEDS.length + 1 + 50);
+    assert.equal(merged.length, SEEDS.length + 1 + 56);
     const unverifiedDb = { ...dbRow, verified: false };
     const merged2 = appendVerifiedBatch([...SEEDS, unverifiedDb], BATCH, keyOf);
     assert.ok(merged2.some((p) => p.id === `cp-${BATCH[0].productId}`), 'DB 미검증 행은 배치를 막지 않는다');
