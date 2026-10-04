@@ -1077,5 +1077,135 @@
       "commentId": 5977113743
     },
     "installReference": "반접이·접이 상태 치수 (참고값)"
+  },
+  {
+    "productId": 8376462953,
+    "category": "bed",
+    "model": "GS1342",
+    "option": "SS",
+    "itemId": "26430834807",
+    "vendorItemId": "93406622427",
+    "sourceDimensions": "W1130 × D2030 × H285 mm (±3%)",
+    "dimensions": {
+      "width": 113,
+      "depth": 203,
+      "height": 28.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 59,
+      "commentId": 5978219857
+    }
+  },
+  {
+    "productId": 39056215,
+    "category": "bed",
+    "model": null,
+    "option": "싱글S × 높은다리(20cm)",
+    "itemId": "8306398596",
+    "vendorItemId": "3645621405",
+    "sourceDimensions": "싱글S 960 × 1980 mm + 높은발통 200 mm + 프레임 42 mm = 전체 높이 242 mm",
+    "dimensions": {
+      "width": 96,
+      "depth": 198,
+      "height": 24.2
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 60,
+      "commentId": 5978240452
+    },
+    "installReference": "높은발통 20cm · 프레임 4.2cm"
+  },
+  {
+    "productId": 9307244879,
+    "category": "bed",
+    "model": null,
+    "option": "싱글",
+    "itemId": "27575721015",
+    "vendorItemId": "94539508269",
+    "sourceDimensions": "싱글 W100 × L200 × H59 cm",
+    "dimensions": {
+      "width": 100,
+      "depth": 200,
+      "height": 59
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 61,
+      "commentId": 5978254555
+    },
+    "installReference": "프레임/매트리스 받침 높이 21cm"
+  },
+  {
+    "productId": 8769039809,
+    "category": "sofa",
+    "model": "AMBO 2인 좌식 소파베드",
+    "option": "카멜",
+    "itemId": "25513912684",
+    "vendorItemId": "91403044764",
+    "sourceDimensions": "소파 상태 가로 88 × 세로 64(최소 각도) × 높이 57 cm",
+    "dimensions": {
+      "width": 88,
+      "depth": 64,
+      "height": 57
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 62,
+      "commentId": 5978268604
+    },
+    "installReference": "완전 펼침 88 × 194 × 12.5cm · 시트높이 12.5~24cm"
+  },
+  {
+    "productId": 6975652863,
+    "category": "sofa",
+    "model": "AMBO 3인 좌식 소파베드",
+    "option": "밀크 7648.5060",
+    "itemId": "20869143306",
+    "vendorItemId": "87936466670",
+    "sourceDimensions": "소파 상태 가로 145 × 세로 67(최소 각도) × 높이 58 cm",
+    "dimensions": {
+      "width": 145,
+      "depth": 67,
+      "height": 58
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 63,
+      "commentId": 5978292609
+    },
+    "installReference": "완전 펼침 145 × 194 × 12.5cm · 포장규격 148 × 107 × 23cm"
+  },
+  {
+    "productId": 9015838125,
+    "category": "sofa",
+    "model": "에보니아 모던 1인용쇼파",
+    "option": null,
+    "itemId": "26431036599",
+    "vendorItemId": "80879599807",
+    "sourceDimensions": "W705 × D740 × H735 mm",
+    "dimensions": {
+      "width": 70.5,
+      "depth": 74,
+      "height": 73.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 64,
+      "commentId": 5978298446
+    }
   }
 ]
