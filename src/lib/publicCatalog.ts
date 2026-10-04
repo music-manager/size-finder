@@ -169,6 +169,19 @@ export const CATEGORY_IDENTITY_RULES: Record<CategoryId, CategoryIdentityRule> =
 /** QA 가 상품 페이지로 확인한 예외 통과 productId. 근거 없이 추가하지 않는다 */
 export const REVIEW_IDENTITY_ALLOWLIST: Readonly<Record<string, string>> = Object.freeze({});
 
+/**
+ * web_index 로 product identity 는 확인됐지만 상품 이미지 원문이 없는 5건.
+ * 다른 상품 이미지를 빌려오지 않고 ReviewCard 의 자체 placeholder 로만 공개한다.
+ * web_index 는 coupangUrl 을 항상 비우므로 외부 CTA 도 "구매 링크 검증 중" 상태다.
+ */
+export const REVIEW_IMAGELESS_ALLOWLIST: Readonly<Record<string, string>> = Object.freeze({
+  '9653658222': 'folding_table — web_index identity 확인, 이미지 원문 없음',
+  '9555031749': 'niche — web_index identity 확인, 이미지 원문 없음',
+  '9727500754': 'bed — web_index identity 확인, 이미지 원문 없음',
+  '9728813384': 'sofa — web_index identity 확인, 이미지 원문 없음',
+  '9730565996': 'hanger — web_index identity 확인, 이미지 원문 없음',
+});
+
 /** QA 가 본체 아님으로 확정한 productId. 이름이 바뀌어도 다시 들어오지 않는다 */
 export const REVIEW_IDENTITY_DENYLIST: Readonly<Record<string, string>> = Object.freeze({
   '8763219111': 'refrigerator — 전자레인지 · 인덕션 혼합 세트',
@@ -214,18 +227,22 @@ export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): 
   const category = record.category as CategoryId;
   if (!CATEGORY_IDS.includes(category)) return null;
   if (categoryIdentityRejection(productId, record.name.trim(), category) !== null) return null;
-  // 이미지 없는 카드는 공개하지 않는다. 다른 상품 · 다른 옵션 이미지로 채우지 않는다
-  if (!hasPublicImage(record.imageUrl)) return null;
 
   const raw = record as ReviewSourceRecord;
   const source: ReviewSource = raw.source === 'coupang_web_index' ? 'coupang_web_index' : 'coupang_search';
+  const allowImageless =
+    source === 'coupang_web_index' &&
+    Object.prototype.hasOwnProperty.call(REVIEW_IMAGELESS_ALLOWLIST, String(productId));
+  // 원문 이미지가 있으면 그대로 쓰고, QA 가 고정한 web_index 5건만 자체 placeholder 로 공개한다.
+  // 다른 상품 · 다른 옵션 이미지를 대신 넣지 않는다.
+  if (!hasPublicImage(record.imageUrl) && !allowImageless) return null;
   const candidate: ReviewCandidate = {
     status: 'review',
     productId,
     name: record.name.trim(),
     category,
     brand: typeof record.brand === 'string' ? record.brand.trim() : '',
-    imageUrl: record.imageUrl.trim(),
+    imageUrl: hasPublicImage(record.imageUrl) ? record.imageUrl.trim() : '',
     // web_index 는 추적 링크가 없다. 저장 URL 이 있어도 넘기지 않는다
     coupangUrl: source === 'coupang_search' && typeof record.coupangUrl === 'string' ? record.coupangUrl : '',
     source,

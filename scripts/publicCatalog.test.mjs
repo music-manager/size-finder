@@ -19,6 +19,7 @@ import {
   MIN_PUBLIC_PER_CATEGORY,
   PUBLIC_CATALOG_TARGET,
   REVIEW_IDENTITY_ALLOWLIST,
+  REVIEW_IMAGELESS_ALLOWLIST,
   REVIEW_IDENTITY_DENYLIST,
   buildPublicCatalog,
   categoryIdentityRejection,
@@ -262,6 +263,11 @@ describe('REVIEW CTA — 저장된 exact affiliate 링크만 외부 링크', () 
         { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
         REGISTRY,
       );
+      if (candidate.source === 'coupang_web_index') {
+        assert.equal(href, null, String(candidate.productId));
+        assert.equal(candidate.coupangUrl, '', String(candidate.productId));
+        continue;
+      }
       assert.ok(href, String(candidate.productId));
       active += 1;
       if (source === 'landing') {
@@ -275,7 +281,7 @@ describe('REVIEW CTA — 저장된 exact affiliate 링크만 외부 링크', () 
         assert.match(url.searchParams.get('traceid'), /^V0-153-[0-9a-f]+$/);
       }
     }
-    assert.equal(active, review.length);
+    assert.equal(active, review.filter((c) => c.source === 'coupang_search').length);
   });
 });
 
@@ -384,14 +390,19 @@ describe('빈 카테고리 0 — review-candidates.json', () => {
     }
   });
 
-  it('web_index 5건은 이미지가 없어 공개 REVIEW 에서 빠지고, 저장 기록은 provenance 로 남는다', () => {
+  it('web_index 5건은 빈 이미지 placeholder + CTA 없음으로 공개하고 provenance 를 유지한다', () => {
     const web = REVIEW_FILE.filter((r) => r.source === 'coupang_web_index');
     assert.equal(web.length, 5);
     for (const row of web) {
       assert.equal(row.imageUrl ?? '', '', String(row.productId));
       assert.match(row.sourceUrl, new RegExp(`^https://www\\.coupang\\.com/vp/products/${row.productId}\\?itemId=\\d+$`));
+      const shown = catalog.review.find((c) => c.productId === row.productId);
+      assert.ok(shown, String(row.productId));
+      assert.equal(shown.imageUrl, '');
+      assert.equal(shown.coupangUrl, '');
+      assert.equal(shown.source, 'coupang_web_index');
     }
-    assert.equal(catalog.review.filter((c) => c.source === 'coupang_web_index').length, 0);
+    assert.equal(catalog.review.filter((c) => c.source === 'coupang_web_index').length, 5);
   });
 
   it('식기세척기 · 접이식테이블 · 신발장 raw Search(V0-153) 후보는 exact 저장 CTA로 노출', () => {
@@ -666,16 +677,23 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
   const DB_DUPES = [dbRow(8321193275), dbRow(8090724268)];
   const WEB_INDEX_IDS = [9653658222, 9555031749, 9727500754, 9728813384, 9730565996];
 
-  it('1. 공개 REVIEW 카드는 모두 https 이미지가 있다 (빈 imageUrl 0건)', () => {
+  it('1. 공개 REVIEW 이미지는 https 원문 또는 QA 고정 web_index placeholder 5건뿐이다', () => {
     const repo = loadRepoCatalog();
     assert.ok(repo.review.length > 0);
-    for (const candidate of repo.review) assert.ok(hasPublicImage(candidate.imageUrl), String(candidate.productId));
-    assert.equal(repo.review.filter((c) => c.imageUrl.trim() === '').length, 0);
+    const imageless = repo.review.filter((c) => !hasPublicImage(c.imageUrl));
+    assert.deepEqual(imageless.map((c) => c.productId).sort(), [...WEB_INDEX_IDS].sort());
+    for (const candidate of imageless) {
+      assert.equal(candidate.imageUrl, '');
+      assert.equal(candidate.source, 'coupang_web_index');
+      assert.equal(candidate.coupangUrl, '');
+    }
   });
 
-  it('2. 이미지 없는 web_index 5건은 공개되지 않고, 빈 · http · 공백 이미지는 REVIEW 가 되지 않는다', () => {
-    const shown = new Set(loadRepoCatalog().review.map((c) => c.productId));
-    for (const id of WEB_INDEX_IDS) assert.equal(shown.has(id), false, String(id));
+  it('2. 이미지 없는 web_index 5건은 placeholder 로 공개하고, 임의의 빈 · http 이미지는 여전히 fail-closed', () => {
+    const repo = loadRepoCatalog();
+    const shown = new Set(repo.review.map((c) => c.productId));
+    for (const id of WEB_INDEX_IDS) assert.equal(shown.has(id), true, String(id));
+    assert.deepEqual(Object.keys(REVIEW_IMAGELESS_ALLOWLIST).map(Number).sort(), [...WEB_INDEX_IDS].sort());
     assert.equal(toReviewCandidate(record({ imageUrl: '' })), null);
     assert.equal(toReviewCandidate(record({ imageUrl: '   ' })), null);
     assert.equal(toReviewCandidate(record({ imageUrl: undefined })), null);
@@ -771,6 +789,11 @@ describe('이슈 #31 — 공개 숫자 · 중복 · 이미지 정합성', () => 
         { id: `cp-${candidate.productId}`, coupangUrl: candidate.coupangUrl, productId: candidate.productId },
         REGISTRY,
       );
+      if (candidate.source === 'coupang_web_index') {
+        assert.equal(href, null, String(candidate.productId));
+        assert.equal(candidate.coupangUrl, '', String(candidate.productId));
+        continue;
+      }
       assert.ok(href, String(candidate.productId));
       if (source === 'landing') {
         assert.doesNotMatch(href, /V0-153/);
@@ -881,13 +904,17 @@ describe('이슈 #33 — Search call 43~45 net-new 16개', () => {
       assert.equal(source, 'search-raw', String(row.productId));
       assert.equal(href, row.coupangUrl, String(row.productId));
     }
-    assert.equal(repo.review.filter((c) => !hasPublicImage(c.imageUrl)).length, 0, '공개 이미지 공백 0');
+    assert.deepEqual(
+      repo.review.filter((c) => !hasPublicImage(c.imageUrl)).map((c) => c.productId).sort(),
+      [9653658222, 9555031749, 9727500754, 9728813384, 9730565996].sort(),
+      '이미지 없는 공개 REVIEW 는 QA 고정 web_index 5건만',
+    );
   });
 
-  it('이슈 #33의 16개는 유지되고, 최종 수집 call61 반영 후 공개 unique 195 · 모든 카테고리 10+ 스냅샷과 일치한다', () => {
+  it('이슈 #33의 16개는 유지되고, web_index placeholder 5건 포함 공개 unique 200 · 모든 카테고리 10+ 스냅샷과 일치한다', () => {
     const repo = loadRepoCatalog();
-    assert.equal(repo.uniqueProductIds, 195);
-    const expected = { refrigerator: 16, washing_machine: 16, dryer: 22, dishwasher: 10, microwave: 13, desk: 10, folding_table: 23, niche: 14, bed: 22, sofa: 16, hanger: 18, shoe_rack: 15 };
+    assert.equal(repo.uniqueProductIds, 200);
+    const expected = { refrigerator: 16, washing_machine: 16, dryer: 22, dishwasher: 10, microwave: 13, desk: 10, folding_table: 24, niche: 15, bed: 23, sofa: 17, hanger: 19, shoe_rack: 15 };
     for (const tab of PUBLIC_TABS) assert.equal(uniqueProductIdsFor(repo, tab.allowed, SEED_PAGE_KEYS), expected[tab.id], tab.id);
     const verifiedIds = new Set(repo.verified.map((p) => p.id));
     for (const row of rows) assert.equal(verifiedIds.has(`cp-${row.productId}`), false, 'REVIEW 는 fit 대상(verified)에 없다');
