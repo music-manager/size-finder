@@ -170,6 +170,26 @@ export const CATEGORY_IDENTITY_RULES: Record<CategoryId, CategoryIdentityRule> =
 export const REVIEW_IDENTITY_ALLOWLIST: Readonly<Record<string, string>> = Object.freeze({});
 
 /**
+ * 오픈 품질 기준상 공개에서 임시 제외하는 불완전 상품.
+ * 데이터는 보존하되 이미지/구매 CTA provenance 가 완성될 때까지 홈·SEO·상세에서 숨긴다.
+ */
+export const PUBLIC_INCOMPLETE_PRODUCT_IDS: readonly number[] = Object.freeze([
+  9653658222,
+  9555031749,
+  9727500754,
+  9728813384,
+  9730565996,
+  5659094136,
+  2354065065,
+]);
+const PUBLIC_INCOMPLETE_PRODUCT_ID_SET = new Set<number>(PUBLIC_INCOMPLETE_PRODUCT_IDS);
+
+export function isPublicIncompleteProductId(value: unknown): boolean {
+  const productId = Number(value);
+  return Number.isSafeInteger(productId) && PUBLIC_INCOMPLETE_PRODUCT_ID_SET.has(productId);
+}
+
+/**
  * web_index 로 product identity 는 확인됐지만 상품 이미지 원문이 없는 5건.
  * 다른 상품 이미지를 빌려오지 않고 ReviewCard 의 자체 placeholder 로만 공개한다.
  * web_index 는 coupangUrl 을 항상 비우므로 외부 CTA 도 "구매 링크 검증 중" 상태다.
@@ -223,6 +243,7 @@ export function toReviewCandidate(record: ReviewSourceRecord | PendingProduct): 
   if (!record || typeof record !== 'object') return null;
   const productId = Number(record.productId);
   if (!isPositiveInt(productId) || String(productId) !== String(record.productId)) return null;
+  if (isPublicIncompleteProductId(productId)) return null;
   if (!nonEmpty(record.name) || !nonEmpty(record.category)) return null;
   const category = record.category as CategoryId;
   if (!CATEGORY_IDS.includes(category)) return null;
@@ -314,7 +335,9 @@ export function buildPublicCatalog(
   seedPageKeys: Record<string, string> = {},
 ): PublicCatalog {
   const { kept: verified, duplicates: duplicateVerified } = dedupeVerifiedByProductKey(
-    verifiedProducts.filter((product) => product.verified === true),
+    verifiedProducts.filter(
+      (product) => product.verified === true && !isPublicIncompleteProductId(product.productId),
+    ),
     seedPageKeys,
   );
   const seen = new Set<number>();
