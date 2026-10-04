@@ -1,0 +1,1081 @@
+[
+  {
+    "productId": 8301888380,
+    "category": "dryer",
+    "model": "BWR03SGDV(A)",
+    "option": null,
+    "itemId": "23950288051",
+    "vendorItemId": "94696301233",
+    "sourceDimensions": "535 × 650 × 420 mm (W×H×D)",
+    "dimensions": {
+      "width": 53.5,
+      "depth": 42,
+      "height": 65
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 3,
+      "commentId": 5966509891
+    }
+  },
+  {
+    "productId": 7912950280,
+    "category": "dryer",
+    "model": "ACM-5000H",
+    "option": null,
+    "itemId": "21717999341",
+    "vendorItemId": "92467941886",
+    "sourceDimensions": "590(W) × 490(D) × 700(H) mm",
+    "dimensions": {
+      "width": 59,
+      "depth": 49,
+      "height": 70
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 4,
+      "commentId": 5966523417
+    }
+  },
+  {
+    "productId": 7494775376,
+    "category": "dishwasher",
+    "model": null,
+    "option": null,
+    "itemId": "23433555047",
+    "vendorItemId": "91163633855",
+    "sourceDimensions": "물탱크 포함 폭 455 × 깊이 420 × 높이 520 mm",
+    "dimensions": {
+      "width": 45.5,
+      "depth": 42,
+      "height": 52
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 6,
+      "commentId": 5966571902
+    }
+  },
+  {
+    "productId": 8744624788,
+    "category": "dishwasher",
+    "model": "MDWMT0305W-AH-KR",
+    "option": null,
+    "itemId": "25415088621",
+    "vendorItemId": "92408423338",
+    "sourceDimensions": "문 닫힘 W×D×H 420 × 440 × 470 mm",
+    "dimensions": {
+      "width": 42,
+      "depth": 44,
+      "height": 47
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 7,
+      "commentId": 5966696431
+    },
+    "installReference": "문 90° 열림 42×78×47cm (참고값)"
+  },
+  {
+    "productId": 8918154578,
+    "category": "dishwasher",
+    "model": "NDW-NI6W",
+    "option": null,
+    "itemId": "26059010831",
+    "vendorItemId": "95460686062",
+    "sourceDimensions": "W550 × D500 × H438 mm",
+    "dimensions": {
+      "width": 55,
+      "depth": 50,
+      "height": 43.8
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 8,
+      "commentId": 5966718985
+    }
+  },
+  {
+    "productId": 8657850118,
+    "category": "dishwasher",
+    "model": "MDWMT0601W-WINE-KR",
+    "option": null,
+    "itemId": "25127955053",
+    "vendorItemId": "96061586790",
+    "sourceDimensions": "(W×D×H) 550 × 345 × 500 mm",
+    "dimensions": {
+      "width": 55,
+      "depth": 34.5,
+      "height": 50
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 9,
+      "commentId": 5966783806
+    }
+  },
+  {
+    "productId": 8670873654,
+    "category": "dishwasher",
+    "model": "CDW-BS0310TWE",
+    "option": null,
+    "itemId": "25170937291",
+    "vendorItemId": "92168228453",
+    "sourceDimensions": "물통 포함 W440 × D414 × H491 mm",
+    "dimensions": {
+      "width": 44,
+      "depth": 41.4,
+      "height": 49.1
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 10,
+      "commentId": 5966793840
+    }
+  },
+  {
+    "productId": 8982193574,
+    "category": "dishwasher",
+    "model": "DW30FB300CW0",
+    "option": null,
+    "itemId": "26298845248",
+    "vendorItemId": "93276664024",
+    "sourceDimensions": "가로×높이×깊이 555 × 450 × 500 mm",
+    "dimensions": {
+      "width": 55.5,
+      "depth": 50,
+      "height": 45
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 11,
+      "commentId": 5966811078,
+      "correctionCommentId": 5968190130
+    },
+    "installReference": "설치 최소공간 55.5×51×47cm (참고값, canonical 미합산)"
+  },
+  {
+    "productId": 8844314186,
+    "category": "dishwasher",
+    "model": "CDW-D0620TWE",
+    "option": null,
+    "itemId": "25778647594",
+    "vendorItemId": "92766608375",
+    "sourceDimensions": "W550 × D345 × H500 mm",
+    "dimensions": {
+      "width": 55,
+      "depth": 34.5,
+      "height": 50
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 12,
+      "commentId": 5966818519
+    }
+  },
+  {
+    "productId": 8653204114,
+    "category": "dishwasher",
+    "model": "MDWMT0601A-AE-KR",
+    "option": null,
+    "itemId": "25121023334",
+    "vendorItemId": "92120379328",
+    "sourceDimensions": "550 × 345 × 500 mm (본체, 문 열림 깊이 713mm 별도)",
+    "dimensions": {
+      "width": 55,
+      "depth": 34.5,
+      "height": 50
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 13,
+      "commentId": 5966829923
+    },
+    "installReference": "문 열림 깊이 71.3cm (참고값)"
+  },
+  {
+    "productId": 8745184047,
+    "category": "dishwasher",
+    "model": "WQP4-6201-KR",
+    "option": null,
+    "itemId": "25417809163",
+    "vendorItemId": "92096805544",
+    "sourceDimensions": "급수탱크 포함 W440 × D413 × H491 mm",
+    "dimensions": {
+      "width": 44,
+      "depth": 41.3,
+      "height": 49.1
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 14,
+      "commentId": 5966852685
+    }
+  },
+  {
+    "productId": 4882898698,
+    "category": "microwave",
+    "model": "M20KE",
+    "option": null,
+    "itemId": "8865360607",
+    "vendorItemId": "76152061617",
+    "sourceDimensions": "440 × 358 × 258 mm (도식 가로/깊이/높이)",
+    "dimensions": {
+      "width": 44,
+      "depth": 35.8,
+      "height": 25.8
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 16,
+      "commentId": 5967074187
+    }
+  },
+  {
+    "productId": 7939925865,
+    "category": "microwave",
+    "model": "MMW-WC25TES",
+    "option": null,
+    "itemId": "21866009170",
+    "vendorItemId": "91490322758",
+    "sourceDimensions": "503(W) × 411(D) × 316(H) mm",
+    "dimensions": {
+      "width": 50.3,
+      "depth": 41.1,
+      "height": 31.6
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 19,
+      "commentId": 5967129668
+    }
+  },
+  {
+    "productId": 8505623426,
+    "category": "microwave",
+    "model": "MM-ER20CRA",
+    "option": null,
+    "itemId": "24618602585",
+    "vendorItemId": "91629750061",
+    "sourceDimensions": "W440 × D360 × H259 mm",
+    "dimensions": {
+      "width": 44,
+      "depth": 36,
+      "height": 25.9
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 20,
+      "commentId": 5967142564
+    }
+  },
+  {
+    "productId": 8987450079,
+    "category": "microwave",
+    "model": "CMW-H1810MW",
+    "option": null,
+    "itemId": "26321612398",
+    "vendorItemId": "93298993599",
+    "sourceDimensions": "434(W) × 342(D) × 242(H) mm",
+    "dimensions": {
+      "width": 43.4,
+      "depth": 34.2,
+      "height": 24.2
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 21,
+      "commentId": 5967159105
+    }
+  },
+  {
+    "productId": 9626332974,
+    "category": "microwave",
+    "model": "EKRM202AGWWM(A)",
+    "option": null,
+    "itemId": "28749019506",
+    "vendorItemId": "95688024846",
+    "sourceDimensions": "(W×H×D) 440 × 259 × 359 mm",
+    "dimensions": {
+      "width": 44,
+      "depth": 35.9,
+      "height": 25.9
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 22,
+      "commentId": 5967183531
+    }
+  },
+  {
+    "productId": 8410704563,
+    "category": "refrigerator",
+    "model": "B124S14",
+    "option": null,
+    "itemId": "24318430913",
+    "vendorItemId": "96075844581",
+    "sourceDimensions": "(W×H×D) 475 × 1170 × 487 mm",
+    "dimensions": {
+      "width": 47.5,
+      "depth": 48.7,
+      "height": 117
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 23,
+      "commentId": 5967196306
+    }
+  },
+  {
+    "productId": 7102076684,
+    "category": "refrigerator",
+    "model": null,
+    "option": null,
+    "itemId": "17730494773",
+    "vendorItemId": "91414995749",
+    "sourceDimensions": "(W×D×H) 474 × 447 × 496 mm",
+    "dimensions": {
+      "width": 47.4,
+      "depth": 44.7,
+      "height": 49.6
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 24,
+      "commentId": 5967205156
+    }
+  },
+  {
+    "productId": 8338421081,
+    "category": "refrigerator",
+    "model": null,
+    "option": null,
+    "itemId": "24078900518",
+    "vendorItemId": "83384767739",
+    "sourceDimensions": "(W×H×D) 555 × 1400 × 585 mm",
+    "dimensions": {
+      "width": 55.5,
+      "depth": 58.5,
+      "height": 140
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 25,
+      "commentId": 5967216558
+    }
+  },
+  {
+    "productId": 8373550846,
+    "category": "refrigerator",
+    "model": "REF-S91W",
+    "option": null,
+    "itemId": "24196945530",
+    "vendorItemId": "91214583927",
+    "sourceDimensions": "(W×D×H) 480 × 450 × 845 mm",
+    "dimensions": {
+      "width": 48,
+      "depth": 45,
+      "height": 84.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 27,
+      "commentId": 5967247670
+    }
+  },
+  {
+    "productId": 9160736353,
+    "category": "refrigerator",
+    "model": null,
+    "option": null,
+    "itemId": "26982870215",
+    "vendorItemId": "94767353235",
+    "sourceDimensions": "(W×H×D) 470 × 1140 × 495 mm",
+    "dimensions": {
+      "width": 47,
+      "depth": 49.5,
+      "height": 114
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 28,
+      "commentId": 5967262008
+    }
+  },
+  {
+    "productId": 8461629268,
+    "category": "refrigerator",
+    "model": null,
+    "option": null,
+    "itemId": "18491266401",
+    "vendorItemId": "85630844872",
+    "sourceDimensions": "(W×H×D) 463 × 820 × 482 mm",
+    "dimensions": {
+      "width": 46.3,
+      "depth": 48.2,
+      "height": 82
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 29,
+      "commentId": 5967269700
+    }
+  },
+  {
+    "productId": 5465944755,
+    "category": "dryer",
+    "model": null,
+    "option": null,
+    "itemId": "8379273357",
+    "vendorItemId": "75666972425",
+    "sourceDimensions": "(가로×높이×깊이) 600 × 850 × 650 mm",
+    "dimensions": {
+      "width": 60,
+      "depth": 65,
+      "height": 85
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 30,
+      "commentId": 5967301849
+    },
+    "installReference": "도어 개방 총 깊이 112cm · 좌우/뒤 2cm 여유 (참고값)"
+  },
+  {
+    "productId": 9036906249,
+    "category": "dryer",
+    "model": null,
+    "option": null,
+    "itemId": "26511616132",
+    "vendorItemId": "93486169129",
+    "sourceDimensions": "700 × 440 × 1510 mm (도식 가로/깊이/높이)",
+    "dimensions": {
+      "width": 70,
+      "depth": 44,
+      "height": 151
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 31,
+      "commentId": 5967349094
+    }
+  },
+  {
+    "productId": 9249669679,
+    "category": "dryer",
+    "model": "CCD-A0310AW",
+    "option": null,
+    "itemId": "27357341982",
+    "vendorItemId": "94332168719",
+    "sourceDimensions": "W535 × D420 × H650 mm",
+    "dimensions": {
+      "width": 53.5,
+      "depth": 42,
+      "height": 65
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 32,
+      "commentId": 5967379068
+    }
+  },
+  {
+    "productId": 6048016397,
+    "category": "dryer",
+    "model": null,
+    "option": null,
+    "itemId": "11077180276",
+    "vendorItemId": "91328905953",
+    "sourceDimensions": "490(W) × 631(H) × 401(D) mm",
+    "dimensions": {
+      "width": 49,
+      "depth": 40.1,
+      "height": 63.1
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 33,
+      "commentId": 5967392227
+    }
+  },
+  {
+    "productId": 7478759947,
+    "category": "dryer",
+    "model": "CD03717G",
+    "option": null,
+    "itemId": "28531280903",
+    "vendorItemId": "95477020157",
+    "sourceDimensions": "480 × 400 × 560 mm (도식 가로/깊이/높이)",
+    "dimensions": {
+      "width": 48,
+      "depth": 40,
+      "height": 56
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 34,
+      "commentId": 5967424512
+    }
+  },
+  {
+    "productId": 7546820404,
+    "category": "dryer",
+    "model": "MHI-303DWH",
+    "option": null,
+    "itemId": "19851477865",
+    "vendorItemId": "91936363678",
+    "sourceDimensions": "490(W) × 631(H) × 401(D) mm",
+    "dimensions": {
+      "width": 49,
+      "depth": 40.1,
+      "height": 63.1
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 35,
+      "commentId": 5967447318
+    }
+  },
+  {
+    "productId": 9596167043,
+    "category": "washing_machine",
+    "model": "LPL-MW30ST",
+    "option": null,
+    "itemId": "28646768273",
+    "vendorItemId": "95593691131",
+    "sourceDimensions": "(W)345 × (L)395 × (H)610 mm",
+    "dimensions": {
+      "width": 34.5,
+      "depth": 39.5,
+      "height": 61
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 36,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 6538307136,
+    "category": "washing_machine",
+    "model": "MAS07W70/WK-KR",
+    "option": null,
+    "itemId": "14546314868",
+    "vendorItemId": "96014498030",
+    "sourceDimensions": "525 × 515 × 900 mm",
+    "dimensions": {
+      "width": 52.5,
+      "depth": 51.5,
+      "height": 90
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 37,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 7470420740,
+    "category": "washing_machine",
+    "model": "MAR01W38/WW-KR",
+    "option": null,
+    "itemId": "24607316220",
+    "vendorItemId": "91357569673",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 43,
+      "depth": 45,
+      "height": 78.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 38,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8472546188,
+    "category": "washing_machine",
+    "model": "MAR03W38/WK-KR",
+    "option": null,
+    "itemId": "24514892492",
+    "vendorItemId": "95945562722",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 43,
+      "depth": 45,
+      "height": 78.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 39,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9707561407,
+    "category": "washing_machine",
+    "model": "S816",
+    "option": null,
+    "itemId": "29043066059",
+    "vendorItemId": "95970127357",
+    "sourceDimensions": "도식 270 × 270 × 330 mm",
+    "dimensions": {
+      "width": 27,
+      "depth": 27,
+      "height": 33
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 40,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9665035076,
+    "category": "niche",
+    "model": null,
+    "option": null,
+    "itemId": "28895219132",
+    "vendorItemId": "94547897181",
+    "sourceDimensions": "외부 400 × 400 × 1808 mm",
+    "dimensions": {
+      "width": 40,
+      "depth": 40,
+      "height": 180.8
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 41,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9415097345,
+    "category": "niche",
+    "model": null,
+    "option": "250",
+    "itemId": "27976723000",
+    "vendorItemId": "94942241284",
+    "sourceDimensions": "외부 250 × 240 × 1800 mm",
+    "dimensions": {
+      "width": 25,
+      "depth": 24,
+      "height": 180
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 42,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8579335930,
+    "category": "folding_table",
+    "model": null,
+    "option": null,
+    "itemId": "27156862744",
+    "vendorItemId": "94124633646",
+    "sourceDimensions": "상판 900 × 600 mm · 높이 305 mm(판매자 상품문의 답변)",
+    "dimensions": {
+      "width": 90,
+      "depth": 60,
+      "height": 30.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 43,
+      "commentId": 5977113743,
+      "heightSource": "seller_QA_height_305mm"
+    }
+  },
+  {
+    "productId": 6595043415,
+    "category": "hanger",
+    "model": null,
+    "option": null,
+    "itemId": "21255767550",
+    "vendorItemId": "91629411030",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 120,
+      "depth": 50,
+      "height": 200
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 44,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8452579582,
+    "category": "hanger",
+    "model": null,
+    "option": null,
+    "itemId": "24456175948",
+    "vendorItemId": "91469931258",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 120,
+      "depth": 50,
+      "height": 200
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 45,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9040838700,
+    "category": "hanger",
+    "model": null,
+    "option": "800mm",
+    "itemId": "26526479768",
+    "vendorItemId": "95330648212",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 80,
+      "depth": 30,
+      "height": 172
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 46,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9669290538,
+    "category": "hanger",
+    "model": null,
+    "option": "60cm · 블랙+월넛",
+    "itemId": "28909830982",
+    "vendorItemId": "95841800582",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 60,
+      "depth": 30,
+      "height": 175
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 47,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8273486865,
+    "category": "hanger",
+    "model": null,
+    "option": null,
+    "itemId": "23846691820",
+    "vendorItemId": "90892134798",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 70,
+      "depth": 37,
+      "height": 188
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 48,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 7539323611,
+    "category": "hanger",
+    "model": "COU-013",
+    "option": null,
+    "itemId": "20994256921",
+    "vendorItemId": "88058598051",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 66,
+      "depth": 38,
+      "height": 120
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 49,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8253845369,
+    "category": "hanger",
+    "model": null,
+    "option": null,
+    "itemId": "23766426429",
+    "vendorItemId": "90790770094",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 68,
+      "depth": 43,
+      "height": 170
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 50,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 7646511942,
+    "category": "shoe_rack",
+    "model": null,
+    "option": null,
+    "itemId": "20333184541",
+    "vendorItemId": "76616985658",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 49,
+      "depth": 29,
+      "height": 130
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 51,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 7169481764,
+    "category": "shoe_rack",
+    "model": null,
+    "option": "화이트 50×17×80cm",
+    "itemId": "24602477151",
+    "vendorItemId": "93843332064",
+    "sourceDimensions": "50 × 17 × 80 cm",
+    "dimensions": {
+      "width": 50,
+      "depth": 17,
+      "height": 80
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 52,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 6252334388,
+    "category": "folding_table",
+    "model": null,
+    "option": "720×480×305mm",
+    "itemId": "2897702528",
+    "vendorItemId": "70886690052",
+    "sourceDimensions": "W720 × D480 × H305 mm",
+    "dimensions": {
+      "width": 72,
+      "depth": 48,
+      "height": 30.5
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 53,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 5659094136,
+    "category": "folding_table",
+    "model": null,
+    "option": "XL",
+    "itemId": "9283480984",
+    "vendorItemId": "76568987526",
+    "sourceDimensions": "W890 × D590 × H300 mm",
+    "dimensions": {
+      "width": 89,
+      "depth": 59,
+      "height": 30
+    },
+    "cta": "none",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 54,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 2354065065,
+    "category": "folding_table",
+    "model": "790 대형",
+    "option": null,
+    "itemId": "4084109222",
+    "vendorItemId": "72068113567",
+    "sourceDimensions": "펼친 상태 W790 × D590 × H300 mm",
+    "dimensions": {
+      "width": 79,
+      "depth": 59,
+      "height": 30
+    },
+    "cta": "none",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 55,
+      "commentId": 5977113743
+    },
+    "installReference": "접은 상태 79×59×4cm (참고값)"
+  },
+  {
+    "productId": 9542185086,
+    "category": "folding_table",
+    "model": "FT2",
+    "option": "80cm × 원목색",
+    "itemId": "28464358548",
+    "vendorItemId": "95649186740",
+    "sourceDimensions": "사용자 확정값(cm), 원문 mm 미전달",
+    "dimensions": {
+      "width": 80,
+      "depth": 80,
+      "height": 73
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 56,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 9531568040,
+    "category": "folding_table",
+    "model": null,
+    "option": null,
+    "itemId": "28425315670",
+    "vendorItemId": "95337577429",
+    "sourceDimensions": "직경 80cm · 높이 74cm",
+    "dimensions": {
+      "width": 80,
+      "depth": 80,
+      "height": 74
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 57,
+      "commentId": 5977113743
+    }
+  },
+  {
+    "productId": 8728923322,
+    "category": "folding_table",
+    "model": null,
+    "option": "1200 × 800",
+    "itemId": "25360937535",
+    "vendorItemId": "92996234518",
+    "sourceDimensions": "완전 펼침 1200 × 800 × 750 mm",
+    "dimensions": {
+      "width": 120,
+      "depth": 80,
+      "height": 75
+    },
+    "cta": "keep_existing",
+    "provenance": {
+      "source": "manual_verified_user_screenshot",
+      "issue": 44,
+      "entry": 58,
+      "commentId": 5977113743
+    },
+    "installReference": "반접이·접이 상태 치수 (참고값)"
+  }
+]
