@@ -172,18 +172,21 @@ describe('공개 카탈로그 반영', () => {
   const records = [...RECORDS];
   const withBatch = (verified) => buildPublicCatalog(appendVerifiedBatch(verified, BATCH, keyOf), records, SEED_PAGE_KEYS);
 
-  it('배치 51건이 verified(fit 대상)로 들어가고 같은 productId 는 REVIEW 에서 빠진다, 공개 중복 0', () => {
+  it('배치 51건 중 오픈 품질 미완성 2건을 제외한 49건이 verified(fit 대상)로 들어가고 공개 중복 0', () => {
     const before = buildPublicCatalog(SEEDS, records, SEED_PAGE_KEYS);
     const after = withBatch(SEEDS);
-    assert.equal(after.verified.length, SEEDS.length + 51);
+    assert.equal(after.verified.length, SEEDS.length + 49);
     const reviewIds = new Set(after.review.map((c) => c.productId));
     for (const pid of [...ISSUE_READY_28, ...SESSION_23]) assert.equal(reviewIds.has(pid), false, String(pid));
     const keys = after.verified.map(keyOf).filter((k) => k !== null);
     assert.equal(new Set(keys).size, keys.length, 'verified productId 중복 0');
     for (const k of keys) assert.equal(reviewIds.has(k), false, 'verified/REVIEW 교차 0');
-    // 비공개였던 접이식테이블 2건이 새로 공개되는 것 외에는 공개 고유상품 수가 같다
-    assert.equal(after.uniqueProductIds, before.uniqueProductIds + 2);
-    for (const pid of [5659094136, 2354065065]) assert.notEqual(categoryIdentityRejection(pid, recordOf(pid).name, 'folding_table'), null);
+    // CTA provenance 미완성 접이식테이블 2건은 verified 데이터는 보존하되 공개에서는 계속 숨긴다
+    assert.equal(after.uniqueProductIds, before.uniqueProductIds);
+    for (const pid of [5659094136, 2354065065]) {
+      assert.notEqual(categoryIdentityRejection(pid, recordOf(pid).name, 'folding_table'), null);
+      assert.equal(after.verified.some((p) => p.productId === pid), false, String(pid));
+    }
   });
 
   it('HOLD · REVIEW 는 계속 REVIEW(또는 비공개)이고 fit 대상이 아니다', () => {
