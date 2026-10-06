@@ -3,8 +3,9 @@ import './globals.css';
 
 const SITE_NAME = '센치픽';
 const SITE_TITLE = '내 원룸 맞춤 가전·가구 실측 검색기 | 센치픽 CmPick';
+// 네이버 서치어드바이저 권장: 설명 80자 이하 (scripts/seoMetadata.test.mjs)
 const SITE_DESCRIPTION =
-  '원룸·자취방 빈 공간의 가로·깊이·높이(cm)만 입력하면 실제로 들어가는 소형냉장고, 미니세탁기, 미니건조기, 전자레인지, 책상, 선반, 침대, 행거만 골라줍니다. 5평·7평·10평 평수별 프리셋 제공. 1인 가구 필수 가전·가구 실측 검색기.';
+  '원룸·자취방 빈 공간의 가로·깊이·높이를 입력하면 실제로 들어가는 소형가전·가구를 골라주는 실측 검색기입니다.';
 const SITE_URL = 'https://cmpick.esedy.com';
 
 export const metadata: Metadata = {
