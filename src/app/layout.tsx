@@ -47,6 +47,10 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // 네이버 서치어드바이저 사이트 소유확인
+  verification: {
+    other: { 'naver-site-verification': '79aa07201becd73ba3197e8da28744236e5f0356' },
+  },
 };
 
 export const viewport: Viewport = {
