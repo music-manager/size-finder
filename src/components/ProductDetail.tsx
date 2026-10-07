@@ -14,6 +14,7 @@ import {
 import { formatCheckedAt, formatWon } from '@/lib/adminParse';
 import { coupangCtaHref } from '@/lib/coupangCtaLinks';
 import { SITE_URL, dimensionText, pageDescription } from '@/lib/productPage';
+import { productJsonLd } from '@/lib/structuredData';
 import type { Product } from '@/lib/types';
 
 interface Props {
@@ -38,35 +39,21 @@ export default function ProductDetail({ product }: Props) {
   // exact identity 가 확인된 링크만 내보낸다. 없으면 버튼 대신 검증 중 표시
   const coupangHref = coupangCtaHref(product);
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Product',
-    name: product.name,
+  // 가격 · 구매 버튼이 모두 있을 때만 Product (없으면 null — src/lib/structuredData.ts)
+  const jsonLd = productJsonLd(product, {
+    siteUrl: SITE_URL,
+    ctaHref: coupangHref,
     description: pageDescription(product),
-    brand: { '@type': 'Brand', name: product.brand },
-    ...(product.imageUrl ? { image: product.imageUrl } : {}),
-    width: { '@type': 'QuantitativeValue', value: width, unitCode: 'CMT' },
-    depth: { '@type': 'QuantitativeValue', value: depth, unitCode: 'CMT' },
-    height: { '@type': 'QuantitativeValue', value: height, unitCode: 'CMT' },
-    ...(product.price
-      ? {
-          offers: {
-            '@type': 'Offer',
-            price: product.price,
-            priceCurrency: 'KRW',
-            url: `${SITE_URL}/p/${product.id}`,
-            availability: 'https://schema.org/InStock',
-          },
-        }
-      : {}),
-  };
+  });
 
   return (
     <article>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
 
       <div className="grid gap-5 sm:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
         {/* 사진 */}
