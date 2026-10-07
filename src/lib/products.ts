@@ -4,6 +4,7 @@ import rawPendingWashingMachine from '@/data/pending-washing-machine.json';
 import rawPendingDryer from '@/data/pending-dryer.json';
 import rawPendingMicrowave from '@/data/pending-microwave.json';
 import rawPendingDesk from '@/data/pending-desk.json';
+import rawPendingShoeRack from '@/data/pending-shoe-rack.json';
 import { CATEGORY_MATCH } from './categories';
 import { exceedsDimensionLimit, resolveDimensionBounds } from './fit';
 import type {
@@ -28,6 +29,7 @@ export const pendingProducts = [
   ...(rawPendingDryer as PendingProduct[]),
   ...(rawPendingMicrowave as PendingProduct[]),
   ...(rawPendingDesk as PendingProduct[]),
+  ...(rawPendingShoeRack as PendingProduct[]),
 ];
 
 /** 슬라이더 최대값: 실데이터 최대치를 10cm 단위로 올림 (여유 10cm) */
