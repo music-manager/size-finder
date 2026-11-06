@@ -368,7 +368,8 @@ export function reviewForCategories(
 
 /**
  * 카테고리에 보이는 공개 카드 수(verified + review). productId 없는 실측 카드도 센다.
- * 화면 분기(이 카테고리에 verified 가 있는지 등)에만 쓴다. 탭 숫자는 uniqueProductIdsFor 를 쓴다.
+ * 홈 탭 숫자(사용자 표시)와 화면 분기(이 카테고리에 verified 가 있는지 등)에 쓴다.
+ * 고유 productId 기준 집계(catalog:gate · 1,000 목표)는 uniqueProductIdsFor 를 쓴다.
  */
 export function publicCountFor(
   catalog: Pick<PublicCatalog, 'verified' | 'review'>,
@@ -386,7 +387,8 @@ export const MIN_PUBLIC_PER_CATEGORY = 10;
 
 /**
  * 카테고리(탭) 하나의 공개 고유상품 수 = 서로 다른 쿠팡 productId 수.
- * 홈 탭 숫자 · catalog:gate 가 쓰는 기준. verified 는 productKey 를 아는 것만 센다.
+ * catalog:gate · 관리자 통계(1,000 목표)가 쓰는 내부 기준. verified 는 productKey 를 아는 것만 센다.
+ * 홈 탭에 보이는 숫자는 공개 카드 수(publicCountFor)다.
  */
 export function uniqueProductIdsFor(
   catalog: Pick<PublicCatalog, 'verified' | 'review'>,

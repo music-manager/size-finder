@@ -30,8 +30,8 @@ import {
   type SpecPreset,
 } from '@/lib/presets';
 import { fitClearance, isSizeFilterActive } from '@/lib/fit';
-import { publicCountFor, uniqueProductIdsFor } from '@/lib/publicCatalog';
-import { SEED_PAGE_KEYS, getPublicCatalog } from '@/lib/publicCatalogData';
+import { publicCountFor } from '@/lib/publicCatalog';
+import { getPublicCatalog } from '@/lib/publicCatalogData';
 import { filtersToQueryString, paramsToFilters } from '@/lib/urlState';
 import type { Filters, Product, SortKey, TabId } from '@/lib/types';
 
@@ -109,12 +109,12 @@ export default function SizeFinderApp({ initialProducts = seedProducts }: Props)
     });
   }, [catalog, filters]);
 
-  // 탭 숫자는 공개 고유상품 수(서로 다른 쿠팡 productId, verified + review).
-  // productId 없는 실측 카드는 화면에는 보이지만 이 숫자에는 들어가지 않는다. 공간 맞춤 결과 수와도 다르다.
+  // 탭 숫자는 화면에 보이는 공개 카드 수(verified + review). productId 없는 실측 카드(dry-008 등)도 센다.
+  // 고유 productId 수(uniqueProductIdsFor)는 catalog:gate · 1,000 목표 집계용으로 따로 둔다. 공간 맞춤 결과 수와도 다르다.
   const counts = useMemo(() => {
     const result: Record<string, number> = {};
     for (const category of CATEGORIES) {
-      result[category.id] = uniqueProductIdsFor(publicCatalog, CATEGORY_MATCH[category.id], SEED_PAGE_KEYS);
+      result[category.id] = publicCountFor(publicCatalog, CATEGORY_MATCH[category.id]);
     }
     return result;
   }, [publicCatalog]);

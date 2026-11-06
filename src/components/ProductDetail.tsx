@@ -175,7 +175,7 @@ export default function ProductDetail({ product }: Props) {
                   {formatWon(product.price)}
                 </span>
                 <span className="text-base font-bold text-rose-600">원</span>
-                <span className="ml-1 text-[11px] text-slate-400">
+                <span className="ml-1 whitespace-nowrap text-[11px] text-slate-400">
                   {formatCheckedAt(product.priceCheckedAt)}
                 </span>
               </p>

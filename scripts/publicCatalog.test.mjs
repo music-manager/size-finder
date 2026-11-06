@@ -329,10 +329,10 @@ describe('카테고리 탭 숫자 = 공개 총상품 수', () => {
     assert.equal(publicCountFor(catalog, null), 3);
   });
 
-  it('SizeFinderApp 탭 숫자는 uniqueProductIdsFor(공개 고유상품), 결과 수는 verified 를 거른 visible 그대로', () => {
+  it('SizeFinderApp 탭 숫자는 publicCountFor(공개 카드 수), 결과 수는 verified 를 거른 visible 그대로', () => {
     const app = stripComments(read('src/components/SizeFinderApp.tsx'));
-    assert.match(app, /result\[category\.id\] = uniqueProductIdsFor\(publicCatalog, CATEGORY_MATCH\[category\.id\], SEED_PAGE_KEYS\)/);
-    assert.doesNotMatch(app, /result\[category\.id\] = publicCountFor/);
+    assert.match(app, /result\[category\.id\] = publicCountFor\(publicCatalog, CATEGORY_MATCH\[category\.id\]\)/);
+    assert.doesNotMatch(app, /uniqueProductIdsFor/);
     assert.match(app, /<span className="text-brand-600">\{visible\.length\}<\/span>개/);
     assert.match(app, /const filtered = filterProducts\(catalog, filters\)/);
     assert.match(app, /if \(filters\.sort !== 'default'\) return sortProducts\(filtered, filters\.sort\)/);

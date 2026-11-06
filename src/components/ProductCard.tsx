@@ -181,12 +181,12 @@ export default function ProductCard({
         {/* 가격 — 커머스 관습대로 가장 강한 시각 요소 */}
         <div className="mt-auto pt-2.5">
           {product.price ? (
-            <p className="flex items-baseline gap-1">
+            <p className="flex flex-wrap items-baseline gap-1">
               <span className="text-[19px] font-extrabold leading-none tabular-nums text-rose-600">
                 {formatWon(product.price)}
               </span>
               <span className="text-sm font-bold text-rose-600">원</span>
-              <span className="ml-auto text-[9px] text-slate-400">
+              <span className="ml-auto whitespace-nowrap text-[9px] text-slate-400">
                 {formatCheckedAt(product.priceCheckedAt)}
               </span>
             </p>
