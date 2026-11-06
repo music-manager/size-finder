@@ -71,12 +71,12 @@ export default function ReviewCard({ candidate }: Props) {
 
         <div className="mt-auto pt-3">
           {candidate.price ? (
-            <p className="flex items-baseline gap-1">
+            <p className="flex flex-wrap items-baseline gap-1">
               <span className="text-[17px] font-extrabold leading-none tabular-nums text-rose-600">
                 {formatWon(candidate.price)}
               </span>
               <span className="text-sm font-bold text-rose-600">원</span>
-              <span className="ml-auto text-[9px] text-slate-400">
+              <span className="ml-auto whitespace-nowrap text-[9px] text-slate-400">
                 {formatCheckedAt(candidate.priceCheckedAt)}
               </span>
             </p>

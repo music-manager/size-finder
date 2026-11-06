@@ -18,7 +18,7 @@ export default function SearchBar({ value, onChange }: Props) {
         type="search"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="모델명·브랜드 검색 (예: 위니아, 미니세탁기)"
+        placeholder="모델명·브랜드 검색"
         aria-label="모델명 또는 브랜드 검색"
         className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
       />
