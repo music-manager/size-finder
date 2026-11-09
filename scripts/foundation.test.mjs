@@ -105,11 +105,26 @@ describe('production Coupang host 직접호출 차단', () => {
     assert.deepEqual(hits.map((f) => f.path), []);
   });
 
-  it('자체 HMAC 서명 코드가 없다', () => {
-    const hits = executableSources.filter(
-      (f) => /createHmac\s*\(/.test(f.code) || f.code.includes('HmacSHA256'),
+  it('쿠팡 요청에 쓰는 자체 HMAC 서명 코드가 없다', () => {
+    // HMAC 자체를 막는 게 아니라 '쿠팡 요청 서명' 을 막는다.
+    // 세션 토큰 같은 쿠팡과 무관한 용도까지 막으면 가드가 엉뚱한 곳을
+    // 때리고, 결국 가드를 무력화하는 방향으로 고치게 된다.
+    // 쿠팡 흔적(호스트·오픈 API 경로·쿠팡 키)과 같은 파일에 있을 때만 잡는다.
+    const hits = executableSources.filter((f) => {
+      const signs = /createHmac\s*\(/.test(f.code) || f.code.includes('HmacSHA256');
+      if (!signs) return false;
+      return (
+        f.code.includes(PRODUCTION_HOST) ||
+        f.code.includes('affiliate_open_api') ||
+        /COUPANG_(SECRET|ACCESS)_KEY/.test(f.code) ||
+        /coupang/i.test(f.code)
+      );
+    });
+    assert.deepEqual(
+      hits.map((f) => f.path),
+      [],
+      '쿠팡 요청 서명은 Coordinator 만 한다',
     );
-    assert.deepEqual(hits.map((f) => f.path), [], 'HMAC 서명은 Coordinator 만 한다');
   });
 
   it('실행 파일 수집이 비어 있지 않다', () => {
