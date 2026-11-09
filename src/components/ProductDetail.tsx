@@ -77,7 +77,6 @@ export default function ProductDetail({ product }: Props) {
                 sizes="(max-width: 640px) 100vw, 320px"
                 className="object-contain p-4"
                 onError={() => setSourceIndex((i) => i + 1)}
-                unoptimized
                 priority
               />
             )
