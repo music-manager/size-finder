@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { ChevronRight, Ruler } from 'lucide-react';
 import ImagePlaceholder from './ImagePlaceholder';
 import { CATEGORY_LABEL } from '@/lib/categories';
@@ -33,12 +34,12 @@ export default function ReviewCard({ candidate }: Props) {
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className="relative block aspect-[4/3] w-full overflow-hidden border-b border-slate-100 bg-white">
         {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={candidate.imageUrl}
             alt={candidate.name}
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-contain p-2"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-contain p-2"
             onError={() => setImageFailed(true)}
           />
         ) : (
