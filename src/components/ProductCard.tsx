@@ -95,7 +95,6 @@ export default function ProductCard({
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               className="object-contain p-2 transition duration-300 group-hover:scale-[1.04]"
               onError={() => setSourceIndex((i) => i + 1)}
-              unoptimized
             />
           )
         ) : (
